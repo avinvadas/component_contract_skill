@@ -18,9 +18,17 @@ The contract distinguishes three variant layers that are often conflated:
 
 Ask each question using the AskUserQuestion tool. One question per tool call — wait for the answer before calling the next. Use selectable options wherever the answer space is bounded; fall back to open text only when the answer is inherently freeform (name, purpose, zone description, token prefix).
 
+For every question, set the `header` field to the step indicator: `Q1 / 14`, `Q2 / 14`, etc. (max 12 chars — this fits). Start the `question` text with a filled progress bar on its own line, then the question title and body. Use this exact format for the progress bar — scale the filled blocks (█) to the current step out of total:
+
+```
+█████░░░░░░░░░  3 of 14 — Composition
+```
+
+Use 15 total characters for the bar (█ for done, ░ for remaining), then ` N of Total — Question title`.
+
 After each answer, acknowledge it in one sentence, then immediately call AskUserQuestion for the next question. No extra commentary between questions.
 
-Skip Q10 if Q9 is single-platform. Once all answers are collected, proceed to Phase 2.
+Skip Q10 if Q9 is single-platform (total becomes 13 — adjust bar and counter accordingly). Once all answers are collected, proceed to Phase 2.
 
 **Q1 — Name**
 Open text. Ask: "What is this component called?"
