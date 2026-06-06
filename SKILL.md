@@ -16,69 +16,55 @@ The contract distinguishes three variant layers that are often conflated:
 
 ## Phase 1: Designer interview
 
-Ask each question using the AskUserQuestion tool. One question per tool call — wait for the answer before calling the next. Use selectable options wherever the answer space is bounded; fall back to open text only when the answer is inherently freeform (name, purpose, zone description, token prefix).
+Ask each question using the AskUserQuestion tool. One question per tool call — wait for the answer before calling the next. Use selectable options wherever the answer space is bounded; fall back to open text only when the answer is inherently freeform (name, purpose, zone description).
 
-For every question, set the `header` field to the step indicator: `Q1 / 14`, `Q2 / 14`, etc. (max 12 chars — this fits). Start the `question` text with a filled progress bar on its own line, then the question title and body. Use this exact format for the progress bar — scale the filled blocks (█) to the current step out of total:
+For every question, set the `header` field to the step indicator: `Q1 / 9`, `Q2 / 9`, etc. Start the `question` text with a filled progress bar on its own line. Use 15 block characters (█ for done, ░ for remaining), then ` N of 9 — Section: Aspect`:
 
 ```
-█████░░░░░░░░░  3 of 14 — Composition
+█████░░░░░░░░░░  3 of 9 — Overview: Ownership
 ```
-
-Use 15 total characters for the bar (█ for done, ░ for remaining), then ` N of Total — Section: Aspect`.
-
-The section label maps each question to the contract section it informs. Use it exactly as shown per question below.
 
 After each answer, acknowledge it in one sentence, then immediately call AskUserQuestion for the next question. No extra commentary between questions.
 
-Skip Q10 if Q9 is single-platform (total becomes 13 — adjust bar and counter accordingly). Once all answers are collected, proceed to Phase 2.
+Q7 (Platform) has a conditional follow-up: if the user selects a multi-platform option, ask the delta sub-question before moving to Q8 — this does not count as a separate numbered step. Once all 9 answers are collected, proceed to Phase 2.
 
 ---
 
-**Q1 — Overview: Identity**
-Progress line: `█░░░░░░░░░░░░░░  1 of 14 — Overview: Identity`
-Open text. Ask: "What is this component called?"
+**Q1 — Overview: Identity & Purpose**
+Progress line: `██░░░░░░░░░░░░░  1 of 9 — Overview: Identity & Purpose`
+Open text. Ask: "What is this component called, and what does it do? (one sentence on what it is and where it appears in the UI)"
 
-**Q2 — Overview: Purpose**
-Progress line: `██░░░░░░░░░░░░░  2 of 14 — Overview: Purpose`
-Open text. Ask: "What does it do, and where in the UI does it appear?"
-
-**Q3 — Overview: Ownership**
-Progress line: `███░░░░░░░░░░░░  3 of 14 — Overview: Ownership`
+**Q2 — Overview: Ownership**
+Progress line: `████░░░░░░░░░░░  2 of 9 — Overview: Ownership`
 Single-select. Ask: "Is this component self-contained, or does it wrap other named components?"
 Options:
 - "Standalone — it owns its own content"
 - "Composite shell — it wraps other named components"
 If composite: follow up with open text: "Which sub-components does it contain, and do they already have contracts?"
 
-**Q4 — Structure: Zones**
-Progress line: `████░░░░░░░░░░░  4 of 14 — Structure: Zones`
-Open text. Ask: "What distinct regions make up this component? For each, describe: is it there to show content or to drive behaviour? How many can appear? Is its position fixed or flexible?"
-Add examples: content zones = label, image, badge; interaction zones = close button, chevron, nav arrows, spinner, checkbox.
+**Q3 — Structure: Zones**
+Progress line: `██████░░░░░░░░░  3 of 9 — Structure: Zones`
+Open text. Ask: "What distinct regions make up this component? For each one: is it there to show content or to drive behaviour? How many can appear? Is its position fixed or flexible?"
+Add examples inline: content zones = label, image, badge; interaction zones = close button, chevron, nav arrows, spinner, checkbox.
 
-**Q5 — Properties: Variants**
-Progress line: `█████░░░░░░░░░░  5 of 14 — Properties: Variants`
+**Q4 — Properties: Variants**
+Progress line: `████████░░░░░░░  4 of 9 — Properties: Variants`
 Open text. Ask: "Does it come in different sizes or visual styles? (e.g. sm / md / lg, filled / outlined) If not, say none."
 
-**Q6 — Properties: Layout**
-Progress line: `██████░░░░░░░░░  6 of 14 — Properties: Layout`
-Multi-select. Ask: "Can its layout change depending on context? Select all that apply."
+**Q5 — Properties: Layout**
+Progress line: `██████████░░░░░  5 of 9 — Properties: Layout`
+Multi-select. Ask: "Can its layout or arrangement change depending on context? Select all that apply."
 Options:
 - "Direction can flip (horizontal ↔ vertical)"
 - "Sizing can change (grows / shrinks / fixed)"
 - "Alignment can change (left / centre / right)"
 - "Has density or overflow modes (compact, scroll, wrap…)"
+- "Adapts to available container space (layout shifts when space is tight)"
 The tool automatically appends an "Other" field — do not add one manually.
+If "Adapts to available container space" is selected: follow up with open text: "What changes when space is constrained, and how does your design system name those conditions?"
 
-**Q7 — Structure: Adaptive layout**
-Progress line: `███████░░░░░░░░  7 of 14 — Structure: Adaptive layout`
-Single-select. Ask: "Does its layout change based on available container space?"
-Options:
-- "No — layout is always the same"
-- "Yes — it adapts to available space"
-If yes: follow up with open text: "What changes, and how does your design system name the space conditions?"
-
-**Q8 — Behavior: Interactions**
-Progress line: `████████░░░░░░░  8 of 14 — Behavior: Interactions`
+**Q6 — Behavior: Interactions**
+Progress line: `████████████░░░  6 of 9 — Behavior: Interactions`
 Multi-select. Ask: "What can a user do with it? Select all that apply."
 Options:
 - "Nothing — display only"
@@ -89,26 +75,23 @@ Options:
 - "Drag or reorder items"
 The tool automatically appends an "Other" field — do not add one manually.
 
-**Q9 — Behavior: Platform**
-Progress line: `█████████░░░░░░  9 of 14 — Behavior: Platform`
+**Q7 — Behavior: Platform**
+Progress line: `██████████████░  7 of 9 — Behavior: Platform`
 Single-select. Ask: "Where will users encounter this component?"
 Options:
 - "Web browser only"
 - "Mobile app only (iOS / Android)"
 - "Both web and mobile"
 - "Desktop application"
+If multi-platform: follow up with single-select: "Do interactions or affordances differ between platforms?"
+  - "No — same on all platforms"
+  - "Yes — some things differ"
+  If yes: follow up with open text: "Describe only what differs. Shared behaviours don't need to be repeated."
 
-**Q10 — Behavior: Platform delta** *(only if Q9 = multi-platform)*
-Progress line: `██████████░░░░░  10 of 14 — Behavior: Platform delta`
-Single-select. Ask: "Do interactions or affordances differ between platforms?"
-Options:
-- "No — same on all platforms"
-- "Yes — some things differ by platform"
-If yes: follow up with open text: "Describe only what differs. Shared behaviours don't need to be repeated."
-
-**Q11 — Appearance: States**
-Progress line: `███████████░░░░  11 of 14 — Appearance: States`
-Multi-select. Ask: "Which states does it have beyond its default?"
+**Q8 — Appearance: States & Tokens**
+Progress line: `████████████████  8 of 9 — Appearance: States & Tokens`
+Two parts — ask as a single AskUserQuestion call with both parts in the question text.
+Part A (multi-select): "Which states does it have beyond its default?"
 Options:
 - "Loading / in-progress"
 - "Error or validation failure"
@@ -116,22 +99,14 @@ Options:
 - "Selected / active / checked"
 - "Empty (no content to show)"
 The tool automatically appends an "Other" field — do not add one manually.
-
-**Q12 — Appearance: Token source**
-Progress line: `████████████░░░  12 of 14 — Appearance: Token source`
-Single-select. Ask: "How are design tokens available for this component?"
-Options:
+After the states answer: follow up with single-select for tokens: "Are design tokens available for this component?"
 - "Figma link — I'll share a URL"
 - "Coded reference — Storybook, CSS, or tokens file"
 - "No source — mark token map as pending"
 If Figma or coded: follow up with open text to collect the URL or file path.
 
-**Q13 — Appearance: Token naming**
-Progress line: `█████████████░░  13 of 14 — Appearance: Token naming`
-Open text. Ask: "What prefix or pattern does your design system use for tokens? (e.g. `ds-`, `--color-`, `sys.color.`)"
-
-**Q14 — Schema: Validation**
-Progress line: `██████████████░  14 of 14 — Schema: Validation`
+**Q9 — Schema: Validation**
+Progress line: `████████████████  9 of 9 — Schema: Validation`
 Single-select. Ask: "Should I also generate a JSON schema file for prop validation?"
 Options:
 - "No schema needed"
