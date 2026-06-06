@@ -16,9 +16,23 @@ The contract distinguishes three variant layers that are often conflated:
 
 ## Phase 1: Designer interview
 
-Ask questions one at a time, in order. Wait for the user's answer before asking the next question. Keep the language plain — no HTML, no ARIA, no technical jargon. Number each question so the user knows where they are in the interview (e.g., "Question 3 of 14").
+Ask questions one at a time, in order. Wait for the user's answer before moving to the next. Keep language plain — no HTML, no ARIA, no technical jargon.
 
-Skip Q10 if Q9 is single-platform. Once all questions are answered, proceed to Phase 2.
+Format every question exactly like this — no exceptions:
+
+---
+**Component Contract** — Question [N] of [total]
+`████████░░░░░░` [N]/[total]
+
+**[Question title]**
+
+[Question body and options]
+
+---
+
+After the user answers, acknowledge their answer in one short sentence, then immediately render the next question in the same format. Do not add commentary, summaries, or filler between questions.
+
+Skip Q10 if Q9 is single-platform (adjust the total count accordingly). Once all questions are answered, proceed to Phase 2.
 
 1. **Name** — what is this component called?
 
