@@ -16,97 +16,97 @@ The contract distinguishes three variant layers that are often conflated:
 
 ## Phase 1: Designer interview
 
-Ask questions one at a time, in order. Wait for the user's answer before moving to the next. Keep language plain — no HTML, no ARIA, no technical jargon.
+Ask each question using the AskUserQuestion tool. One question per tool call — wait for the answer before calling the next. Use selectable options wherever the answer space is bounded; fall back to open text only when the answer is inherently freeform (name, purpose, zone description, token prefix).
 
-Format every question exactly like this — no exceptions:
+After each answer, acknowledge it in one sentence, then immediately call AskUserQuestion for the next question. No extra commentary between questions.
 
----
-**Component Contract** — Question [N] of [total]
-`████████░░░░░░` [N]/[total]
+Skip Q10 if Q9 is single-platform. Once all answers are collected, proceed to Phase 2.
 
-**[Question title]**
+**Q1 — Name**
+Open text. Ask: "What is this component called?"
 
-[Question body and options]
+**Q2 — Purpose**
+Open text. Ask: "In one sentence — what does it do, and where in the UI does it appear?"
 
----
+**Q3 — Composition**
+Single-select. Options:
+- "Standalone — it's a self-contained element with its own content"
+- "Composite shell — it wraps other named components (e.g. a tab bar + panels)"
+If composite: follow up with open text asking which sub-components it contains and whether those already have contracts.
 
-After the user answers, acknowledge their answer in one short sentence, then immediately render the next question in the same format. Do not add commentary, summaries, or filler between questions.
+**Q4 — Zones**
+Open text. Ask: "What distinct regions or elements make up this component? For each one, describe: (1) is it there to show content or to drive behaviour / navigation? (2) how many can appear? (3) is its position always fixed or can it move?"
+Provide examples inline: content zones = label, description, thumbnail, badge count; interaction zones = close button, chevron, spinner, nav arrows, checkbox.
 
-Skip Q10 if Q9 is single-platform (adjust the total count accordingly). Once all questions are answered, proceed to Phase 2.
+**Q5 — Variants**
+Open text. Ask: "Does it come in different sizes or visual styles? List them if so (e.g. sm / md / lg, filled / outlined, primary / secondary). If not, say none."
 
-1. **Name** — what is this component called?
+**Q6 — Layout flexibility**
+Multi-select. Header: "Layout flexibility". Ask: "Can the component arrange itself or its children differently depending on context? Select all that apply."
+Options (up to 4 — split if needed, or use the most common):
+- "Direction can flip (e.g. horizontal ↔ vertical)"
+- "Sizing can change (grows / shrinks / fixed)"
+- "Alignment can change (left / centre / right)"
+- "Has density or overflow modes (compact, scroll, wrap…)"
+Add a note: "You can also type other layout behaviours not listed here."
+If none apply, user selects "Other" and types "none".
 
-2. **Purpose** — in one sentence: what does it do, and where in the UI does it appear?
+**Q7 — Adaptive layout**
+Single-select. Options:
+- "No — layout is identical regardless of available space"
+- "Yes — layout changes based on container space"
+If yes: follow up with open text asking what changes and how the design system names the space conditions.
 
-3. **Composition** — is it a container that wraps other named components (e.g., it holds a tab bar + a card list), or is it a standalone element with its own content?
-   - If it wraps others: which sub-components does it contain? Do those already have their own contracts?
+**Q8 — Interactions**
+Multi-select. Header: "Interactions". Ask: "What can a user do with this component? Select all that apply."
+Options:
+- "Nothing — display only"
+- "Click / tap to navigate (link)"
+- "Click / tap to trigger an action (button)"
+- "Select one or more options from it"
+- "Swipe or scroll through content inside it"
+Add "Other" for drag/reorder or anything else.
 
-4. **Zones** — what distinct regions or elements make up this component? For each one, answer:
-   - Is it there to **show content** (text, images, informational icons, data) or to **support the component's behaviour** (indicate a state, trigger an action, afford navigation, communicate functionality)?
-   - How many instances can appear? (e.g., always exactly one label, one to three action buttons, any number of tags)
-   - Is its position fixed (it must always appear in the same place — e.g., always top-right, always before the label), or can implementations move it?
+**Q9 — Platform**
+Single-select. Options:
+- "Web browser only"
+- "Mobile app only (iOS / Android)"
+- "Both web and mobile"
+- "Desktop application"
 
-   Examples of content zones: a text label, a description, a thumbnail image, a category icon, a badge count.
-   Examples of interaction zones: an expand/collapse chevron, a close button, a loading spinner, navigation arrows, a selection checkbox, a drag handle.
+**Q10 — Interaction delta** *(only if Q9 = multi-platform)*
+Single-select. Options:
+- "No — interactions are identical across platforms"
+- "Yes — some interactions or affordances differ by platform"
+If yes: follow up with open text asking what differs (only what is different — shared behaviours need not be repeated).
 
-   This matters because an interaction zone cannot be substituted with a content element — even if both accept the same visual element type — without breaking the component's contract.
+**Q11 — States**
+Multi-select. Header: "States". Ask: "Beyond its default appearance, which states does this component have?"
+Options:
+- "Loading / in-progress"
+- "Error or validation failure"
+- "Disabled / unavailable"
+- "Selected / active / checked"
+- "Empty (no content to show)"
+Use "Other" for anything else.
 
-5. **Variants** — does it come in different sizes or visual styles? (e.g., small/medium/large, filled/outlined, primary/secondary)
+**Q12 — Token source**
+Single-select. Header: "Token source". Options:
+- "Figma link — I'll share a URL with a node-id"
+- "Coded reference — Storybook URL, CSS file, or tokens.json"
+- "No source — mark token map as pending"
+If Figma or coded: follow up with open text to collect the URL or file path.
 
-6. **Layout flexibility** — can the component arrange itself or its children differently depending on context? Choose all that apply:
-   - Direction can flip (e.g., items flow left-to-right or top-to-bottom)
-   - Sizing can change (e.g., grows to fill available space vs. shrinks to its content vs. fixed size)
-   - Content alignment can change (e.g., left-aligned, centred, right-aligned)
-   - Has a density or spacing mode (e.g., compact vs. default vs. spacious)
-   - Overflow behaviour can change (e.g., clips, scrolls, or wraps when content is too large)
-   - Layout can be reversed or mirrored (e.g., image on left vs. right)
-   - None of the above — its layout is always the same
+**Q13 — Token naming**
+Open text. Ask: "What prefix or pattern does your design system use for tokens? (e.g. `ds-`, `--color-`, `color-`, `sys.color.`)"
 
-7. **Adaptive layout** — does the component's layout change based on how much space it has been given? The component should respond to its available container space — not the device or viewport size. If yes:
-   - What changes when space is constrained — for example, does a horizontal row collapse into a vertical stack? Does a zone move to a different position?
-   - How does your design system name the space conditions? (e.g., "compact", "default", "expanded" — or a container width threshold)
-   - Are any zones hidden, collapsed, or repositioned when space is limited?
-   - Is the layout identical regardless of available space? (If yes, skip this question.)
+**Q14 — JSON schema**
+Single-select. Options:
+- "No schema needed"
+- "Yes — generate a Tabs.schema.json (JSON Schema Draft 07)"
+If yes and the component has sub-components: follow up asking whether sub-component zones should use `$ref` references or inline shapes.
 
-8. **What can a user do with it?** Choose all that apply, or describe freely:
-   - Nothing — it's display only
-   - Click or tap it to go somewhere (a link)
-   - Click or tap it to trigger an action (a button: submit, open, close, confirm…)
-   - Type into it
-   - Select one or more options from it
-   - Swipe or scroll through content inside it
-   - Drag or reorder things within it
-   - Something else — describe it
-
-9. **Platform** — where will users encounter this component?
-   - Web browser only
-   - Mobile app only (iOS / Android)
-   - Both web and mobile
-   - Desktop application
-
-10. **Interaction delta** — *(ask only if the answer to Q9 includes more than one platform)* do the available interactions or affordances differ depending on how the user is accessing the component?
-    - **No** — the interaction is the same regardless of device or input method *(single behavior table; skip the rest of this question)*
-    - **Yes** — describe what differs. For example: "desktop shows arrow buttons for navigation; mobile relies on swipe and shows only dot indicators." Only describe what is *different* — shared behaviors don't need to be repeated per platform.
-
-11. **States** — beyond its default appearance, does it have any of these?
-    - Loading / in-progress
-    - Error or validation failure
-    - Disabled / unavailable
-    - Selected / active / checked
-    - Empty (no content to show)
-    - Other — describe
-
-12. **Token source** — how are design tokens available for this component?
-    - **Figma link**: share a URL that contains `node-id` — Claude will inspect the component directly
-    - **Coded reference**: share a Storybook URL, a CSS/SCSS file, a `tokens.json`, or similar — Claude will read it
-    - **Description only**: no reference available right now — the token map will be marked as pending
-
-13. **Token naming** — what prefix or pattern does this design system use for tokens? (e.g., `color-`, `ds-`, `--color-`, `sys.color.`)
-
-14. **JSON schema** — should Claude also generate a `.schema.json` file that can be used to validate this component's props programmatically?
-    - If yes: use JSON Schema Draft 07 by default unless you have a preference. For components that contain sub-components, should those be referenced by name (`$ref`) or have their shape written out inline?
-
-Wait for answers before proceeding to Phase 2.
+Wait for all answers before proceeding to Phase 2.
 
 ---
 
