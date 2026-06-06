@@ -43,13 +43,12 @@ Open text. Ask: "Does it come in different sizes or visual styles? List them if 
 
 **Q6 — Layout flexibility**
 Multi-select. Header: "Layout flexibility". Ask: "Can the component arrange itself or its children differently depending on context? Select all that apply."
-Options (up to 4 — split if needed, or use the most common):
+Options:
 - "Direction can flip (e.g. horizontal ↔ vertical)"
 - "Sizing can change (grows / shrinks / fixed)"
 - "Alignment can change (left / centre / right)"
 - "Has density or overflow modes (compact, scroll, wrap…)"
-Add a note: "You can also type other layout behaviours not listed here."
-If none apply, user selects "Other" and types "none".
+The tool automatically appends an "Other" field — do not add one manually.
 
 **Q7 — Adaptive layout**
 Single-select. Options:
@@ -65,7 +64,8 @@ Options:
 - "Click / tap to trigger an action (button)"
 - "Select one or more options from it"
 - "Swipe or scroll through content inside it"
-Add "Other" for drag/reorder or anything else.
+- "Drag or reorder items within it"
+The tool automatically appends an "Other" field — do not add one manually.
 
 **Q9 — Platform**
 Single-select. Options:
@@ -88,7 +88,7 @@ Options:
 - "Disabled / unavailable"
 - "Selected / active / checked"
 - "Empty (no content to show)"
-Use "Other" for anything else.
+The tool automatically appends an "Other" field — do not add one manually.
 
 **Q12 — Token source**
 Single-select. Header: "Token source". Options:
