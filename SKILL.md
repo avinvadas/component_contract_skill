@@ -24,72 +24,91 @@ For every question, set the `header` field to the step indicator: `Q1 / 14`, `Q2
 █████░░░░░░░░░  3 of 14 — Composition
 ```
 
-Use 15 total characters for the bar (█ for done, ░ for remaining), then ` N of Total — Question title`.
+Use 15 total characters for the bar (█ for done, ░ for remaining), then ` N of Total — Section: Aspect`.
+
+The section label maps each question to the contract section it informs. Use it exactly as shown per question below.
 
 After each answer, acknowledge it in one sentence, then immediately call AskUserQuestion for the next question. No extra commentary between questions.
 
 Skip Q10 if Q9 is single-platform (total becomes 13 — adjust bar and counter accordingly). Once all answers are collected, proceed to Phase 2.
 
-**Q1 — Name**
+---
+
+**Q1 — Overview: Identity**
+Progress line: `█░░░░░░░░░░░░░░  1 of 14 — Overview: Identity`
 Open text. Ask: "What is this component called?"
 
-**Q2 — Purpose**
-Open text. Ask: "In one sentence — what does it do, and where in the UI does it appear?"
+**Q2 — Overview: Purpose**
+Progress line: `██░░░░░░░░░░░░░  2 of 14 — Overview: Purpose`
+Open text. Ask: "What does it do, and where in the UI does it appear?"
 
-**Q3 — Composition**
-Single-select. Options:
-- "Standalone — it's a self-contained element with its own content"
-- "Composite shell — it wraps other named components (e.g. a tab bar + panels)"
-If composite: follow up with open text asking which sub-components it contains and whether those already have contracts.
-
-**Q4 — Zones**
-Open text. Ask: "What distinct regions or elements make up this component? For each one, describe: (1) is it there to show content or to drive behaviour / navigation? (2) how many can appear? (3) is its position always fixed or can it move?"
-Provide examples inline: content zones = label, description, thumbnail, badge count; interaction zones = close button, chevron, spinner, nav arrows, checkbox.
-
-**Q5 — Variants**
-Open text. Ask: "Does it come in different sizes or visual styles? List them if so (e.g. sm / md / lg, filled / outlined, primary / secondary). If not, say none."
-
-**Q6 — Layout flexibility**
-Multi-select. Header: "Layout flexibility". Ask: "Can the component arrange itself or its children differently depending on context? Select all that apply."
+**Q3 — Overview: Ownership**
+Progress line: `███░░░░░░░░░░░░  3 of 14 — Overview: Ownership`
+Single-select. Ask: "Is this component self-contained, or does it wrap other named components?"
 Options:
-- "Direction can flip (e.g. horizontal ↔ vertical)"
+- "Standalone — it owns its own content"
+- "Composite shell — it wraps other named components"
+If composite: follow up with open text: "Which sub-components does it contain, and do they already have contracts?"
+
+**Q4 — Structure: Zones**
+Progress line: `████░░░░░░░░░░░  4 of 14 — Structure: Zones`
+Open text. Ask: "What distinct regions make up this component? For each, describe: is it there to show content or to drive behaviour? How many can appear? Is its position fixed or flexible?"
+Add examples: content zones = label, image, badge; interaction zones = close button, chevron, nav arrows, spinner, checkbox.
+
+**Q5 — Properties: Variants**
+Progress line: `█████░░░░░░░░░░  5 of 14 — Properties: Variants`
+Open text. Ask: "Does it come in different sizes or visual styles? (e.g. sm / md / lg, filled / outlined) If not, say none."
+
+**Q6 — Properties: Layout**
+Progress line: `██████░░░░░░░░░  6 of 14 — Properties: Layout`
+Multi-select. Ask: "Can its layout change depending on context? Select all that apply."
+Options:
+- "Direction can flip (horizontal ↔ vertical)"
 - "Sizing can change (grows / shrinks / fixed)"
 - "Alignment can change (left / centre / right)"
 - "Has density or overflow modes (compact, scroll, wrap…)"
 The tool automatically appends an "Other" field — do not add one manually.
 
-**Q7 — Adaptive layout**
-Single-select. Options:
-- "No — layout is identical regardless of available space"
-- "Yes — layout changes based on container space"
-If yes: follow up with open text asking what changes and how the design system names the space conditions.
+**Q7 — Structure: Adaptive layout**
+Progress line: `███████░░░░░░░░  7 of 14 — Structure: Adaptive layout`
+Single-select. Ask: "Does its layout change based on available container space?"
+Options:
+- "No — layout is always the same"
+- "Yes — it adapts to available space"
+If yes: follow up with open text: "What changes, and how does your design system name the space conditions?"
 
-**Q8 — Interactions**
-Multi-select. Header: "Interactions". Ask: "What can a user do with this component? Select all that apply."
+**Q8 — Behavior: Interactions**
+Progress line: `████████░░░░░░░  8 of 14 — Behavior: Interactions`
+Multi-select. Ask: "What can a user do with it? Select all that apply."
 Options:
 - "Nothing — display only"
 - "Click / tap to navigate (link)"
 - "Click / tap to trigger an action (button)"
-- "Select one or more options from it"
-- "Swipe or scroll through content inside it"
-- "Drag or reorder items within it"
+- "Select one or more options"
+- "Swipe or scroll through content"
+- "Drag or reorder items"
 The tool automatically appends an "Other" field — do not add one manually.
 
-**Q9 — Platform**
-Single-select. Options:
+**Q9 — Behavior: Platform**
+Progress line: `█████████░░░░░░  9 of 14 — Behavior: Platform`
+Single-select. Ask: "Where will users encounter this component?"
+Options:
 - "Web browser only"
 - "Mobile app only (iOS / Android)"
 - "Both web and mobile"
 - "Desktop application"
 
-**Q10 — Interaction delta** *(only if Q9 = multi-platform)*
-Single-select. Options:
-- "No — interactions are identical across platforms"
-- "Yes — some interactions or affordances differ by platform"
-If yes: follow up with open text asking what differs (only what is different — shared behaviours need not be repeated).
+**Q10 — Behavior: Platform delta** *(only if Q9 = multi-platform)*
+Progress line: `██████████░░░░░  10 of 14 — Behavior: Platform delta`
+Single-select. Ask: "Do interactions or affordances differ between platforms?"
+Options:
+- "No — same on all platforms"
+- "Yes — some things differ by platform"
+If yes: follow up with open text: "Describe only what differs. Shared behaviours don't need to be repeated."
 
-**Q11 — States**
-Multi-select. Header: "States". Ask: "Beyond its default appearance, which states does this component have?"
+**Q11 — Appearance: States**
+Progress line: `███████████░░░░  11 of 14 — Appearance: States`
+Multi-select. Ask: "Which states does it have beyond its default?"
 Options:
 - "Loading / in-progress"
 - "Error or validation failure"
@@ -98,20 +117,25 @@ Options:
 - "Empty (no content to show)"
 The tool automatically appends an "Other" field — do not add one manually.
 
-**Q12 — Token source**
-Single-select. Header: "Token source". Options:
-- "Figma link — I'll share a URL with a node-id"
-- "Coded reference — Storybook URL, CSS file, or tokens.json"
+**Q12 — Appearance: Token source**
+Progress line: `████████████░░░  12 of 14 — Appearance: Token source`
+Single-select. Ask: "How are design tokens available for this component?"
+Options:
+- "Figma link — I'll share a URL"
+- "Coded reference — Storybook, CSS, or tokens file"
 - "No source — mark token map as pending"
 If Figma or coded: follow up with open text to collect the URL or file path.
 
-**Q13 — Token naming**
-Open text. Ask: "What prefix or pattern does your design system use for tokens? (e.g. `ds-`, `--color-`, `color-`, `sys.color.`)"
+**Q13 — Appearance: Token naming**
+Progress line: `█████████████░░  13 of 14 — Appearance: Token naming`
+Open text. Ask: "What prefix or pattern does your design system use for tokens? (e.g. `ds-`, `--color-`, `sys.color.`)"
 
-**Q14 — JSON schema**
-Single-select. Options:
+**Q14 — Schema: Validation**
+Progress line: `██████████████░  14 of 14 — Schema: Validation`
+Single-select. Ask: "Should I also generate a JSON schema file for prop validation?"
+Options:
 - "No schema needed"
-- "Yes — generate a Tabs.schema.json (JSON Schema Draft 07)"
+- "Yes — generate a .schema.json (JSON Schema Draft 07)"
 If yes and the component has sub-components: follow up asking whether sub-component zones should use `$ref` references or inline shapes.
 
 Wait for all answers before proceeding to Phase 2.
