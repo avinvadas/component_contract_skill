@@ -16,7 +16,9 @@ The contract distinguishes three variant layers that are often conflated:
 
 ## Phase 1: Designer interview
 
-Ask ALL of the following in a single message. Keep the language plain — no HTML, no ARIA, no technical jargon. Number the questions so the user can answer by number.
+Ask questions one at a time, in order. Wait for the user's answer before asking the next question. Keep the language plain — no HTML, no ARIA, no technical jargon. Number each question so the user knows where they are in the interview (e.g., "Question 3 of 14").
+
+Skip Q10 if Q9 is single-platform. Once all questions are answered, proceed to Phase 2.
 
 1. **Name** — what is this component called?
 
