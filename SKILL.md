@@ -16,61 +16,96 @@ The contract distinguishes three variant layers that are often conflated:
 
 ## Phase 1: Designer interview
 
-Use the AskUserQuestion tool for each question. One question per call — wait for the answer before moving on. Use selectable options when the choices are bounded. Use open text only when the answer is genuinely freeform (name, description, URL).
+Use the AskUserQuestion tool for each question. One question per call — wait for the answer before moving on.
 
-Do not add an "Other" option manually — the tool appends one automatically. Adding it yourself creates a duplicate.
+**Formatting rules — apply to every question without exception:**
+- `header`: step chip only — `Q1 / 9`, `Q2 / 9`, etc.
+- `question`: structured as three lines:
+  1. Progress bar: 15 block chars (█ filled, ░ remaining)
+  2. Blank line
+  3. Short bold title (2–4 words), then the question as plain text on the next line
 
-For every question:
-- Set `header` to the step: `Q1 / 9`, `Q2 / 9`, etc.
-- Start the `question` text with a progress bar: 15 block characters (█ filled, ░ remaining), then the step label.
-
-Example for step 3:
+Example:
 ```
-██████░░░░░░░░░  3 of 9 — Parts
+██████░░░░░░░░░
+
+**Parts**
+What visible parts does it have?
 ```
 
-After each answer: one sentence acknowledgement, then immediately ask the next question. No extra commentary.
+**Option rules — apply to every question without exception:**
+- Never add "Other", "Something else", "Custom", or any freeform fallback as a named option. The tool appends one automatically — a second one creates a duplicate.
+- Use `multiSelect: true` whenever more than one answer can be true at the same time.
+- Use single-select only when exactly one answer applies.
 
-Conditional follow-ups (marked below) do not add to the step count. Once all 9 main answers are in, proceed to Phase 2.
+After each answer: one short sentence acknowledgement, then immediately ask the next question. No commentary between questions.
+
+Conditional follow-ups do not add to the step count. Once all 9 main answers are collected, proceed to Phase 2.
 
 ---
 
 **Q1 — Name & purpose**
-Progress: `██░░░░░░░░░░░░░  1 of 9 — Name & purpose`
-Open text. Ask: "What's it called, and what does it do? Where does it appear?"
+```
+██░░░░░░░░░░░░░
+
+**Name & purpose**
+What's it called? What does it do and where does it appear?
+```
+Open text.
 
 **Q2 — Structure**
-Progress: `████░░░░░░░░░░░  2 of 9 — Structure`
-Single-select. Ask: "Does it stand alone, or does it hold other components inside it?"
-Options:
+```
+████░░░░░░░░░░░
+
+**Structure**
+Does it stand alone, or does it hold other components inside?
+```
+Single-select:
 - "Stands alone"
 - "Holds other components inside"
-If holds others → open text follow-up: "Which components does it hold? Do any of them already have contracts?"
+If "Holds other components" → open text follow-up: "Which ones? Do any already have contracts?"
 
 **Q3 — Parts**
-Progress: `██████░░░░░░░░░  3 of 9 — Parts`
-Open text. Ask: "What visible parts does it have? For each part: is it there to show something, or to let the user do something? How many of it can appear? Is its spot always in the same place, or can it move?"
-Add short examples: showing = label, image, badge; doing = close button, arrow, checkbox, spinner.
+```
+██████░░░░░░░░░
+
+**Parts**
+What visible parts does it have? For each: is it there to show something, or let someone do something? How many can appear? Is its spot fixed or can it move?
+```
+Open text. Add examples in the description field: showing = label, image, badge; doing = close button, arrow, checkbox, spinner.
 
 **Q4 — Styles**
-Progress: `████████░░░░░░░  4 of 9 — Styles`
-Open text. Ask: "Does it come in different sizes or looks? (e.g. small / medium / large, filled / outlined) If not, say none."
+```
+████████░░░░░░░
+
+**Styles**
+Does it come in different sizes or looks?
+```
+Open text. Add hint: "e.g. small / medium / large, filled / outlined. Say none if not."
 
 **Q5 — Layout**
-Progress: `██████████░░░░░  5 of 9 — Layout`
-Multi-select. Ask: "Can its layout change? Pick all that apply."
-Options:
-- "Direction flips (left-to-right ↔ top-to-bottom)"
-- "Size changes (stretches / shrinks / fixed)"
+```
+██████████░░░░░
+
+**Layout**
+Can its layout change?
+```
+Multi-select:
+- "Direction flips (horizontal ↔ vertical)"
+- "Size changes (grows / shrinks / fixed)"
 - "Alignment changes (left / centre / right)"
 - "Has a compact or overflow mode"
 - "Adapts to the space it's given"
 If "Adapts to the space it's given" → open text follow-up: "What changes when space is tight? What does your design system call those conditions?"
 
-**Q6 — What it does**
-Progress: `████████████░░░  6 of 9 — What it does`
-Multi-select. Ask: "What can someone do with it? Pick all that apply."
-Options:
+**Q6 — Interaction**
+```
+████████████░░░
+
+**Interaction**
+What can someone do with it?
+```
+Multi-select:
 - "Just looks — no interaction"
 - "Tap to go to a URL"
 - "Tap to do something (submit, open, close, toggle)"
@@ -79,71 +114,83 @@ Options:
 - "Scroll or swipe through content"
 - "Drag to reorder"
 
-Each selected option triggers a follow-up. Ask them in order before moving to Q7.
+Each selected option may trigger a follow-up. Ask them in order before Q7.
 
-If "Just looks — no interaction" →
-  Single-select: "What best describes what it is?"
+If "Just looks" → multi-select follow-up: "What kind of element is it?"
   - "A section or region of the page"
   - "A list of items"
-  - "A figure, image, or diagram"
+  - "A figure or diagram"
   - "Status info that updates on its own"
-  - "Purely decorative — screen readers can skip it"
+  - "Purely decorative"
 
-If "Tap to do something" →
-  Single-select: "What does tapping it do?"
+If "Tap to do something" → single-select follow-up: "What does it do?"
   - "Submits a form"
-  - "Opens or closes an overlay that covers the rest of the page"
-  - "Expands or collapses something"
-  - "Toggles a setting on or off"
-  - "Triggers an action (delete, add, save, etc.)"
+  - "Opens or closes a page-blocking overlay"
+  - "Expands or collapses content"
+  - "Toggles a setting on/off"
+  - "Triggers an action (delete, add, save…)"
 
-If "Switch between panels or views" →
-  Single-select: "Does switching change the URL?"
+If "Switch between panels or views" → single-select follow-up: "Does switching change the URL?"
   - "No — content swaps in place"
   - "Yes — each panel has its own URL"
 
-If "Pick from a list of options" →
-  Single-select: "How many items can be selected at once?"
+If "Pick from a list" → single-select follow-up: "How many can be selected?"
   - "Just one"
   - "Multiple"
-  Then: "Is the list always visible, or does it open as a dropdown?"
+  Then single-select: "Is the list always visible or does it open?"
   - "Always visible"
   - "Opens as a dropdown"
 
-Never assume the HTML element or ARIA role from the component name alone. Always derive from these answers.
+Never assume the HTML element or ARIA role from the component name. Always derive from these answers.
 
 **Q7 — Platform**
-Progress: `██████████████░  7 of 9 — Platform`
-Single-select. Ask: "Where will people use it?"
-Options:
+```
+██████████████░
+
+**Platform**
+Where will people use it?
+```
+Single-select:
 - "Web only"
 - "Mobile app only"
 - "Web and mobile"
 - "Desktop app"
-If web and mobile or multi-platform → single-select follow-up: "Does anything work differently on mobile vs desktop?"
+If multi-platform → single-select follow-up: "Does anything work differently on mobile vs desktop?"
   - "No — same everywhere"
   - "Yes — some things differ"
-  If yes → open text: "What's different? Only describe what changes — shared behaviour doesn't need repeating."
+  If yes → open text: "What's different? Only describe what changes."
 
 **Q8 — States & tokens**
-Progress: `████████████████  8 of 9 — States & tokens`
-Multi-select. Ask: "Which extra states does it have?"
-Options:
+```
+████████████████
+
+**States**
+Which extra states does it have?
+```
+Multi-select:
 - "Loading"
 - "Error"
 - "Disabled"
 - "Selected or active"
 - "Empty"
-After states answer → single-select follow-up: "Do you have design tokens for it?"
-  - "Yes — I have a Figma link"
-  - "Yes — I have a code or Storybook link"
-  - "No — skip tokens for now"
+After answer → single-select follow-up:
+```
+**Tokens**
+Do you have design tokens for it?
+```
+  - "Yes — Figma link"
+  - "Yes — code or Storybook link"
+  - "No — skip for now"
   If yes → open text: "Share the link or file."
 
 **Q9 — Schema**
-Progress: `████████████████  9 of 9 — Schema`
-Single-select. Ask: "Want a JSON schema file for this component too?"
-Options:
+```
+████████████████
+
+**Schema**
+Want a JSON schema file too?
+```
+Single-select:
 - "No thanks"
 - "Yes — generate a .schema.json"
 If yes and the component holds sub-components → single-select follow-up: "How should sub-components appear in the schema?"
