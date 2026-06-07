@@ -16,102 +16,110 @@ The contract distinguishes three variant layers that are often conflated:
 
 ## Phase 1: Designer interview
 
-Ask each question using the AskUserQuestion tool. One question per tool call — wait for the answer before calling the next. Use selectable options wherever the answer space is bounded; fall back to open text only when the answer is inherently freeform (name, purpose, zone description).
+Use the AskUserQuestion tool for each question. One question per call — wait for the answer before moving on. Use selectable options when the choices are bounded. Use open text only when the answer is genuinely freeform (name, description, URL).
 
-For every question, set the `header` field to the step indicator: `Q1 / 9`, `Q2 / 9`, etc. Start the `question` text with a filled progress bar on its own line. Use 15 block characters (█ for done, ░ for remaining), then ` N of 9 — Section: Aspect`:
+Do not add an "Other" option manually — the tool appends one automatically. Adding it yourself creates a duplicate.
 
+For every question:
+- Set `header` to the step: `Q1 / 9`, `Q2 / 9`, etc.
+- Start the `question` text with a progress bar: 15 block characters (█ filled, ░ remaining), then the step label.
+
+Example for step 3:
 ```
-█████░░░░░░░░░░  3 of 9 — Overview: Ownership
+██████░░░░░░░░░  3 of 9 — Parts
 ```
 
-After each answer, acknowledge it in one sentence, then immediately call AskUserQuestion for the next question. No extra commentary between questions.
+After each answer: one sentence acknowledgement, then immediately ask the next question. No extra commentary.
 
-Q7 (Platform) has a conditional follow-up: if the user selects a multi-platform option, ask the delta sub-question before moving to Q8 — this does not count as a separate numbered step. Once all 9 answers are collected, proceed to Phase 2.
+Conditional follow-ups (marked below) do not add to the step count. Once all 9 main answers are in, proceed to Phase 2.
 
 ---
 
-**Q1 — Overview: Identity & Purpose**
-Progress line: `██░░░░░░░░░░░░░  1 of 9 — Overview: Identity & Purpose`
-Open text. Ask: "What is this component called, and what does it do? (one sentence on what it is and where it appears in the UI)"
+**Q1 — Name & purpose**
+Progress: `██░░░░░░░░░░░░░  1 of 9 — Name & purpose`
+Open text. Ask: "What's it called, and what does it do? Where does it appear?"
 
-**Q2 — Overview: Ownership**
-Progress line: `████░░░░░░░░░░░  2 of 9 — Overview: Ownership`
-Single-select. Ask: "Is this component self-contained, or does it wrap other named components?"
+**Q2 — Structure**
+Progress: `████░░░░░░░░░░░  2 of 9 — Structure`
+Single-select. Ask: "Does it stand alone, or does it hold other components inside it?"
 Options:
-- "Standalone — it owns its own content"
-- "Composite shell — it wraps other named components"
-If composite: follow up with open text: "Which sub-components does it contain, and do they already have contracts?"
+- "Stands alone"
+- "Holds other components inside"
+If holds others → open text follow-up: "Which components does it hold? Do any of them already have contracts?"
 
-**Q3 — Structure: Zones**
-Progress line: `██████░░░░░░░░░  3 of 9 — Structure: Zones`
-Open text. Ask: "What distinct regions make up this component? For each one: is it there to show content or to drive behaviour? How many can appear? Is its position fixed or flexible?"
-Add examples inline: content zones = label, image, badge; interaction zones = close button, chevron, nav arrows, spinner, checkbox.
+**Q3 — Parts**
+Progress: `██████░░░░░░░░░  3 of 9 — Parts`
+Open text. Ask: "What visible parts does it have? For each part: is it there to show something, or to let the user do something? How many of it can appear? Is its spot always in the same place, or can it move?"
+Add short examples: showing = label, image, badge; doing = close button, arrow, checkbox, spinner.
 
-**Q4 — Properties: Variants**
-Progress line: `████████░░░░░░░  4 of 9 — Properties: Variants`
-Open text. Ask: "Does it come in different sizes or visual styles? (e.g. sm / md / lg, filled / outlined) If not, say none."
+**Q4 — Styles**
+Progress: `████████░░░░░░░  4 of 9 — Styles`
+Open text. Ask: "Does it come in different sizes or looks? (e.g. small / medium / large, filled / outlined) If not, say none."
 
-**Q5 — Properties: Layout**
-Progress line: `██████████░░░░░  5 of 9 — Properties: Layout`
-Multi-select. Ask: "Can its layout or arrangement change depending on context? Select all that apply."
+**Q5 — Layout**
+Progress: `██████████░░░░░  5 of 9 — Layout`
+Multi-select. Ask: "Can its layout change? Pick all that apply."
 Options:
-- "Direction can flip (horizontal ↔ vertical)"
-- "Sizing can change (grows / shrinks / fixed)"
-- "Alignment can change (left / centre / right)"
-- "Has density or overflow modes (compact, scroll, wrap…)"
-- "Adapts to available container space (layout shifts when space is tight)"
-The tool automatically appends an "Other" field — do not add one manually.
-If "Adapts to available container space" is selected: follow up with open text: "What changes when space is constrained, and how does your design system name those conditions?"
+- "Direction flips (left-to-right ↔ top-to-bottom)"
+- "Size changes (stretches / shrinks / fixed)"
+- "Alignment changes (left / centre / right)"
+- "Has a compact or overflow mode"
+- "Adapts to the space it's given"
+If "Adapts to the space it's given" → open text follow-up: "What changes when space is tight? What does your design system call those conditions?"
 
-**Q6 — Behavior: Interactions**
-Progress line: `████████████░░░  6 of 9 — Behavior: Interactions`
-Multi-select. Ask: "What can a user do with it? Select all that apply."
+**Q6 — What it does**
+Progress: `████████████░░░  6 of 9 — What it does`
+Multi-select. Ask: "What can someone do with it? Pick all that apply."
 Options:
-- "Nothing — display only"
-- "Click / tap to navigate (link)"
-- "Click / tap to trigger an action (button)"
-- "Select one or more options"
-- "Swipe or scroll through content"
-- "Drag or reorder items"
-The tool automatically appends an "Other" field — do not add one manually.
+- "Just looks — no interaction"
+- "Tap to go to a URL"
+- "Tap to do something (submit, open, close)"
+- "Switch between panels or views"
+- "Pick from a list of options"
+- "Scroll or swipe through content"
+- "Drag to reorder"
+If "Switch between panels or views" → single-select follow-up: "Does switching change the URL?"
+  - "No — content swaps in place"
+  - "Yes — each panel has its own URL"
+This answer determines whether tabs/panels use `<button>` (in-place) or `<a>` (navigation) — do not assume.
 
-**Q7 — Behavior: Platform**
-Progress line: `██████████████░  7 of 9 — Behavior: Platform`
-Single-select. Ask: "Where will users encounter this component?"
+**Q7 — Platform**
+Progress: `██████████████░  7 of 9 — Platform`
+Single-select. Ask: "Where will people use it?"
 Options:
-- "Web browser only"
-- "Mobile app only (iOS / Android)"
-- "Both web and mobile"
-- "Desktop application"
-If multi-platform: follow up with single-select: "Do interactions or affordances differ between platforms?"
-  - "No — same on all platforms"
+- "Web only"
+- "Mobile app only"
+- "Web and mobile"
+- "Desktop app"
+If web and mobile or multi-platform → single-select follow-up: "Does anything work differently on mobile vs desktop?"
+  - "No — same everywhere"
   - "Yes — some things differ"
-  If yes: follow up with open text: "Describe only what differs. Shared behaviours don't need to be repeated."
+  If yes → open text: "What's different? Only describe what changes — shared behaviour doesn't need repeating."
 
-**Q8 — Appearance: States & Tokens**
-Progress line: `████████████████  8 of 9 — Appearance: States & Tokens`
-Two parts — ask as a single AskUserQuestion call with both parts in the question text.
-Part A (multi-select): "Which states does it have beyond its default?"
+**Q8 — States & tokens**
+Progress: `████████████████  8 of 9 — States & tokens`
+Multi-select. Ask: "Which extra states does it have?"
 Options:
-- "Loading / in-progress"
-- "Error or validation failure"
-- "Disabled / unavailable"
-- "Selected / active / checked"
-- "Empty (no content to show)"
-The tool automatically appends an "Other" field — do not add one manually.
-After the states answer: follow up with single-select for tokens: "Are design tokens available for this component?"
-- "Figma link — I'll share a URL"
-- "Coded reference — Storybook, CSS, or tokens file"
-- "No source — mark token map as pending"
-If Figma or coded: follow up with open text to collect the URL or file path.
+- "Loading"
+- "Error"
+- "Disabled"
+- "Selected or active"
+- "Empty"
+After states answer → single-select follow-up: "Do you have design tokens for it?"
+  - "Yes — I have a Figma link"
+  - "Yes — I have a code or Storybook link"
+  - "No — skip tokens for now"
+  If yes → open text: "Share the link or file."
 
-**Q9 — Schema: Validation**
-Progress line: `████████████████  9 of 9 — Schema: Validation`
-Single-select. Ask: "Should I also generate a JSON schema file for prop validation?"
+**Q9 — Schema**
+Progress: `████████████████  9 of 9 — Schema`
+Single-select. Ask: "Want a JSON schema file for this component too?"
 Options:
-- "No schema needed"
-- "Yes — generate a .schema.json (JSON Schema Draft 07)"
-If yes and the component has sub-components: follow up asking whether sub-component zones should use `$ref` references or inline shapes.
+- "No thanks"
+- "Yes — generate a .schema.json"
+If yes and the component holds sub-components → single-select follow-up: "How should sub-components appear in the schema?"
+  - "By reference ($ref)"
+  - "Written out inline"
 
 Wait for all answers before proceeding to Phase 2.
 
