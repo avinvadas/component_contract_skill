@@ -35,6 +35,7 @@ What visible parts does it have?
 
 **Option rules — apply to every question without exception:**
 - Never add "Other", "Something else", "Custom", or any freeform fallback as a named option. The tool appends one automatically — a second one creates a duplicate.
+- The tool's "Other" field accepts free text. Scope it by ending the question text with a short prompt that says exactly what to write there. Examples: "If none fit, name the style." / "If none fit, describe the interaction." / "If none fit, name the state."
 - Use `multiSelect: true` whenever more than one answer can be true at the same time.
 - Use single-select only when exactly one answer applies.
 
@@ -88,7 +89,7 @@ Open text. Add hint: "e.g. small / medium / large, filled / outlined. Say none i
 ██████████░░░░░
 
 **Layout**
-Can its layout change?
+Can its layout change? Pick all that apply. If none fit, describe the layout behaviour.
 ```
 Multi-select:
 - "Direction flips (horizontal ↔ vertical)"
@@ -103,7 +104,7 @@ If "Adapts to the space it's given" → open text follow-up: "What changes when 
 ████████████░░░
 
 **Interaction**
-What can someone do with it?
+What can someone do with it? Pick all that apply. If none fit, describe the interaction.
 ```
 Multi-select:
 - "Just looks — no interaction"
@@ -116,14 +117,14 @@ Multi-select:
 
 Each selected option may trigger a follow-up. Ask them in order before Q7.
 
-If "Just looks" → multi-select follow-up: "What kind of element is it?"
+If "Just looks" → multi-select follow-up: "What kind of element is it? If none fit, name the element type."
   - "A section or region of the page"
   - "A list of items"
   - "A figure or diagram"
   - "Status info that updates on its own"
   - "Purely decorative"
 
-If "Tap to do something" → single-select follow-up: "What does it do?"
+If "Tap to do something" → single-select follow-up: "What does it do? If none fit, describe the action."
   - "Submits a form"
   - "Opens or closes a page-blocking overlay"
   - "Expands or collapses content"
@@ -165,7 +166,7 @@ If multi-platform → single-select follow-up: "Does anything work differently o
 ████████████████
 
 **States**
-Which extra states does it have?
+Which extra states does it have? If none fit, name the state.
 ```
 Multi-select:
 - "Loading"
