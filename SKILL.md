@@ -73,15 +73,44 @@ Multi-select. Ask: "What can someone do with it? Pick all that apply."
 Options:
 - "Just looks — no interaction"
 - "Tap to go to a URL"
-- "Tap to do something (submit, open, close)"
+- "Tap to do something (submit, open, close, toggle)"
 - "Switch between panels or views"
 - "Pick from a list of options"
 - "Scroll or swipe through content"
 - "Drag to reorder"
-If "Switch between panels or views" → single-select follow-up: "Does switching change the URL?"
+
+Each selected option triggers a follow-up. Ask them in order before moving to Q7.
+
+If "Just looks — no interaction" →
+  Single-select: "What best describes what it is?"
+  - "A section or region of the page"
+  - "A list of items"
+  - "A figure, image, or diagram"
+  - "Status info that updates on its own"
+  - "Purely decorative — screen readers can skip it"
+
+If "Tap to do something" →
+  Single-select: "What does tapping it do?"
+  - "Submits a form"
+  - "Opens or closes an overlay that covers the rest of the page"
+  - "Expands or collapses something"
+  - "Toggles a setting on or off"
+  - "Triggers an action (delete, add, save, etc.)"
+
+If "Switch between panels or views" →
+  Single-select: "Does switching change the URL?"
   - "No — content swaps in place"
   - "Yes — each panel has its own URL"
-This answer determines whether tabs/panels use `<button>` (in-place) or `<a>` (navigation) — do not assume.
+
+If "Pick from a list of options" →
+  Single-select: "How many items can be selected at once?"
+  - "Just one"
+  - "Multiple"
+  Then: "Is the list always visible, or does it open as a dropdown?"
+  - "Always visible"
+  - "Opens as a dropdown"
+
+Never assume the HTML element or ARIA role from the component name alone. Always derive from these answers.
 
 **Q7 — Platform**
 Progress: `██████████████░  7 of 9 — Platform`
@@ -162,45 +191,58 @@ Leave the token map as pending and note it clearly in the contract:
 
 ## Phase 3: Derive semantic markup (internal — not asked)
 
-Based on the interview answers, choose the correct HTML element(s) and ARIA roles. The designer does not need to know this logic — apply it silently and document the result in the contract.
+Derive all HTML elements and ARIA roles strictly from the Q6 interview answers and their follow-ups. Never infer the element from the component's name. A component called "Tabs" might use `<a>` tags if panels have URLs. A component called "Card" might be a `<button>` if it's fully tappable.
 
-### Decision logic
+### Decision table
 
-**Is it display-only with no interaction?**
-→ Use the most semantically appropriate element for its content role:
-- Page region with a heading: `<section aria-labelledby="...">` or `<aside>`
-- Primary content area: `<main>`
-- Navigation group: `<nav>`
-- Plain container: `<div>`
+Use the Q6 answers and follow-ups to pick the right element. Work through every selected interaction type.
 
-**Does clicking/tapping take the user somewhere (a destination)?**
-→ `<a href="...">` — always an anchor, never a button
+**"Just looks — no interaction"**
+| Follow-up answer | Element |
+|---|---|
+| Section or region of the page | `<section aria-labelledby="...">`, `<aside>`, `<article>`, or `<main>` — pick by role |
+| List of items | `<ul>` + `<li>` (unordered) or `<ol>` + `<li>` (ranked/ordered) |
+| Figure, image, or diagram | `<figure>` + optional `<figcaption>` |
+| Status info that updates on its own | `<div role="status">` or `<div aria-live="polite">` |
+| Purely decorative | `<div aria-hidden="true">` |
 
-**Does clicking/tapping trigger an action (submit, open, close, confirm, toggle)?**
-→ `<button type="button">` (or `type="submit"` if it submits a form)
-- Never use `<div>` or `<span>` with an onClick for this purpose
+**"Tap to go to a URL"**
+→ `<a href="...">` — always. Never a `<button>` or `<div>`.
 
-**Does the user type into it?**
-→ `<input>`, `<textarea>`, or `<select>` depending on the input type; pair with `<label>`
+**"Tap to do something"**
+| Follow-up answer | Element |
+|---|---|
+| Submits a form | `<button type="submit">` inside `<form>` |
+| Opens/closes a page-blocking overlay | `<button>` that triggers `<dialog>` with `aria-modal="true"` |
+| Expands or collapses content | `<button aria-expanded="true/false">` controlling a region |
+| Toggles a setting on/off | `<button aria-pressed="true/false">` |
+| Generic action (delete, add, save…) | `<button type="button">` |
+Never use `<div>` or `<span>` for any of these.
 
-**Does the user select one from a set of options?**
-→ Radio group: `<fieldset>` + `<legend>` + `<input type="radio">` items
-→ Single toggle: `<input type="checkbox">` or `<button aria-pressed="true/false">`
-→ Dropdown: `<select>` or a custom listbox with `role="listbox"` + `role="option"`
+**"Switch between panels or views"**
+| Follow-up answer | Elements |
+|---|---|
+| Content swaps in place (no URL change) | `role="tablist"` on container, `role="tab"` on each trigger, `role="tabpanel"` on each panel — triggers are `<button>` |
+| Each panel has its own URL | `<nav>` containing `<a href>` links — no tablist role |
 
-**Is it a tab interface?**
-→ `role="tablist"` on the container, `role="tab"` on each tab, `role="tabpanel"` on each panel
+**"Pick from a list of options"**
+| Selection | Visibility | Element |
+|---|---|---|
+| Just one | Always visible | `<fieldset>` + `<legend>` + `<input type="radio">` items |
+| Just one | Opens as dropdown | `<select>` (native) or `role="listbox"` + `role="option"` (custom) |
+| Multiple | Always visible | `<fieldset>` + `<legend>` + `<input type="checkbox">` items |
+| Multiple | Opens as dropdown | Custom listbox with `aria-multiselectable="true"` |
 
-**Does it open a modal or overlay that blocks the rest of the page?**
-→ `<dialog>` (preferred) or `role="dialog"` + `aria-modal="true"`
+**"Scroll or swipe through content"**
+→ Scroll container: `<div>` with `overflow: auto` and `tabindex="0"` for keyboard access. If items are navigable: `role="list"` + `role="listitem"` or arrow-key managed composite widget.
 
-**Is it a feed or list of items?**
-→ `<ul>` + `<li>` (unordered, default)
-→ `<ol>` + `<li>` only when the order is semantically meaningful (rankings, steps)
-→ `<menu>` only when items are interactive commands
+**"Drag to reorder"**
+→ `role="list"` + `role="listitem"` with `aria-grabbed` / `aria-dropeffect`, or pointer-event draggable with keyboard fallback (Space to grab, Arrow to move, Enter/Space to drop).
 
-**Is it a composite shell wrapping named sub-components?**
-→ The root element applies to the shell only; document sub-component markup in their own contracts
+**Composite shell**
+→ The root element applies to the shell only. Document sub-component markup in their own contracts.
+
+**When multiple interaction types apply** (e.g. a card that is tappable AND contains a list), document the root element separately from the inner structure. The root takes the primary interaction type; inner zones follow their own rules.
 
 **When multiple root elements are valid**, document all options and the condition for choosing each.
 
