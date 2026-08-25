@@ -1,0 +1,19 @@
+# Cross-platform comparison
+
+Pure comparison content — not routing logic. This file exists so the five cross-cutting concerns that recur across every platform file can be scanned side by side, then followed into the relevant platform directory for depth. It does not decide *which* platform file applies to a given component — that's Q8's job, resolved in SKILL.md's Phase 3/4 (currently only implemented for web; see the open item on Phase 3/4 platform branching).
+
+**Last verified:** 2026-08-25
+
+This is the multi-platform extension of the principle §5.1 already applies to interaction deltas — document what's shared once, and only split out what genuinely differs. Here, the "shared" thing is the underlying concept (e.g., "how does directionality get expressed"); each platform supplies its own answer.
+
+| Concern | Web | iOS | Android | macOS | Windows | Linux |
+|---|---|---|---|---|---|---|
+| Accessibility API | WAI-ARIA roles/states/properties | `UIAccessibility` traits + label/hint/value | Compose `semantics{}` / `AccessibilityNodeInfo`, `Role` + `contentDescription` | `NSAccessibility` roles (AppKit) or shared SwiftUI modifiers | UI Automation control patterns (Invoke, Toggle, SelectionItem, Value, RangeValue…) | AT-SPI roles/states (toolkit-agnostic; GTK native, Qt via bridge) |
+| Component/structure resolution | HTML element + ARIA role, from Q2+Q7 | Native SwiftUI control/presentation, from Q2+Q7 | Native Compose component, from Q2+Q7 | Same as iOS, plus macOS-only conventions (hover, context menu, sheet vs. window vs. popover) | UIA control pattern (not a specific XAML class), from Q2+Q7 | AT-SPI role (not a specific widget), from Q2+Q7 |
+| Layout adaptation ("container query" equivalent) | CSS Container Queries (`@container`, container-relative) | Size Classes (compact/regular), container-relative | Window Size Classes (compact/medium/expanded), container-relative | Same mechanism as iOS; wider practical range due to user-resizable windows | `VisualStateManager` adaptive triggers on window/container width | GTK: `AdwBreakpoint`. Qt: layout managers / QML anchors — no unified equivalent |
+| RTL / directionality | CSS Logical Properties (`inline-start`/`-end`) vs. `dir` attribute (content-level only) | Leading/trailing (Auto Layout, SwiftUI `.leading`/`.trailing`) | Start/end (predates CSS logical properties) | Same as iOS | `FlowDirection`, but `Margin`/`Padding` stay physical (Left/Top/Right/Bottom) — messier, often needs explicit handling | GTK4: native start/end. Qt: `LayoutDirection` + direction-aware anchoring |
+| Reduced motion signal | `prefers-reduced-motion` media feature | `UIAccessibility.isReduceMotionEnabled` | System animator-duration-scale setting | `NSWorkspace.accessibilityDisplayShouldReduceMotion` | `UISettings.AnimationsEnabled` | No cross-desktop standard; GNOME/KDE each have their own setting, XDG Settings Portal emerging for sandboxed apps |
+
+## How to read the RTL/directionality row
+
+Every platform except Windows converged on the same underlying idea — express layout in terms of "start/end" relative to reading direction rather than "left/right" absolute physical sides, and the platform resolves the physical side automatically. Windows is the outlier: `FlowDirection` flips the container's flow, but `Margin`/`Padding` values are still authored as literal Left/Top/Right/Bottom, so they don't auto-resolve the way every other platform's logical/leading-trailing/start-end properties do. When writing §2.2 Order for a multi-platform contract, this means the same logical description ("top edge, trailing edge") is directly implementable on every platform except Windows, where it additionally needs an explicit per-direction override — document that difference in the contract rather than letting a single logical phrase imply uniform automatic handling everywhere.
