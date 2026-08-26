@@ -5,21 +5,20 @@ Answer a structured interview about a UI component, and it will generate a forma
 
 ## What it generates
 
-One interview, one component, any combination of target platforms (Web, iOS, Android, macOS, Windows, Linux) — always the same output shape, whether the component targets one platform or five:
+One interview, **one contract file** per component, covering any combination of target platforms (Web, iOS, Android, macOS, Windows, Linux) within that single document — plus one JSON Schema file per platform, since schemas are consumed by each platform's own separate build process.
 
-- **`ComponentName.md`** — the shared file, written once regardless of platform count:
-  1. Overview: What the component is and what its purpose is. What it owns and what it delegates.
-  3. Properties: Layout props, visual variants, behavioral props (only what applies)
-  4. Appearance: Interaction states, layout policy, design token map
+```
+ComponentName/
+├── ComponentName.md                  # the one contract — every platform, one document
+├── ComponentName.Web.schema.json     # per platform, optional
+└── ComponentName.iOS.schema.json
+```
 
-- **`ComponentName.[Platform].md`** — one per target platform (e.g. `Modal.Web.md`, `Modal.iOS.md`):
-  2. Structure: the platform's native markup/control and composition zones (each zone typed as Content or Interaction, with cardinality and position rules)
-  5. Behavior: interaction events, state machine, emitted events — in that platform's own terms
-  6. Accessibility: native accessibility roles/states, keyboard or gesture navigation, focus management, assistive-technology expectations
+- **`ComponentName.md`** — the entire contract, across six sections. Sections that describe *intent* (Overview, Composition Zones, Properties, Layout Policy, Design Tokens, State Machine, Focus Management) are written once. Sections that are structurally platform-specific (Semantic Markup, Events Emitted/Received, Accessibility Roles & Attributes) hold one row per targeted platform, in the same table, right next to each other — never a separate file per platform, and never a value merged across platforms or left to be inferred ("same as Web"). A handful of sections (Adaptive Layout, Interaction States, Interactions, Keyboard/Gesture Navigation, Screen Reader expectations) are shared by default and only pick up a platform-specific note where an actual difference exists. The file opens with YAML frontmatter (component name, version, status, platforms) rather than a bespoke metadata block, so both a person and an agent reading it as implementation context can rely on the same standard convention.
 
-- **`ComponentName.schema.json`** *(optional)* — one JSON Schema Draft file for prop validation regardless of platform count, derived from the shared file's Properties section
+- **`ComponentName.[Platform].schema.json`** *(optional, one per platform)* — a JSON Schema Draft file for prop validation. Its content is typically identical across a component's platforms, since it's derived entirely from sections that don't vary by platform — it's split into separate files because each platform's build tooling consumes its own schema as a separate compile-time step, not because the data differs.
 
-A single-platform component still gets a shared file plus one platform file — never one flat file — so adding a second platform later is purely additive.
+A single-platform component still gets this same directory shape — the one contract file plus one schema file — so adding a second platform later means editing the existing contract's tables to add a row, and dropping in one more schema file, never restructuring what's already there.
 
 ## Why it exists
 
@@ -38,7 +37,7 @@ Trigger it in Claude with phrases like:
 - *"Write up the spec for [component name]"*
 - *"Add [component] to the design system contracts"*
 
-Claude will ask 14 structured questions, then generate the contract (and optionally the schema) directly.
+Claude will ask 10 main questions, plus a handful of conditional follow-ups depending on your answers (e.g. how many platforms you selected, or whether the component holds sub-components), then generate the contract (and optionally the schema) directly.
 
 ## Reference material (`references/`)
 
@@ -50,6 +49,7 @@ The skill's technical derivations (markup, accessibility, layout mechanics, toke
 | `figma-variables-model.md` | Figma's Collections/Modes/variable-binding model |
 | `json-schema-draft-07.md` | JSON Schema Draft 07 |
 | `platform-differences.md` | Cross-platform comparison of accessibility API, layout adaptation, RTL, and motion — comparison content only, not routing logic |
+| `native-events-models.md` | The native counterpart to `web/dom-events-model.md` — event/callback idioms for iOS, Android, macOS, Windows, and Linux, each with more than one live convention and no single canonical spec |
 | `web/wai-aria-patterns.md` | WAI-ARIA Authoring Practices Guide |
 | `web/wcag-mapping.md` | WCAG 2.2 success criteria |
 | `web/html-semantics.md` | WHATWG HTML Living Standard |

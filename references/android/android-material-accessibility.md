@@ -4,7 +4,7 @@ Sources of authority: [Android Accessibility developer documentation](https://de
 
 **Last verified:** 2026-08-25
 
-Not yet wired into SKILL.md's phase logic — see the open item on Phase 3/4 platform branching.
+Consulted by SKILL.md's Phase 3 ("Component / structure resolution" section) and Phase 4 ("Accessibility API" section) whenever Q8 includes Android.
 
 ---
 
@@ -23,6 +23,8 @@ Where the web decision table resolves Q2 (action) + Q7 (interaction) to an HTML 
 
 | Action / interaction | Native equivalent |
 |---|---|
+| Shows information only, updates on its own (status/live region) | A generic container (`Box`/`Surface`) with `Modifier.semantics { liveRegion = LiveRegionMode.Polite }` — use `Assertive` for urgent/error messages |
+| Shows information only, static (never updates) | A generic container with `contentDescription` set on the content; no live region, no interactive semantics |
 | Triggers an action, click/tap | `Button` |
 | Toggles a setting | `Switch` |
 | Choose one from a list, always visible | `RadioButton` group |

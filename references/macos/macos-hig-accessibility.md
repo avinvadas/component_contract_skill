@@ -4,7 +4,7 @@ Sources of authority: Apple's [Accessibility documentation](https://developer.ap
 
 **Last verified:** 2026-08-25
 
-Not yet wired into SKILL.md's phase logic — see the open item on Phase 3/4 platform branching.
+Consulted by SKILL.md's Phase 3 ("Component / structure resolution" section) and Phase 4 ("Accessibility API" section) whenever Q8 includes macOS.
 
 ---
 

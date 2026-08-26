@@ -6,7 +6,7 @@ Source of authority: [AT-SPI (Assistive Technology Service Provider Interface)](
 
 **Read this caveat before anything else in the file.** Unlike the other four platforms, "Linux" is not one platform with one component/interaction model — there is no single toolkit or design guidance layer analogous to UIKit+HIG or WinUI+UIA. Two toolkit ecosystems dominate (GTK/libadwaita and Qt/KDE), each with its own component conventions and its own adaptive-layout mechanism, and neither is canonical the way this skill avoids treating Fluent or Material as canonical for their platforms. This file anchors on AT-SPI — the one thing both ecosystems actually implement — and documents the toolkit split explicitly rather than picking a side.
 
-Not yet wired into SKILL.md's phase logic — see the open item on Phase 3/4 platform branching.
+Consulted by SKILL.md's Phase 3 ("Component / structure resolution" section) and Phase 4 ("Accessibility API" section) whenever Q8 includes Linux.
 
 ---
 
@@ -30,7 +30,9 @@ Resolve Q2 (action) + Q7 (interaction) to the *AT-SPI role/state the implementat
 | Choose one, opens on demand | `COMBO_BOX` | `GtkDropDown` | `QComboBox` |
 | Opens/closes something, contextual | `DIALOG` | `AdwDialog` / `GtkPopover` | `QDialog` / `QMenu` |
 
-If the target implementation's toolkit isn't known, document the AT-SPI role/state requirement in §6.1 and leave the concrete widget unspecified — the accessibility contract holds regardless of which toolkit ultimately implements it.
+If the target implementation's toolkit isn't known, leave the concrete widget unspecified — the accessibility contract holds regardless of which toolkit ultimately implements it.
+
+**Mapping onto a component contract's §2.1 vs. §6.1:** put the AT-SPI role in §2.1's Role column (e.g. `PUSH_BUTTON`), and the toolkit widget(s) from the table above in §2.1's Tag/Control column — both toolkits side by side (e.g. `GTK: GtkButton / Qt: QPushButton`), or `unspecified — toolkit not known` if it isn't. The AT-SPI role reappears in §6.1's Role/Tag column (that repetition is expected, same as every other platform), where the actual accessible-name/description wiring for whichever toolkit is targeted belongs — that's the part that's genuinely new information in §6.1, not the role itself.
 
 ## Layout adaptation (feeds §2.3 Adaptive Layout) — fragmented, document per toolkit
 

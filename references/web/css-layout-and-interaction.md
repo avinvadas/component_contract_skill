@@ -21,13 +21,13 @@ Consult this file from **Phase 3** (§2.2 Order, §2.3 Adaptive Layout) and **Ph
 
 The states named in §4.1 (default, hover, focus, active, disabled, error, selected) map onto real CSS selectors, and one distinction matters enough to get wrong constantly:
 
-- `**:hover`** — pointer is over the element. No keyboard equivalent; never the sole indicator of an interactive affordance (see WCAG 1.4.13 in `references/web/wcag-mapping.md`).
-- `**:focus**` — matches whenever the element has focus, regardless of input method (mouse click, keyboard, or programmatic).
-- `**:focus-visible**` — matches only when the browser's heuristic determines focus should be visibly indicated (typically: keyboard navigation, not a mouse click). This is what §6.3's "Focus Management" and the WCAG 2.4.7 mapping actually depend on — styling the visible focus ring on `:focus-visible` rather than bare `:focus` is what avoids showing a focus ring on every mouse click while still showing one for keyboard users. If a contract's §4.1 lists a "focus" state, note in the contract which selector it's meant to bind to; don't let it default to `:focus` by omission.
-- `**:focus-within**` — matches a container when any descendant has focus. Relevant for composite shells (e.g., a search field wrapper that should look "focused" when its inner `<input>` has focus).
-- `**:active**` — matches during activation (pointer down, or keyboard activation per browser behavior). Momentary; not a state that persists in the state machine (§5.2).
-- `**:disabled**` — only matches elements using the native `disabled` attribute (see `references/web/html-semantics.md` for `disabled` vs. `aria-disabled`). An element disabled only via `aria-disabled` needs a corresponding attribute selector or class, not `:disabled`.
-- `**:checked**` — native checkbox/radio state; a custom-styled equivalent needs an attribute selector (`[aria-checked="true"]`) instead, since `:checked` only applies to the native form elements.
+- **`:hover`** — pointer is over the element. No keyboard equivalent; never the sole indicator of an interactive affordance (see WCAG 1.4.13 in `references/web/wcag-mapping.md`).
+- **`:focus`** — matches whenever the element has focus, regardless of input method (mouse click, keyboard, or programmatic).
+- **`:focus-visible`** — matches only when the browser's heuristic determines focus should be visibly indicated (typically: keyboard navigation, not a mouse click). This is what §6.3's "Focus Management" and the WCAG 2.4.7 mapping actually depend on — styling the visible focus ring on `:focus-visible` rather than bare `:focus` is what avoids showing a focus ring on every mouse click while still showing one for keyboard users. If a contract's §4.1 lists a "focus" state, note in the contract which selector it's meant to bind to; don't let it default to `:focus` by omission.
+- **`:focus-within`** — matches a container when any descendant has focus. Relevant for composite shells (e.g., a search field wrapper that should look "focused" when its inner `<input>` has focus).
+- **`:active`** — matches during activation (pointer down, or keyboard activation per browser behavior). Momentary; not a state that persists in the state machine (§5.2).
+- **`:disabled`** — only matches elements using the native `disabled` attribute (see `references/web/html-semantics.md` for `disabled` vs. `aria-disabled`). An element disabled only via `aria-disabled` needs a corresponding attribute selector or class, not `:disabled`.
+- **`:checked`** — native checkbox/radio state; a custom-styled equivalent needs an attribute selector (`[aria-checked="true"]`) instead, since `:checked` only applies to the native form elements.
 
 ## CSS Logical Properties and RTL (feeds §2.2 Order)
 

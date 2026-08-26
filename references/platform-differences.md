@@ -1,6 +1,6 @@
 # Cross-platform comparison
 
-Pure comparison content — not routing logic. This file exists so the five cross-cutting concerns that recur across every platform file can be scanned side by side, then followed into the relevant platform directory for depth. It does not decide *which* platform file applies to a given component — that's Q8's job, resolved in SKILL.md's Phase 3/4 (currently only implemented for web; see the open item on Phase 3/4 platform branching).
+Pure comparison content — not routing logic. This file exists so the five cross-cutting concerns that recur across every platform file can be scanned side by side, then followed into the relevant platform directory for depth. It does not decide *which* platform file applies to a given component — that's Q8's job, resolved in SKILL.md's Phase 3/4, which branch to the matching platform file for every platform Q8 names.
 
 **Last verified:** 2026-08-25
 

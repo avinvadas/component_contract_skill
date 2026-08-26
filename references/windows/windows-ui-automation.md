@@ -4,7 +4,7 @@ Source of authority: Microsoft's [UI Automation (UIA)](https://learn.microsoft.c
 
 **Last verified:** 2026-08-25
 
-Not yet wired into SKILL.md's phase logic — see the open item on Phase 3/4 platform branching.
+Consulted by SKILL.md's Phase 3 ("Component / structure resolution" section) and Phase 4 ("Accessibility API" section) whenever Q8 includes Windows.
 
 ---
 
@@ -28,6 +28,8 @@ Resolve Q2 (action) + Q7 (interaction) to the UIA control pattern the native con
 
 | Action / interaction | Required control pattern |
 |---|---|
+| Shows information only, updates on its own (status/live region) | No control pattern applies — an implementation-defined container with `AutomationProperties.LiveSetting="Polite"` (`"Assertive"` for urgent/error messages) |
+| Shows information only, static (never updates) | No control pattern applies — an implementation-defined container with `AutomationProperties.Name` set; `LiveSetting="Off"` |
 | Triggers an action, click/tap | Invoke |
 | Toggles a setting | Toggle |
 | Choose one from a list, always visible | SelectionItem (per item) + Selection (container) |
@@ -35,6 +37,8 @@ Resolve Q2 (action) + Q7 (interaction) to the UIA control pattern the native con
 | Collects input (text) | Value |
 | Collects input (bounded numeric — slider/stepper) | RangeValue |
 | Opens/closes something | ExpandCollapse (inline) or a distinct window/flyout (`ContentDialog`/`Flyout`-equivalent) for a modal/popover-style presentation |
+
+**Mapping onto a component contract's §2.1 vs. §6.1:** Windows doesn't have a concrete control class the way Web/iOS/Android/macOS do — the table above *is* both the structural commitment and most of the accessibility contract at once. When populating a contract's §2.1 (Semantic Markup), put the required pattern in both the Role and Tag/Control columns (e.g. Role: `Invoke`, Tag/Control: `Implementation-defined — any control exposing the Invoke pattern`). The concrete wiring — `AutomationProperties.Name`/`HelpText`/`LiveSetting` and the pattern's own state (`ToggleState`, `ExpandCollapseState`, etc.) — is what actually belongs in §6.1; don't duplicate the pattern name as if it were new information there beyond naming which state property it exposes.
 
 ## Layout adaptation (feeds §2.3 Adaptive Layout)
 
