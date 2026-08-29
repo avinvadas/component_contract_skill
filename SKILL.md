@@ -64,9 +64,11 @@ Every reference file carries a **`Last verified:` date** directly under its "Sou
 
 ---
 
-## Phase 0: Reference freshness check
+## Phase 0: Pre-interview checks
 
-Run this once, before Phase 1, every time the skill starts. It is a cheap check that only occasionally does real work — most runs, it should cost nothing.
+Two independent checks, both run once, before Phase 1, every time the skill starts. Both are cheap by default and only occasionally do real work.
+
+### 0A: Reference freshness check
 
 1. For every file under `references/`, read its `Last verified:` date. Comparing dates is local and free — do this for all 15 files unconditionally.
 2. If today is less than **90 days** after that date, the file isn't due. Skip it — no network access, nothing to report.
@@ -77,6 +79,38 @@ Run this once, before Phase 1, every time the skill starts. It is a cheap check 
 4. If web access isn't available in the current environment, skip step 3 entirely for this run. Only mention the skip if at least one file was actually due (don't report "nothing to check" as if it were a finding) — and never block the interview from starting because a freshness check couldn't run.
 
 This check must never be the reason someone can't generate a contract. A skipped, deferred, or inconclusive check is always a reason to proceed with what's already there, not to stop.
+
+### 0B: Design system context
+
+Everything in `references/` is external and generic — it's the same regardless of whose design system this is. This step is the opposite: a handful of facts specific to *this* design system that don't change component-to-component (token prefix, which platforms use which framework, naming casing, RTL support, whether existing contracts live somewhere findable) and shouldn't be re-derived or re-asked on every single invocation.
+
+1. Look for a context file at `.claude/design-system-context.yml` in the current working directory (create the `.claude/` directory if it doesn't exist yet, when writing in step 3). This is a cheap local file check — do it unconditionally.
+2. **If it exists**, load it silently. Its contents seed defaults for Phase 1 onward (e.g., a token-naming convention default for Q9, a per-platform framework default that changes which concrete controls Phase 3 names for iOS/Android, a default platform set to pre-check in Q2) — seeding a default is not the same as skipping the question. A component can still legitimately differ from the system-wide default (not every component targets every platform the system generally supports), so nothing here should suppress a question, only pre-fill or bias its options.
+3. **If it doesn't exist**, don't run a Phase-1-style sequential interview for this — these fields are independent of each other (unlike Phase 1's questions, which deliberately go one-at-a-time because later options depend on earlier answers), so there's no reason to force multiple round-trips. Instead:
+   - **Detect first.** Scan the working directory before asking anything: a token file (`tokens.json`, `tailwind.config.*`, `*.tokens.json`, CSS custom-property definitions) for format and prefix; platform manifests (`Package.swift`/`Podfile` vs. `build.gradle` dependencies) for framework hints; an existing directory of files carrying this skill's frontmatter shape for where contracts already live. This costs nothing and needs no confirmation round-trip when it succeeds outright.
+   - **Ask everything left in one batched `AskUserQuestion` call**, not several sequential ones — the tool supports up to four questions per call; use that. Cover token naming convention/format, per-platform framework (SwiftUI vs. UIKit, Compose vs. View system, GTK vs. Qt — this materially changes which concrete controls Phase 3 names, not cosmetic detail), naming casing, and RTL support. Where step one detected a value, make it the first, pre-recommended option in that question rather than skipping confirmation entirely — a system-wide default deserves a quick confirm, not a silent guess, since every future component inherits it.
+   - Write the result to `.claude/design-system-context.yml` when done, and confirm the path to the user. This file is meant to be checked into the design system's own repo, not treated as scratch state — it's shared context for the whole team, not a personal cache.
+4. **If a later phase detects a contradiction** between this file's contents and something else (a coded reference, a direct interview answer) — that's the conflict-resolution policy's job, not this step's. See below. A confirmed correction there should update this file, not just the current contract, so the system-wide default stays accurate for the next component.
+
+This step, like 0A, must never block the interview — if the file can't be read or written for some reason, fall back to asking the equivalent questions inline during Phase 1 instead of stopping.
+
+---
+
+## Conflict resolution policy
+
+Applies whenever two sources of truth disagree — a coded reference, a general reference file, an interview answer, or the persisted design-system context above. **The rule underneath all four cases: never silently pick a side. Surface the conflict, and let the type of conflict decide who resolves it.**
+
+Use this callout format wherever a conflict is documented in a contract, so it never gets silently absorbed into either direction:
+
+> ⚠ **Discrepancy:** [what the code/other source does] vs. [what this contract states] — [resolved by: designer confirmation / general reference precedence / flagged, unresolved].
+
+**1. Coded reference vs. general reference (ARIA/WCAG/HTML/CSS/native platform files) — a compliance question, not a style choice.** The general reference wins on what the contract *states* as the requirement — never mirror a coded reference's non-compliant pattern just because it's what currently exists. But don't discard the coded reality either: state the compliant answer, then flag the divergence explicitly with the callout above, so the contract does the job the README claims for it — surfacing design/engineering drift, not hiding it.
+
+**2. Coded reference vs. a direct interview answer, same fact — a question of current intent, not correctness.** Only the designer knows whether the code is stale or the answer describes a planned change. Don't silently prefer either. Surface it once, briefly, before finalizing that section — e.g. "your answer says the close button is optional; the provided component always renders it — which should the contract state?" — and use their answer. *(This case, and case 3 below, depend on code-ingestion beyond token extraction — Phase 2 Path B today only reads tokens from a coded reference, not structure or behavior. These rules describe what should happen once that input path exists; they're not yet reachable in practice.)*
+
+**3. Multiple coded references disagreeing with each other on something the contract treats as shared intent (§2.2, §3, etc.).** Don't silently canonicalize one platform's version. Surface the discrepancy and ask. If the answer is "they're genuinely different on purpose," that's a signal the fact isn't actually shared intent — move it to a platform-specific row instead of leaving it in a section that implies agreement.
+
+**4. No source covers this case at all (an absence, not a conflict)** — e.g. the Android/Windows status-display gap found while building the eval set. Nothing to adjudicate between. The only rule: never present an improvisation as if it were grounded in a reference. State plainly that no source covers it and that judgment was used, the way Toast's contract already does.
 
 ---
 
@@ -271,6 +305,8 @@ Never infer or invent token names. An unbound property ("Apply variable" in the 
 Token files take different shapes across design systems — DTCG JSON (`$value`/`$type`), Style Dictionary (`value`/`type`), CSS custom properties, or a Tailwind theme config. See `references/design-tokens-format.md` to recognize whichever shape the source actually uses, including how tiering (primitive/semantic/component) and aliasing show up in each format — don't assume CSS custom properties are the only possibility.
 
 For every property: record `property | token name | resolved value (if visible)`. Hardcoded values with no token reference = raw. Note the source in the token map.
+
+If a token's resolved value here contradicts the design-system context file (Phase 0B) — e.g. a different naming prefix than what's on record — that's the Conflict resolution policy's case 2 or 4, not something to resolve silently.
 
 ---
 
