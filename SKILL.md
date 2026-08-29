@@ -87,12 +87,47 @@ Everything in `references/` is external and generic — it's the same regardless
 1. Look for a context file at `.claude/design-system-context.yml` in the current working directory (create the `.claude/` directory if it doesn't exist yet, when writing in step 3). This is a cheap local file check — do it unconditionally.
 2. **If it exists**, load it silently. Its contents seed defaults for Phase 1 onward (e.g., a token-naming convention default for Q9, a per-platform framework default that changes which concrete controls Phase 3 names for iOS/Android, a default platform set to pre-check in Q2) — seeding a default is not the same as skipping the question. A component can still legitimately differ from the system-wide default (not every component targets every platform the system generally supports), so nothing here should suppress a question, only pre-fill or bias its options.
 3. **If it doesn't exist**, don't run a Phase-1-style sequential interview for this — these fields are independent of each other (unlike Phase 1's questions, which deliberately go one-at-a-time because later options depend on earlier answers), so there's no reason to force multiple round-trips. Instead:
-   - **Detect first.** Scan the working directory before asking anything: a token file (`tokens.json`, `tailwind.config.*`, `*.tokens.json`, CSS custom-property definitions) for format and prefix; platform manifests (`Package.swift`/`Podfile` vs. `build.gradle` dependencies) for framework hints; an existing directory of files carrying this skill's frontmatter shape for where contracts already live. This costs nothing and needs no confirmation round-trip when it succeeds outright.
-   - **Ask everything left in one batched `AskUserQuestion` call**, not several sequential ones — the tool supports up to four questions per call; use that. Cover token naming convention/format, per-platform framework (SwiftUI vs. UIKit, Compose vs. View system, GTK vs. Qt — this materially changes which concrete controls Phase 3 names, not cosmetic detail), naming casing, and RTL support. Where step one detected a value, make it the first, pre-recommended option in that question rather than skipping confirmation entirely — a system-wide default deserves a quick confirm, not a silent guess, since every future component inherits it.
+   - **Detect first.** Scan the working directory before asking anything: a token file (`tokens.json`, `tailwind.config.*`, `*.tokens.json`, CSS custom-property definitions) for format and prefix; platform manifests (`Package.swift`/`Podfile` vs. `build.gradle` dependencies) for framework hints; an existing directory of files carrying this skill's frontmatter shape for where contracts already live. This costs nothing and needs no confirmation round-trip when it succeeds outright. **Read the file's actual content, not just its filename** — a `tailwind.config.js` whose colors reference `var(--token-name)` means the real source format is CSS custom properties with Tailwind only as a consumption layer, not "tailwind" as the format; recording it as plain Tailwind would be wrong even though the right filename was found.
+   - **Ask everything left in one batched `AskUserQuestion` call, up to four questions.** Cover token naming convention/format, per-platform framework (SwiftUI vs. UIKit, Compose vs. View system, GTK vs. Qt — this materially changes which concrete controls Phase 3 names, not cosmetic detail), naming casing, and RTL support. Where step one detected a value — including a confident one — make it the first, pre-recommended option in that question rather than skipping confirmation entirely; a system-wide default deserves a quick confirm, not a silent guess, since every future component inherits it. If more than four fields need either confirmation or asking (a design system spanning several platforms easily exceeds four), use a second batched call rather than forcing everything into one or dropping confirmation for whichever fields didn't fit — order both calls so anything ambiguous or fully undetected comes first, confident detections last, so a second call is the one most likely to be skippable in practice, not the one most likely to matter.
    - Write the result to `.claude/design-system-context.yml` when done, and confirm the path to the user. This file is meant to be checked into the design system's own repo, not treated as scratch state — it's shared context for the whole team, not a personal cache.
 4. **If a later phase detects a contradiction** between this file's contents and something else (a coded reference, a direct interview answer) — that's the conflict-resolution policy's job, not this step's. See below. A confirmed correction there should update this file, not just the current contract, so the system-wide default stays accurate for the next component.
 
 This step, like 0A, must never block the interview — if the file can't be read or written for some reason, fall back to asking the equivalent questions inline during Phase 1 instead of stopping.
+
+### `design-system-context.yml` schema
+
+Only include platform keys this design system actually uses — never write a placeholder for a platform it doesn't target.
+
+```yaml
+design_system: [free-text name, optional]
+last_updated: [YYYY-MM-DD]
+
+tokens:
+  format: dtcg | style-dictionary | css-custom-properties | tailwind
+  prefix: [string, e.g. "ds-", "color-", "--ds-"]
+
+platforms:
+  web:
+    framework: react | vue | web-components | vanilla
+  ios:
+    framework: swiftui | uikit
+  android:
+    framework: compose | view-system
+  macos:
+    framework: swiftui | appkit
+  windows:
+    framework: winui-xaml | other
+  linux:
+    toolkit: gtk | qt
+
+naming:
+  file_casing: PascalCase | kebab-case
+  prop_casing: camelCase | kebab-case | snake_case
+
+rtl_supported: true | false
+
+contracts_directory: [path relative to repo root, optional — set once detected, so future runs don't re-scan]
+```
 
 ---
 
@@ -104,9 +139,9 @@ Use this callout format wherever a conflict is documented in a contract, so it n
 
 > ⚠ **Discrepancy:** [what the code/other source does] vs. [what this contract states] — [resolved by: designer confirmation / general reference precedence / flagged, unresolved].
 
-**1. Coded reference vs. general reference (ARIA/WCAG/HTML/CSS/native platform files) — a compliance question, not a style choice.** The general reference wins on what the contract *states* as the requirement — never mirror a coded reference's non-compliant pattern just because it's what currently exists. But don't discard the coded reality either: state the compliant answer, then flag the divergence explicitly with the callout above, so the contract does the job the README claims for it — surfacing design/engineering drift, not hiding it.
+**1. Coded reference vs. general reference (ARIA/WCAG/HTML/CSS/native platform files) — a compliance question, not a style choice.** The general reference wins on what the contract *states* as the requirement — never mirror a coded reference's non-compliant pattern just because it's what currently exists. But don't discard the coded reality either: state the compliant answer, then flag the divergence explicitly with the callout above, so the contract does the job the README claims for it — surfacing design/engineering drift, not hiding it. *(Verified in principle by hand — a component reading `<div onClick>` where the Web decision table calls for `<button>` produces exactly this callout, correctly. But like cases 2 and 3, this is currently inert in practice: it requires structure read from a coded reference, and Phase 2 Path B today only extracts tokens, never markup or behavior. All three of cases 1–3 wait on the same missing capability — not just 2 and 3.)*
 
-**2. Coded reference vs. a direct interview answer, same fact — a question of current intent, not correctness.** Only the designer knows whether the code is stale or the answer describes a planned change. Don't silently prefer either. Surface it once, briefly, before finalizing that section — e.g. "your answer says the close button is optional; the provided component always renders it — which should the contract state?" — and use their answer. *(This case, and case 3 below, depend on code-ingestion beyond token extraction — Phase 2 Path B today only reads tokens from a coded reference, not structure or behavior. These rules describe what should happen once that input path exists; they're not yet reachable in practice.)*
+**2. Coded reference vs. a direct interview answer, same fact — a question of current intent, not correctness.** Only the designer knows whether the code is stale or the answer describes a planned change. Don't silently prefer either. Surface it once, briefly, before finalizing that section — e.g. "your answer says the close button is optional; the provided component always renders it — which should the contract state?" — and use their answer. *(Inert today for the same reason as case 1.)*
 
 **3. Multiple coded references disagreeing with each other on something the contract treats as shared intent (§2.2, §3, etc.).** Don't silently canonicalize one platform's version. Surface the discrepancy and ask. If the answer is "they're genuinely different on purpose," that's a signal the fact isn't actually shared intent — move it to a platform-specific row instead of leaving it in a section that implies agreement.
 
