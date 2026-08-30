@@ -6,6 +6,12 @@ Source of authority: [WAI-ARIA Authoring Practices Guide (APG)](https://www.w3.o
 
 Consult this file from **Phase 3** (semantic markup) and **Phase 4** (accessibility derivation) whenever the component's action/interaction combination isn't fully covered by SKILL.md's condensed decision table, or whenever you need the full keyboard/attribute set for a pattern the table only names in passing.
 
+## The first rule of ARIA use
+
+Before consulting any pattern below: if a native HTML element or attribute already has the semantics and behavior a component needs, use it — never re-purpose a generic element (`<div>`, `<span>`) and patch equivalent behavior on with ARIA. This is WAI-ARIA's own foundational rule, not a style preference, and it's stricter than it looks: **a passing accessible-role check is necessary but not sufficient.** A native element bundles behavior that no amount of ARIA can replicate on a generic one — `<a href>` carries right-click "open in new tab," Cmd/Ctrl+click, the status-bar URL preview, and search-engine crawlability; a native `<button>` keeps working before JavaScript has loaded and gets keyboard, focus, and disabled-state handling for free. An ARIA-patched `<div>` that reports the correct role but lacks these has not satisfied the requirement, even though a naive accessibility-tree check might say it has.
+
+Only re-purpose a generic element with ARIA when no native element for the needed archetype exists at all (a custom combobox, a custom-styled slider no native `<input>` can visually achieve) — and even then, replicate the *entire* pattern below, not just the role.
+
 ---
 
 ## Button

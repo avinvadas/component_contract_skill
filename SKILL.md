@@ -133,19 +133,21 @@ contracts_directory: [path relative to repo root, optional — set once detected
 
 ## Conflict resolution policy
 
-Applies whenever two sources of truth disagree — a coded reference, a general reference file, an interview answer, or the persisted design-system context above. **The rule underneath all four cases: never silently pick a side. Surface the conflict, and let the type of conflict decide who resolves it.**
+**Intent — an interview answer, plus general references — is always authoritative. A provided existing implementation is something to test against that intent, not a second source of truth to reconcile it with.** This follows from how a contract actually gets built: Phase 1's interview plus Phase 3/4's derivation from `references/` are already sufficient to construct a complete, correct contract on their own, for everything except token bindings (§4.3) — no existing implementation needs to be read to get structure, props, behavior, or accessibility right; that's what the interview and the general references are for. So when an implementation is *also* provided, its role is to be checked against a contract that's already fully constructible without it — not to supply competing facts that need arbitrating case by case.
 
-Use this callout format wherever a conflict is documented in a contract, so it never gets silently absorbed into either direction:
+The one deliberate exception is design tokens: a token's literal binding is a genuinely arbitrary, system-specific fact that no amount of best-practice knowledge or stated intent can derive on its own — that's exactly why Phase 2 treats a coded or Figma source as a legitimate *information* source for tokens specifically, not just something to verify. Everything below assumes a non-token fact.
 
-> ⚠ **Discrepancy:** [what the code/other source does] vs. [what this contract states] — [resolved by: designer confirmation / general reference precedence / flagged, unresolved].
+Use this callout format wherever a mismatch is documented in a contract, so it never gets silently absorbed either direction:
 
-**1. Coded reference vs. general reference (ARIA/WCAG/HTML/CSS/native platform files) — a compliance question, not a style choice.** The general reference wins on what the contract *states* as the requirement — never mirror a coded reference's non-compliant pattern just because it's what currently exists. But don't discard the coded reality either: state the compliant answer, then flag the divergence explicitly with the callout above, so the contract does the job the README claims for it — surfacing design/engineering drift, not hiding it. *(Verified in principle by hand — a component reading `<div onClick>` where the Web decision table calls for `<button>` produces exactly this callout, correctly. But like cases 2 and 3, this is currently inert in practice: it requires structure read from a coded reference, and Phase 2 Path B today only extracts tokens, never markup or behavior. All three of cases 1–3 wait on the same missing capability — not just 2 and 3.)*
+> ⚠ **Discrepancy:** [what the provided implementation does] vs. [what this contract states] — [why: general-reference precedence / doesn't match stated intent / no source covers this].
 
-**2. Coded reference vs. a direct interview answer, same fact — a question of current intent, not correctness.** Only the designer knows whether the code is stale or the answer describes a planned change. Don't silently prefer either. Surface it once, briefly, before finalizing that section — e.g. "your answer says the close button is optional; the provided component always renders it — which should the contract state?" — and use their answer. *(Inert today for the same reason as case 1.)*
+**1. Provided implementation vs. general reference (ARIA/WCAG/HTML/CSS/native platform files) — a compliance question, not a negotiation.** The general reference wins on what the contract *states*, unconditionally — never mirror a non-compliant pattern just because it's what currently exists. State the compliant answer, then flag the divergence with the callout above, so the contract does the job the README claims for it: surfacing drift, not hiding it. *(Verified in principle by hand — a component reading `<div onClick>` where the Web decision table calls for `<button>` produces exactly this callout. Still inert in practice today, since it requires reading structure from an implementation and Phase 2 only extracts tokens — but per the framing above, what's actually needed to unblock this is a narrow verification check against already-known expected facts, not a general code-ingestion capability.)*
 
-**3. Multiple coded references disagreeing with each other on something the contract treats as shared intent (§2.2, §3, etc.).** Don't silently canonicalize one platform's version. Surface the discrepancy and ask. If the answer is "they're genuinely different on purpose," that's a signal the fact isn't actually shared intent — move it to a platform-specific row instead of leaving it in a section that implies agreement.
+**2. Provided implementation vs. a direct interview answer, same fact.** The interview answer is authoritative — that's what stating intent is for. A mismatch is a finding *about the implementation* (stale, incomplete, or simply wrong), not an open question to re-litigate with the designer. State what the contract requires per the interview answer, then flag the implementation's divergence with the callout — don't stop mid-flow to ask "which one should I trust." *(Inert today for the same reason as case 1.)*
 
-**4. No source covers this case at all (an absence, not a conflict)** — e.g. the Android/Windows status-display gap found while building the eval set. Nothing to adjudicate between. The only rule: never present an improvisation as if it were grounded in a reference. State plainly that no source covers it and that judgment was used, the way Toast's contract already does.
+**3. Multiple platform implementations disagreeing with each other on something the contract treats as shared intent (§2.2, §3, etc.).** Don't let two implementations negotiate the truth between themselves. The shared intent was already established once, in the interview — check each platform's implementation against *that*, independently, not against each other. If a genuine, intentional per-platform difference turns up this way, that's a signal the fact isn't actually shared intent after all — move it to a platform-specific row, don't leave it looking like agreement.
+
+**4. No source covers this case at all (an absence, not a conflict)** — e.g. the Android/Windows status-display gap found while building the eval set. Nothing to adjudicate. The only rule: never present an improvisation as if it were grounded in a reference. State plainly that no source covers it and that judgment was used, the way Toast's contract already does.
 
 ---
 
@@ -341,7 +343,7 @@ Token files take different shapes across design systems — DTCG JSON (`$value`/
 
 For every property: record `property | token name | resolved value (if visible)`. Hardcoded values with no token reference = raw. Note the source in the token map.
 
-If a token's resolved value here contradicts the design-system context file (Phase 0B) — e.g. a different naming prefix than what's on record — that's the Conflict resolution policy's case 2 or 4, not something to resolve silently.
+If a token's resolved value here contradicts the design-system context file (Phase 0B) — e.g. a different naming prefix than what's on record — never resolve it silently. Surface it with the Conflict resolution policy's callout format, and update the persisted context file if the token source turns out to be current truth. This doesn't map onto that policy's numbered cases — tokens are its deliberate exception, where both the coded reference and the persisted context are legitimate *information* sources on equal footing, not an implementation being tested against already-sufficient intent.
 
 ---
 
@@ -508,7 +510,22 @@ With all phases complete, write the contract as **one file**, regardless of how 
 **Every subsection falls into exactly one of three treatments — decide which before writing it, don't default to one:**
 
 1. **Always shared, no Platform column** — §1 Overview, §2.2 Composition Zones, §3 Properties (all of it), §4.2 Layout Policy, §4.3 Design Tokens, §5.2 State Machine, §6.3 Focus Management. These describe intent, not implementation — cardinality, purpose, token bindings, and internal state don't change because the target platform changed.
-2. **Always one row per platform** — §2.1 Semantic Markup, §5.3 Events Emitted, §5.4 Events Received, §6.1 Roles & Attributes. These are structurally platform-specific — there's no such thing as a "shared" tag, control, event idiom, or accessibility vocabulary, so every one of these always gets a `Platform` column with one row per platform in Q2, even when two platforms' values are identical. Never merge two platforms into one row or write "same as Web" — state each platform's row in full. This matters as much for an agent reading the file as context for implementation as it does for a person: neither should have to resolve a cross-reference to know what applies to their platform.
+2. **State the intent once, then one manifestation row per platform** — §2.1 Semantic Markup, §5.3 Events Emitted, §5.4 Events Received, §6.1 Roles & Attributes. These sections have two distinct layers, and conflating them is the mistake to avoid: an **intent layer** (the abstract interaction archetype, or what an event/accessibility requirement means) that's genuinely platform-agnostic — the same "button-ness" or "announces on dismissal" regardless of platform — and a **manifestation layer** (the concrete tag, event signature, or attribute syntax) that's structurally platform-specific because every platform has its own vocabulary for expressing the same archetype. State the intent once, in plain language, at the top of the subsection — but never label it "Intent" or the table below "Manifestation" in the output itself; this is how you organize the derivation, not vocabulary to hand the reader. A plain opening sentence followed by "Each platform's [equivalent/event/implementation]:" carries the same structure without requiring anyone reading the finished contract to learn a framework they never asked for.
+
+   **This is purely an internal organizing distinction — it never surfaces in Phase 1.** The interview only ever asks intent-level questions (what it does, how it's interacted with, what it's called) — it was never going to ask someone to name a tag or an ARIA attribute, so nothing here changes what gets asked. It only changes how what's already derived gets written up in Phase 5.
+
+   Three checks for sorting any given fact into the right layer, useful when a case isn't obvious:
+   - **Translation check** — can it be stated in plain language with zero tag names, API names, or attribute strings? If yes, intent. If the sentence collapses into nonsense without naming a specific platform's vocabulary, manifestation.
+   - **Swap check** — if this platform's expression were replaced by a different, equally valid one on the *same* platform, would the plain-language statement still hold? If it survives the swap, the statement was intent and the swapped things were manifestations of it.
+   - **Fidelity check** — is this the yardstick something gets checked against, or the thing being checked? Yardstick = intent; the thing being measured = manifestation.
+
+   Two nuances worth knowing: a manifestation fact can have a smaller intent-level decision embedded in it (`aria-live="polite"` vs. `AutomationProperties.LiveSetting="Polite"` are both manifestations of one intent, but *which* urgency level — polite vs. assertive — is itself a real decision and belongs in the intent sentence, not re-decided per platform). And a manifestation fact that would be identical for *every* component in the design system (naming casing, framework choice) has drifted out of this contract's scope entirely — that's Phase 0B's job, not a per-component table.
+
+   **A third nuance specific to §2.1: "manifestation" doesn't mean "any technique that produces an equivalent accessible role."** Passing an accessibility-tree check is necessary but not sufficient — see `references/web/wai-aria-patterns.md`'s first rule of ARIA use. A native element bundles behavior (keyboard handling with no JS dependency, right-click/Cmd-click on links, crawlability) that a re-purposed generic element patched with ARIA cannot replicate, even when both report the same role. So for §2.1 specifically, the named native element *is* the compliance condition, not an example among role-equivalent alternatives — only fall back to a re-purposed generic element when no native equivalent exists for the archetype at all.
+
+   Then give every platform its own manifestation row *underneath* the stated intent — never merge two platforms into one row or write "same as Web," even when the concrete expression happens to be identical, since the manifestation table's job is to show each platform's own expression, not to economize on typing. This matters as much for an agent reading the file as context for implementation as it does for a person: neither should have to resolve a cross-reference to know what applies to their platform, and neither should see the same intent restated six times as if it were six independent facts.
+
+   A platform's manifestation isn't chosen freely — it's checked for fidelity to the stated intent. If a platform's native vocabulary can't fully carry what the intent requires (a required behavior has no real equivalent, or is only approximated), say so explicitly in that row's Notes rather than listing an imperfect match as if it were clean.
 3. **Shared by default, platform-specific only where a real difference exists** — §2.3 Adaptive Layout, §4.1 Interaction States, §5.1 Interactions, §6.2 Keyboard/Gesture Navigation, §6.4 Screen Reader / Assistive Technology Expectations. Write one shared version first. Add a platform note or column only when there's an actual divergence to record (Q4's cross-platform follow-up surfaces most of these for §5.1; the others come up rarely — hover not existing on touch platforms, `Escape` having no gesture equivalent). Don't add a Platform column pre-emptively "just in case."
 
    **For the two of these that are tables (§5.1, §6.2), "note or column" is not a free choice — it depends on how many rows actually diverge, and it must be deterministic:**
@@ -537,7 +554,7 @@ When the user answered yes to any item in Q8 (layout flexibility), populate §3.
 **§2.3 Adaptive Layout is container-relative, never viewport-relative — and it's a treatment-3 section:**
 §2.3 maps available space conditions to layout configurations, and that mapping is shared intent (see treatment 1/2/3 above). Reference §3.1 props by name when describing what changes. Omit §2.3 entirely if the component's layout is identical regardless of available space. If it's useful to name which mechanism each platform uses to implement the same shared condition (CSS Container Queries for Web, Size Classes for iOS, etc.), add that as a short bulleted list under the table, not a Platform column — the condition and its effect don't change per platform, only the plumbing does. See `references/platform-differences.md` for the comparison, then the specific platform file.
 
-**Events Emitted/Received (§5.3/§5.4) are always per-platform (treatment 2) — ground each row in that platform's own idiom:**
+**Events Emitted/Received (§5.3/§5.4): the intent is shared, the manifestation is always per-platform (treatment 2) — ground each manifestation row in that platform's own idiom:**
 For a **Web** row, record the event name as it would appear in `addEventListener`, not a framework's handler-prop convention — see `references/web/dom-events-model.md` for the `CustomEvent` contract and why this keeps the row verifiable against rendered output regardless of implementation framework. For a native platform's row, see `references/native-events-models.md` for that platform's own idiom (closures vs. delegate protocols on iOS/macOS, lambda callbacks vs. listener interfaces on Android, routed vs. classic .NET events on Windows, GObject signals vs. Qt signals/slots on Linux) — several platforms have more than one live idiom with no single canonical spec, so name the one actually in use rather than defaulting to whichever is more familiar.
 
 ---
@@ -567,15 +584,21 @@ platforms: [list every platform selected in Q2, e.g. Web, iOS, Android]
 
 ### 2.1 Semantic Markup
 
-*(Always one row per platform — see Phase 5, treatment 2. This table is the structural commitment only — the actual accessibility wiring for it belongs in §6.1, not here; don't duplicate columns between the two.)*
+*(Always one row per platform — see Phase 5, treatment 2. State the archetype once; don't repeat it per platform row. This section is the structural commitment only — the actual accessibility attribute wiring belongs in §6.1, not here.)*
 
-| Platform | Role | Tag / Control | Required | Notes |
-|---|---|---|---|---|
-[One row per platform listed in `platforms`. Web's Tag/Control column holds an HTML tag; most native platforms hold their native control name (see Phase 3). Never merge two platforms into one row, even when the value is identical.
+[One sentence: what this root fundamentally is, independent of platform — e.g. "A simple, generic trigger," "Navigates to a URL," "A modal overlay." Every platform below implements this same thing.]
 
-Windows and Linux don't have a concrete "control" the way the other platforms do — their reference files ground structure in an accessibility pattern/role, not a control class. For those two: put the required pattern/role in both **Role** and **Tag / Control** (e.g. Windows: Role `Invoke`, Tag/Control `Implementation-defined — any control exposing the Invoke pattern`; Linux: Role the AT-SPI constant, Tag/Control `GTK: GtkButton / Qt: QPushButton`, or `unspecified` if the target toolkit isn't known). The concrete wiring (`AutomationProperties.Name` for Windows, the toolkit's accessible-name API for Linux) still goes in §6.1, same as every other platform — this isn't an exception to the §2.1/§6.1 split, just a case where §2.1's two columns happen to say a similar thing because the platform doesn't separate them either.]
+Each platform's native equivalent:
 
-> **Root element choice:** [If multiple valid roots exist for a given platform, explain when to use each, inside a note under that platform's row.]
+| Platform | Tag / Control | Required | Notes |
+|---|---|---|---|
+[One row per platform listed in `platforms`. Web's Tag/Control column holds an HTML tag; most native platforms hold their native control name (see Phase 3). Never merge two platforms into one row, even when the value is identical. If a platform's manifestation can't fully carry the stated intent (a required behavior has no equivalent, or is only approximated), say so explicitly in Notes rather than listing it as a clean match.
+
+The native element named here **is** the compliance condition, not one example among alternatives that would produce an equivalent accessible role. Per `references/web/wai-aria-patterns.md`'s first rule of ARIA use: a re-purposed generic element patched with ARIA to report the same role is not equally compliant, even if an accessibility-tree check alone would pass it — it's missing the native behavior (keyboard handling before JS loads, right-click/Cmd-click on links, crawlability, and more) that comes bundled with the real element and isn't visible to a role check. Only accept a re-purposed generic element in this table when the reference material confirms no native equivalent exists for the archetype at all.
+
+Windows and Linux don't have a concrete "control" the way the other platforms do — their reference files ground structure in an accessibility pattern/role, not a control class. For those two, Tag/Control *is* the pattern/role itself (e.g. Windows: `Implementation-defined — any control exposing the Invoke pattern`; Linux: `GTK: GtkButton / Qt: QPushButton`, or `unspecified` if the target toolkit isn't known) — that's not an exception to stating intent separately, just a case where the platform's manifestation and its accessibility identity happen to be the same thing. The concrete wiring (`AutomationProperties.Name` for Windows, the toolkit's accessible-name API for Linux) still goes in §6.1.]
+
+> **Root element choice:** [If multiple valid manifestations exist for a single platform, explain when to use each.]
 
 ### 2.2 Composition Zones
 
@@ -659,13 +682,20 @@ Windows and Linux don't have a concrete "control" the way the other platforms do
 
 [Source: Figma / Storybook / tokens.json / description-only — state clearly]
 
-[Token-bound properties:]
+[Token-bound properties — the same conceptual token regardless of platform:]
 | Property | Token |
 |----------|-------|
 
 [Unbound properties:]
 | Property | Raw value |
 |----------|-----------|
+
+[Only if this design system's naming convention genuinely differs by platform (per `.claude/design-system-context.yml`, Phase 0B) — show what each token is actually called on each platform, rather than assuming one string works everywhere:]
+
+| Token | Web | iOS | Android |
+|---|---|---|---|
+
+[Omit this table entirely when naming is consistent across platforms — most design systems won't need it, and it shouldn't appear pre-emptively "just in case."]
 
 [No source provided:]
 > Token map pending — supply a Figma node URL, Storybook URL, or CSS/token file to complete this section.
@@ -689,17 +719,25 @@ Windows and Linux don't have a concrete "control" the way the other platforms do
 
 ### 5.3 Events Emitted
 
-*(Always one row per platform — see Phase 5, treatment 2.)*
+*(Always one row per platform — see Phase 5, treatment 2. State each distinct event's intent once; repeat the block if the component emits more than one conceptually distinct event.)*
 
-| Platform | Event | Payload | Notes |
-|---|---|---|---|
-[One row per platform. Web rows use the DOM `CustomEvent` name as it would appear in `addEventListener`; native rows use that platform's own idiom per `references/native-events-models.md`. If none, state "None" per platform rather than omitting the row.]
+[One sentence: what this event announces and what it means, independent of platform — e.g. "Announces that the component has been dismissed, and why (timeout vs. manual)." If there's no event to emit, say "None" once and omit the table below.]
+
+Each platform's event:
+
+| Platform | Signature | Notes |
+|---|---|---|
+[One row per platform. Web rows ground the signature in the DOM `CustomEvent` name as it would appear in `addEventListener`, per `references/web/dom-events-model.md`; native rows use that platform's own idiom per `references/native-events-models.md`. If the component emits nothing, state that once above instead of writing "None" per platform row.]
 
 ### 5.4 Events Received
 
-*(Same shape as 5.3.)*
+*(Same shape as 5.3 — state what's listened for once, then each platform's implementation.)*
 
-| Platform | Event | Response |
+[One sentence: what this component listens for and how it responds, independent of platform. If it receives nothing, say "None" once and omit the table below.]
+
+Each platform's implementation:
+
+| Platform | Signature | Notes |
 |---|---|---|
 
 ---
@@ -708,11 +746,15 @@ Windows and Linux don't have a concrete "control" the way the other platforms do
 
 ### 6.1 Roles & Attributes
 
-*(Always one row per platform — see Phase 5, treatment 2.)*
+*(Always one row per platform — see Phase 5, treatment 2. State each element's accessibility requirement once, then how each platform meets it. Repeat the block below once per element that needs distinct accessibility treatment — the root and an internal close button are two separate requirements, not one.)*
 
-| Platform | Element | Role / Tag | Attributes | Notes |
-|---|---|---|---|---|
-[One row per platform. Web rows use ARIA roles/attributes; native rows use that platform's own vocabulary — see that platform's reference file. Never merge two platforms into one row.]
+**[Element]:** [What this must convey to assistive technology, in plain language, independent of platform — e.g. "Must be announced as a live status region when its content changes, without requiring focus to move" or "Must expose button semantics."]
+
+Each platform's implementation:
+
+| Platform | Attributes | Notes |
+|---|---|---|
+[One row per platform. Web rows use ARIA roles/attributes; native rows use that platform's own vocabulary — see that platform's reference file. Never merge two platforms into one row. Repeat the intent-plus-manifestation block above for each additional element needing its own accessibility treatment.]
 
 ### 6.2 Keyboard / Gesture Navigation
 
