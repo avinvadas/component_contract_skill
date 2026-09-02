@@ -1,0 +1,266 @@
+{
+  "primitive": {
+    "color": {
+      "white": { "$type": "color", "$value": "#FFFFFF" },
+      "black": { "$type": "color", "$value": "#000000" },
+      "black-alpha": {
+        "40": { "$type": "color", "$value": "rgba(0, 0, 0, 0.40)" },
+        "50": { "$type": "color", "$value": "rgba(0, 0, 0, 0.50)" },
+        "60": { "$type": "color", "$value": "rgba(0, 0, 0, 0.60)" }
+      },
+      "gray": {
+        "50":  { "$type": "color", "$value": "#F9FAFB" },
+        "100": { "$type": "color", "$value": "#F3F4F6" },
+        "200": { "$type": "color", "$value": "#E5E7EB" },
+        "300": { "$type": "color", "$value": "#D1D5DB" },
+        "400": { "$type": "color", "$value": "#9CA3AF" },
+        "500": { "$type": "color", "$value": "#6B7280" },
+        "600": { "$type": "color", "$value": "#4B5563" },
+        "700": { "$type": "color", "$value": "#374151" },
+        "800": { "$type": "color", "$value": "#1F2937" },
+        "900": { "$type": "color", "$value": "#111827" }
+      },
+      "blue": {
+        "100": { "$type": "color", "$value": "#DBEAFE" },
+        "300": { "$type": "color", "$value": "#93C5FD" },
+        "500": { "$type": "color", "$value": "#3B82F6" },
+        "700": { "$type": "color", "$value": "#1D4ED8" },
+        "900": { "$type": "color", "$value": "#1E3A8A" }
+      },
+      "green": {
+        "100": { "$type": "color", "$value": "#D1FAE5" },
+        "300": { "$type": "color", "$value": "#6EE7B7" },
+        "500": { "$type": "color", "$value": "#10B981" },
+        "700": { "$type": "color", "$value": "#047857" },
+        "900": { "$type": "color", "$value": "#064E3B" }
+      },
+      "amber": {
+        "100": { "$type": "color", "$value": "#FEF3C7" },
+        "300": { "$type": "color", "$value": "#FCD34D" },
+        "500": { "$type": "color", "$value": "#F59E0B" },
+        "700": { "$type": "color", "$value": "#B45309" },
+        "900": { "$type": "color", "$value": "#78350F" }
+      },
+      "red": {
+        "100": { "$type": "color", "$value": "#FEE2E2" },
+        "300": { "$type": "color", "$value": "#FCA5A5" },
+        "500": { "$type": "color", "$value": "#EF4444" },
+        "700": { "$type": "color", "$value": "#B91C1C" },
+        "900": { "$type": "color", "$value": "#7F1D1D" }
+      }
+    },
+    "dimension": {
+      "space": {
+        "0":  { "$type": "dimension", "$value": "0px" },
+        "1":  { "$type": "dimension", "$value": "4px" },
+        "2":  { "$type": "dimension", "$value": "8px" },
+        "3":  { "$type": "dimension", "$value": "12px" },
+        "4":  { "$type": "dimension", "$value": "16px" },
+        "5":  { "$type": "dimension", "$value": "20px" },
+        "6":  { "$type": "dimension", "$value": "24px" },
+        "8":  { "$type": "dimension", "$value": "32px" },
+        "10": { "$type": "dimension", "$value": "40px" },
+        "12": { "$type": "dimension", "$value": "48px" }
+      },
+      "radius": {
+        "none": { "$type": "dimension", "$value": "0px" },
+        "sm":   { "$type": "dimension", "$value": "4px" },
+        "md":   { "$type": "dimension", "$value": "8px" },
+        "lg":   { "$type": "dimension", "$value": "12px" },
+        "xl":   { "$type": "dimension", "$value": "16px" },
+        "full": { "$type": "dimension", "$value": "9999px" }
+      },
+      "font-size": {
+        "100": { "$type": "dimension", "$value": "11px" },
+        "200": { "$type": "dimension", "$value": "12px" },
+        "300": { "$type": "dimension", "$value": "14px" },
+        "400": { "$type": "dimension", "$value": "16px" },
+        "500": { "$type": "dimension", "$value": "18px" },
+        "600": { "$type": "dimension", "$value": "20px" },
+        "700": { "$type": "dimension", "$value": "24px" },
+        "800": { "$type": "dimension", "$value": "30px" }
+      }
+    },
+    "font-family": {
+      "base": { "$type": "fontFamily", "$value": "Inter, system-ui, sans-serif" },
+      "mono": { "$type": "fontFamily", "$value": "\"IBM Plex Mono\", monospace" }
+    },
+    "font-weight": {
+      "regular":  { "$type": "fontWeight", "$value": 400 },
+      "medium":   { "$type": "fontWeight", "$value": 500 },
+      "semibold": { "$type": "fontWeight", "$value": 600 },
+      "bold":     { "$type": "fontWeight", "$value": 700 }
+    },
+    "line-height": {
+      "tight":   { "$type": "number", "$value": 1.2 },
+      "normal":  { "$type": "number", "$value": 1.5 },
+      "relaxed": { "$type": "number", "$value": 1.7 }
+    },
+    "duration": {
+      "fast": { "$type": "duration", "$value": "150ms", "$description": "Micro-transitions: hover, press, toggle." },
+      "base": { "$type": "duration", "$value": "250ms", "$description": "Enter/exit transitions for overlays and panels." },
+      "slow": { "$type": "duration", "$value": "400ms", "$description": "Larger-surface transitions (e.g. a full-screen sheet's enter/exit)." }
+    }
+  },
+
+  "semantic": {
+    "color": {
+      "surface": {
+        "neutral": { "$type": "color", "$value": "{primitive.color.gray.100}", "$description": "Default neutral background for labels, chips, and containers with no semantic charge." },
+        "info":    { "$type": "color", "$value": "{primitive.color.blue.100}" },
+        "success": { "$type": "color", "$value": "{primitive.color.green.100}" },
+        "warning": { "$type": "color", "$value": "{primitive.color.amber.100}" },
+        "error":   { "$type": "color", "$value": "{primitive.color.red.100}" }
+      },
+      "text": {
+        "primary":   { "$type": "color", "$value": "{primitive.color.gray.900}" },
+        "secondary": { "$type": "color", "$value": "{primitive.color.gray.600}" },
+        "disabled":  { "$type": "color", "$value": "{primitive.color.gray.400}" },
+        "on-color":  { "$type": "color", "$value": "{primitive.color.white}", "$description": "Text placed on a saturated feedback/action fill." }
+      },
+      "border": {
+        "default": { "$type": "color", "$value": "{primitive.color.gray.300}" },
+        "focus":   { "$type": "color", "$value": "{primitive.color.blue.500}" }
+      },
+      "feedback": {
+        "info":    { "$type": "color", "$value": "{primitive.color.blue.500}" },
+        "success": { "$type": "color", "$value": "{primitive.color.green.500}" },
+        "warning": { "$type": "color", "$value": "{primitive.color.amber.500}" },
+        "error":   { "$type": "color", "$value": "{primitive.color.red.500}" }
+      },
+      "action": {
+        "primary":       { "$type": "color", "$value": "{primitive.color.blue.500}", "$description": "Default fill for the primary/brand action." },
+        "primary-hover": { "$type": "color", "$value": "{primitive.color.blue.700}" },
+        "on-primary":    { "$type": "color", "$value": "{primitive.color.white}", "$description": "Text/icon color placed on top of the primary fill." }
+      },
+      "overlay": {
+        "backdrop": { "$type": "color", "$value": "{primitive.color.black-alpha.50}", "$description": "Scrim behind a modal or other blocking overlay." }
+      }
+    },
+    "space": {
+      "inset": {
+        "sm": { "$type": "dimension", "$value": "{primitive.dimension.space.2}" },
+        "md": { "$type": "dimension", "$value": "{primitive.dimension.space.4}" },
+        "lg": { "$type": "dimension", "$value": "{primitive.dimension.space.6}" }
+      },
+      "stack": {
+        "sm": { "$type": "dimension", "$value": "{primitive.dimension.space.1}" },
+        "md": { "$type": "dimension", "$value": "{primitive.dimension.space.3}" },
+        "lg": { "$type": "dimension", "$value": "{primitive.dimension.space.5}" }
+      }
+    },
+    "radius": {
+      "control": { "$type": "dimension", "$value": "{primitive.dimension.radius.md}", "$description": "Default corner radius for interactive controls (buttons, inputs, cards)." },
+      "overlay": { "$type": "dimension", "$value": "{primitive.dimension.radius.lg}", "$description": "Default corner radius for modals, sheets, popovers." },
+      "pill":    { "$type": "dimension", "$value": "{primitive.dimension.radius.full}" }
+    },
+    "font-size": {
+      "body":    { "$type": "dimension", "$value": "{primitive.dimension.font-size.300}" },
+      "label":   { "$type": "dimension", "$value": "{primitive.dimension.font-size.200}" },
+      "heading": { "$type": "dimension", "$value": "{primitive.dimension.font-size.600}" }
+    },
+    "font-weight": {
+      "body":    { "$type": "fontWeight", "$value": "{primitive.font-weight.regular}" },
+      "heading": { "$type": "fontWeight", "$value": "{primitive.font-weight.semibold}" },
+      "action":  { "$type": "fontWeight", "$value": "{primitive.font-weight.medium}" }
+    },
+    "line-height": {
+      "body":    { "$type": "number", "$value": "{primitive.line-height.normal}" },
+      "heading": { "$type": "number", "$value": "{primitive.line-height.tight}" }
+    },
+    "motion": {
+      "duration": {
+        "fast": { "$type": "duration", "$value": "{primitive.duration.fast}", "$description": "Micro-interactions: hover, press, toggle." },
+        "base": { "$type": "duration", "$value": "{primitive.duration.base}", "$description": "Enter/exit transitions for overlays and panels." },
+        "slow": { "$type": "duration", "$value": "{primitive.duration.slow}", "$description": "Enter/exit transitions for larger surfaces (a full-screen sheet, a large panel)." }
+      }
+    }
+  },
+
+  "component": {
+    "button": {
+      "radius": { "$type": "dimension", "$value": "{semantic.radius.control}" },
+      "variant": {
+        "primary": {
+          "background":       { "$type": "color", "$value": "{semantic.color.action.primary}" },
+          "background-hover": { "$type": "color", "$value": "{semantic.color.action.primary-hover}" },
+          "text":             { "$type": "color", "$value": "{semantic.color.action.on-primary}" },
+          "border":           { "$type": "color", "$value": "transparent" }
+        },
+        "secondary": {
+          "background":       { "$type": "color", "$value": "transparent" },
+          "background-hover": { "$type": "color", "$value": "{semantic.color.surface.neutral}" },
+          "text":             { "$type": "color", "$value": "{semantic.color.text.primary}" },
+          "border":           { "$type": "color", "$value": "{semantic.color.border.default}" }
+        },
+        "ghost": {
+          "background":       { "$type": "color", "$value": "transparent" },
+          "background-hover": { "$type": "color", "$value": "{semantic.color.surface.neutral}" },
+          "text":             { "$type": "color", "$value": "{semantic.color.text.primary}" },
+          "border":           { "$type": "color", "$value": "transparent" }
+        }
+      },
+      "size": {
+        "sm": {
+          "padding-inline": { "$type": "dimension", "$value": "{semantic.space.inset.sm}" },
+          "padding-block":  { "$type": "dimension", "$value": "{primitive.dimension.space.1}" },
+          "font-size":      { "$type": "dimension", "$value": "{semantic.font-size.label}" }
+        },
+        "md": {
+          "padding-inline": { "$type": "dimension", "$value": "{semantic.space.inset.md}" },
+          "padding-block":  { "$type": "dimension", "$value": "{primitive.dimension.space.2}" },
+          "font-size":      { "$type": "dimension", "$value": "{semantic.font-size.body}" }
+        },
+        "lg": {
+          "padding-inline": { "$type": "dimension", "$value": "{semantic.space.inset.lg}" },
+          "padding-block":  { "$type": "dimension", "$value": "{primitive.dimension.space.3}" },
+          "font-size":      { "$type": "dimension", "$value": "{primitive.dimension.font-size.400}" }
+        }
+      }
+    },
+    "badge": {
+      "padding-inline": {
+        "sm": { "$type": "dimension", "$value": "{primitive.dimension.space.2}" },
+        "md": { "$type": "dimension", "$value": "{primitive.dimension.space.3}" },
+        "lg": { "$type": "dimension", "$value": "{primitive.dimension.space.4}" }
+      },
+      "radius": { "$type": "dimension", "$value": "{semantic.radius.pill}" }
+    },
+    "toast": {
+      "surface-color": {
+        "info":    { "$type": "color", "$value": "{semantic.color.surface.info}" },
+        "success": { "$type": "color", "$value": "{semantic.color.surface.success}" },
+        "warning": { "$type": "color", "$value": "{semantic.color.surface.warning}" },
+        "error":   { "$type": "color", "$value": "{semantic.color.surface.error}" }
+      },
+      "icon-color": {
+        "info":    { "$type": "color", "$value": "{semantic.color.feedback.info}" },
+        "success": { "$type": "color", "$value": "{semantic.color.feedback.success}" },
+        "warning": { "$type": "color", "$value": "{semantic.color.feedback.warning}" },
+        "error":   { "$type": "color", "$value": "{semantic.color.feedback.error}" }
+      },
+      "radius":         { "$type": "dimension", "$value": "{semantic.radius.control}" },
+      "padding":        { "$type": "dimension", "$value": "{semantic.space.inset.md}" },
+      "enter-duration": { "$type": "duration",  "$value": "{semantic.motion.duration.base}", "$description": "How long the toast's own enter/exit transition animates — unrelated to how long it stays visible before auto-dismissing, which is a Behavioral Prop (§3.3), not a token." }
+    },
+    "snackbar": {
+      "surface-color":     { "$type": "color",    "$value": "{primitive.color.gray.800}", "$description": "Snackbar deliberately uses a fixed high-contrast surface rather than a semantic feedback color — it isn't styled per severity the way Toast is." },
+      "text-color":        { "$type": "color",    "$value": "{semantic.color.text.on-color}" },
+      "action-text-color": { "$type": "color",    "$value": "{primitive.color.blue.300}", "$description": "Tuned for contrast against the fixed dark surface above, not the general-purpose {semantic.color.feedback.info} used elsewhere." },
+      "radius":            { "$type": "dimension", "$value": "{semantic.radius.control}" },
+      "padding":           { "$type": "dimension", "$value": "{semantic.space.inset.md}" },
+      "enter-duration":    { "$type": "duration",  "$value": "{semantic.motion.duration.base}", "$description": "How long the snackbar's own enter/exit transition animates — unrelated to how long it stays visible before auto-dismissing, which is a Behavioral Prop (§3.3), not a token." }
+    },
+    "modal": {
+      "backdrop-color": { "$type": "color",    "$value": "{semantic.color.overlay.backdrop}" },
+      "radius":         { "$type": "dimension", "$value": "{semantic.radius.overlay}" },
+      "body-padding":   { "$type": "dimension", "$value": "{semantic.space.inset.lg}" },
+      "enter-duration": { "$type": "duration",  "$value": "{semantic.motion.duration.base}" }
+    },
+    "radio-group": {
+      "option-gap":       { "$type": "dimension", "$value": "{semantic.space.stack.md}" },
+      "option-card-radius": { "$type": "dimension", "$value": "{semantic.radius.control}" },
+      "indicator-color-selected": { "$type": "color", "$value": "{semantic.color.border.focus}" }
+    }
+  }
+}

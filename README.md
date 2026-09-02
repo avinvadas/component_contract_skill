@@ -14,7 +14,13 @@ ComponentName/
 └── ComponentName.iOS.schema.json
 ```
 
-- **`ComponentName.md`** — the entire contract, across six sections. Sections that describe *intent* (Overview, Composition Zones, Properties, Layout Policy, Design Tokens, State Machine, Focus Management) are written once. Sections that are structurally platform-specific (Semantic Markup, Events Emitted/Received, Accessibility Roles & Attributes) hold one row per targeted platform, in the same table, right next to each other — never a separate file per platform, and never a value merged across platforms or left to be inferred ("same as Web"). A handful of sections (Adaptive Layout, Interaction States, Interactions, Keyboard/Gesture Navigation, Screen Reader expectations) are shared by default and only pick up a platform-specific note where an actual difference exists. The file opens with YAML frontmatter (component name, version, status, platforms) rather than a bespoke metadata block, so both a person and an agent reading it as implementation context can rely on the same standard convention.
+- **`ComponentName.md`** — the entire contract, opening with a short Design Intent statement and then organized under four concerns, a plain separation-of-concerns structure rather than a grab-bag "Properties" section spanning several unrelated ones:
+  - **Structure** — semantic markup, composition zones and their ownership/cardinality, adaptive layout, layout props, and layout policy
+  - **Appearance** — visual variants, interaction states, and design tokens
+  - **Behavior** — behavioral props, interactions, the state machine, and events emitted/received
+  - **Accessibility** — roles/attributes, keyboard/gesture navigation, focus management, and screen reader/assistive-technology expectations
+
+  Sections that describe *intent* (Composition Zones, Layout Policy, Visual Variants, Design Tokens, Behavioral Props, State Machine, Focus Management) are written once. Sections that are structurally platform-specific (Semantic Markup, Events Emitted/Received, Accessibility Roles & Attributes) hold one row per targeted platform, in the same table, right next to each other — never a separate file per platform, and never a value merged across platforms or left to be inferred ("same as Web"). A handful of sections (Adaptive Layout, Interaction States, Interactions, Keyboard/Gesture Navigation, Screen Reader expectations) are shared by default and only pick up a platform-specific note where an actual difference exists. The file opens with YAML frontmatter (component name, version, status, platforms) rather than a bespoke metadata block, so both a person and an agent reading it as implementation context can rely on the same standard convention.
 
 - **`ComponentName.[Platform].schema.json`** *(optional, one per platform)* — a JSON Schema Draft file for prop validation. Its content is typically identical across a component's platforms, since it's derived entirely from sections that don't vary by platform — it's split into separate files because each platform's build tooling consumes its own schema as a separate compile-time step, not because the data differs.
 
@@ -22,7 +28,9 @@ A single-platform component still gets this same directory shape — the one con
 
 ## Why it exists
 
-Component documentation decays because it lives in the wrong place — Figma descriptions, Notion pages, or engineers' heads. A component contract lives alongside the component itself and answers the questions that actually cause design–engineering drift: *Can this zone be moved? Is this element interactive or decorative? What tokens are bound here? What happens on Escape?*
+A component contract captures **design intent**: what a component is and what it does, beneath its instances. Design intent is the stable ground beneath the ongoing cycle between design and engineering, and it can show up in more ways than a single tool captures at a given moment. The contract is a stable, explicit statement of that intent. The JSON schema that comes with it validates a real implementation against it.
+
+This creates a documentation-driven process, in which design and engineering both build from — and test against — the same explicit statement of intent, instead of each inferring it separately from whatever specific artifact happens to be at hand.
 
 The contract format enforces three distinctions that informal documentation skips:
 - **Content vs. Interaction zones**: A close button and a category icon are both SVGs, but only one can be omitted without breaking the component

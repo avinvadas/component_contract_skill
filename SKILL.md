@@ -5,14 +5,14 @@ description: Creates structured component contract markdown files for design sys
 
 ## What this skill produces
 
-One interview produces **one component contract file**, capturing the design intent of a UI component across six sections, covering any combination of target platforms (Web, iOS, Android, macOS, Windows, Linux) within that single document. Sections that describe intent (Overview, Properties, most of Appearance, the shared parts of Behavior) are written once; sections that describe platform-native implementation (Structure's markup/control, most of Accessibility, the platform-specific parts of Behavior) hold one row per targeted platform inside the same section, rather than living in a separate file per platform. The document is meant to work as direct context for an agent implementing or generating the component, not only as something a person reads top to bottom — so nothing in it is inferred or left implicit that an implementer would need to ask about.
+One interview produces **one component contract file**, capturing the design intent of a UI component, covering any combination of target platforms (Web, iOS, Android, macOS, Windows, Linux) within that single document. The contract opens with a short Design Intent statement, then organizes everything else under four concerns — a plain separation-of-concerns structure so a reader always knows where to look for a given fact, rather than a grab-bag "Properties" section spanning several unrelated ones:
 
-1. **Purpose** — one sentence: what the component is and what need it solves
-2. **Structure** — the correct native markup/control per platform, including required and optional children
-3. **Properties** — what the component exposes, organized by layout (CSS/flow), style (visual variants), and behavior (states, flags)
-4. **Appearance** — which design tokens are applied
-5. **Behavior** — how it acts, what events it dispatches, what events it responds to — per platform wherever that genuinely varies
-6. **Accessibility** — focus traps, native accessibility roles/states per platform, keyboard/gesture navigation
+- **Structure** — the correct native markup/control per platform, composition zones and their ownership/cardinality, adaptive layout, and the layout props/policy that control spatial arrangement
+- **Appearance** — visual variants, interaction states, and design tokens
+- **Behavior** — behavioral props, interactions, the internal state machine, and events emitted/received — per platform wherever that genuinely varies
+- **Accessibility** — roles/attributes per platform, keyboard/gesture navigation, focus management, and screen reader/assistive-technology expectations
+
+Sections that describe intent (most of Structure's composition rules, most of Appearance, the shared parts of Behavior) are written once; sections that describe platform-native implementation (Structure's markup/control, most of Accessibility, the platform-specific parts of Behavior) hold one row per targeted platform inside the same section, rather than living in a separate file per platform. The document is meant to work as direct context for an agent implementing or generating the component, not only as something a person reads top to bottom — so nothing in it is inferred or left implicit that an implementer would need to ask about.
 
 A JSON Schema file is generated separately, one per targeted platform, if requested (Phase 6) — schemas are consumed by each platform's own build process, so they stay split even though the contract itself doesn't.
 
@@ -178,7 +178,7 @@ Platform (Q2) comes right after Name & Purpose even though it isn't itself contr
 ---
 
 **Q1 — Name & purpose**
-header: "§1 Overview"
+header: "Intent"
 question: "What's it called, and what problem does it solve? One sentence is enough. (9 questions left)"
 Open text.
 
@@ -196,7 +196,7 @@ Multi-select:
 This answer drives which reference file(s) Phase 3/4 consult, how many platform rows appear in the contract's per-platform tables, and how many per-platform schema files Phase 6 writes. It's scope, not §5 Behavior content — no follow-up here asks about behavior differences yet; that's Q4's job, once there's an actual interaction to ask "does this differ" about.
 
 **Q3 — Action** *(drives semantic markup derivation in Phase 3, alongside Q4)*
-header: "§1 Overview"
+header: "Intent"
 question: "What does it do? Pick all that apply. (7 questions left)"
 Multi-select:
 - "Shows information — no user action needed"
@@ -208,12 +208,29 @@ Multi-select:
 - "Collects input from the user"
 
 If both "Takes the user to a URL" and "Switches between content panels" are selected → multi-select follow-up:
-header: "§1 Overview"
+header: "Intent"
 question: "Which routing modes does it support?"
   - "Swaps content in place — no URL change"
   - "Each panel has its own URL"
 
-**Q4 — Interaction** *(drives semantic markup derivation in Phase 3, alongside Q3 — its conditional follow-up below is the only place this interview feeds §5 Behavior directly)*
+If "Opens or closes something (overlay, drawer, section)" is selected → multi-select follow-up:
+header: "§2 Structure"
+question: "How can it be dismissed? Select all that apply."
+  - "A dedicated close/dismiss control (e.g. an X in a header)"
+  - "One of its own action buttons also dismisses it (e.g. Cancel, Done)"
+  - "Clicking or tapping outside it"
+  - "A platform-standard gesture or key (Escape, swipe-down, back gesture)"
+  - "Automatically, after a delay"
+
+  Don't infer this from the component's name or assume a header close control exists "because that's how it usually works" — a real design might rely on a footer action alone, or on the backdrop/gesture only, with no dedicated control at all. The zone only belongs in §2.2 if this answer actually names it.
+
+  If "One of its own action buttons also dismisses it" → open text follow-up:
+  header: "§5 Behavior"
+  question: "Which action(s) also dismiss it, and does dismissal happen in addition to that action's own effect or instead of it? If the zone holding it can hold more than one action (check its cardinality in Q6), also say how the dismissing one is told apart from its siblings — a fixed label like 'Cancel', a fixed position, or a flag/prop your system provides — not just that 'a footer action' dismisses, since that alone doesn't say which."
+
+  Whether this becomes a real interception fact (contrast Phase 5's delegation principle, which defaults to pass-through) depends entirely on that distinguishing mechanism: if the design system gives the parent an actual way to recognize the dismissing child (a prop it reads, a dedicated position), document that mechanism in §5.1 as genuine interception. If the answer only identifies the action by label with nothing the parent itself could check — the far more common case — the truth is that dismissal happens because the *consumer* wired that specific button's own callback to also call the close handler, not because the parent recognized or reacted to anything. State it that way in §5.1: pass-through stays the documented behavior, with a note that this pattern is commonly wired by the consumer rather than intercepted by the parent. Don't invent a detection mechanism that was never confirmed just to make the interception read as more official than it is.
+
+**Q4 — Interaction** *(drives semantic markup derivation in Phase 3, alongside Q3 — together with Q3's dismissal follow-up above, these are the only places this interview feeds §5 Behavior directly)*
 header: "§2 Structure"
 question: "How does the user interact with it? Pick all that apply. (6 questions left)"
 Multi-select:
@@ -255,8 +272,14 @@ header: "§2 Structure"
 question: "What are its visible parts? Name each one and say what it's for — showing content, or doing something. (4 questions left)"
 Open text. Add in the description: Examples of content parts: label, image, badge, description. Examples of action parts: close button, chevron, checkbox, spinner.
 
+If the answer names an action part not already covered by Q5's composition list → open text follow-up:
+header: "§2 Structure"
+question: "Should any of these parts be built to match an existing component's pattern — same interaction and accessibility conventions — without embedding it as an actual instance the way Q5's composition works? Name the part and which component's pattern it should follow, or leave blank if none apply."
+
+This is deliberately distinct from Q5: Q5 asks whether a zone *is* another component (composition — the child's own contract fully governs its structure, appearance, behavior, and accessibility). This asks whether a zone should merely *look and behave like* one, while still being specified locally in this contract — see Phase 5's pattern-reference principle for how the two render differently in the output.
+
 **Q7 — Visual styles**
-header: "§3 Properties"
+header: "Appearance"
 question: "Which visual styles does it have? Check the ones your system uses. If your system calls them something different, type the correct name in the field below. (3 questions left)"
 
 Before calling AskUserQuestion for Q7, derive 3–6 likely visual style variants from the component name and purpose given in Q1. Use them as the multi-select options. The list should reflect common conventions for that component type. Examples:
@@ -272,7 +295,7 @@ Unchecked options are not part of this component's contract. The built-in free-t
 Multi-select: [derived from Q1]
 
 **Q8 — Layout flexibility**
-header: "§3 Properties"
+header: "Structure"
 question: "Can its layout change? Pick all that apply. (2 questions left)"
 Multi-select:
 - "Direction flips (horizontal ↔ vertical)"
@@ -281,10 +304,10 @@ Multi-select:
 - "Has a compact or overflow mode"
 - "Adapts to the space available"
 If "Adapts to the space available" → open text follow-up:
-header: "§3 Properties"
+header: "Structure"
 question: "What changes when space is tight? What does your design system call those conditions?"
 
-The first four options feed §3.1 Layout Props. "Adapts to the space available" and its follow-up feed §2.3 Adaptive Layout instead — a Structure concern, not Properties — even though it's asked here, in the same breath as the rest of this question, since "can its layout change" is one natural conversation for the person answering it.
+The first four options feed §3.1 Layout Props; "Adapts to the space available" and its follow-up feed §2.3 Adaptive Layout instead. Both land under the Structure concern either way, even though it's asked here, in the same breath as the rest of this question, since "can its layout change" is one natural conversation for the person answering it.
 
 **Q9 — States & tokens**
 header: "§4 Appearance"
@@ -342,6 +365,8 @@ Never infer or invent token names. An unbound property ("Apply variable" in the 
 Token files take different shapes across design systems — DTCG JSON (`$value`/`$type`), Style Dictionary (`value`/`type`), CSS custom properties, or a Tailwind theme config. See `references/design-tokens-format.md` to recognize whichever shape the source actually uses, including how tiering (primitive/semantic/component) and aliasing show up in each format — don't assume CSS custom properties are the only possibility.
 
 For every property: record `property | token name | resolved value (if visible)`. Hardcoded values with no token reference = raw. Note the source in the token map.
+
+Record the token by its canonical, syntax-neutral name — not the source file's platform-specific spelling. A CSS custom property's leading `--` and kebab-case, a Swift constant's camelCase, an Android XML resource's `snake_case` — these are that platform's rendering of the token, not the token's identity. If a naming convention was confirmed (Q9, or `.claude/design-system-context.yml`), strip the source's wrapping syntax down to that form (`--color-overlay-backdrop` → `color-overlay-backdrop` under a `color-` prefix convention). If no convention was confirmed, say so in the token map rather than silently adopting whichever platform happened to supply the source file as the default spelling for every platform.
 
 If a token's resolved value here contradicts the design-system context file (Phase 0B) — e.g. a different naming prefix than what's on record — never resolve it silently. Surface it with the Conflict resolution policy's callout format, and update the persisted context file if the token source turns out to be current truth. This doesn't map onto that policy's numbered cases — tokens are its deliberate exception, where both the coded reference and the persisted context are legitimate *information* sources on equal footing, not an implementation being tested against already-sufficient intent.
 
@@ -416,7 +441,9 @@ Never use `<div>` or `<span>` for triggered actions.
 → `role="list"` + `role="listitem"` with pointer-event drag and keyboard fallback (Space to grab, Arrow to move, Space or Enter to drop, Escape to cancel).
 
 **Composite shell**
-→ The root element applies to the shell only. Document sub-component markup in their own contracts.
+→ The root element applies to the shell only. Document sub-component markup in their own contracts — but the shell's *own* zones (§2.2 rows not delegated to a sub-component, e.g. a Close button or a Title) aren't sub-components and have no contract to defer to. Resolve each one against this same decision table (or the platform's own resolution table) using its own action/interaction, and give it its own block in §2.1 alongside the root. A zone that's plain inline content with no independent semantic identity (label text, a decorative wrapper) doesn't need a block of its own — only zones that are themselves interactive, or that carry accessibility weight (a control, a heading targeted by `aria-labelledby`, a live region), do.
+
+This only applies to zones the root's own resolution says nothing about. Some archetypes resolve to a compound pattern that already names its constituent zones' elements as part of the single root entry — a radio group's `<fieldset>` + `<legend>` + `<input type="radio">` items, or a tablist's `role="tab"` / `role="tabpanel"` pair. When a zone's element is already stated there, it doesn't get a second, separate block — that would just restate the same fact under a different heading. Owned-zone blocks exist for zones bolted onto an otherwise single-element root that the root's own resolution never mentions (a `<dialog>` says nothing about its Title or Close button), not for zones a compound pattern already accounts for.
 
 **When multiple actions apply**, the primary action defines the root element. Inner zones follow their own rules per the table above. The primary action is what the component fundamentally *is* to the user.
 
@@ -433,6 +460,8 @@ Use the user's answers from Q6 to fill the Cardinality column. When the user has
 
 If not derivable from the component's purpose, note as `1+` and flag for confirmation.
 
+**One zone per genuinely different role — don't collapse distinct roles into one "N buttons" zone just because they're all delegated to the same child component type.** Whether an action-holding zone is one row or several depends on what Q6 actually said, not on the child type: "Footer with 1–3 action buttons" (Modal's case) is genuinely one undifferentiated slot — the consumer supplies an arbitrary number of app-defined actions, none of which the contract can say anything specific about. "A footer with Cancel and Save" is different — two named, distinct roles were given, each with its own fixed identity and (per the Q3 dismissal follow-up, if applicable) possibly different behavior. Model that as two separate §2.2 rows (`Cancel action`, cardinality `1`; `Save action`, cardinality `1`), not one row reading "Footer: 2 Button components." Collapsing them forces every later section to bolt on an awkward disambiguation note to say which of the "2 buttons" does what; naming them separately means §5.1 can just say what each one does, the same way any other zone's row already does.
+
 ### Setting order (for §2.2)
 
 Mark a zone as `Fixed` when moving it would break the user's expectation or when its position is load-bearing for meaning or accessibility:
@@ -444,6 +473,12 @@ Mark a zone as `Fixed` when moving it would break the user's expectation or when
 Mark a zone as `Flexible` when its position is a layout preference — e.g., a thumbnail that could appear above or beside text depending on the layout variant.
 
 When the target design system supports RTL locales, record `Fixed` positions in logical terms (leading/trailing, start/end, inline-start/inline-end — whichever vocabulary the current platform uses) rather than physical ones (`left`/`right`), since a directionality flag alone does not flip physically-positioned layout on any of the platforms covered here except where the platform's own logical-property system does the work. See `references/platform-differences.md` for how each platform expresses this, then the specific platform file for the mechanism (`references/web/css-layout-and-interaction.md` for Web). If the system is confirmed LTR-only, physical terms are fine.
+
+### Presence toggle for a fixed-content zone (for §3.3)
+
+A zone with `Cardinality` starting at `0` is normally optional "for free" — nothing needs deriving beyond the zone itself, because whether it appears is just whether the consumer supplied content for it (an icon element, footer children). That mechanism only works when the zone's *content genuinely varies per instance* — the consumer is authoring something different each time.
+
+It breaks down for a zone whose content is fixed by the design, not authored by the consumer — nothing ever varies between one instance of the zone and the next (a Close button is always the same icon, the same accessible name, the same behavior; only whether it's there at all changes). A fixed-content zone can't signal its own presence through "what was passed in," because nothing is ever passed in — so it needs an explicit boolean prop in §3.3, e.g. `showCloseButton`, derived alongside the zone the same way any other optional-but-not-content-driven fact would be. This holds regardless of whether the zone's markup happens to be bespoke or reuses another component's contract (by composition or by pattern reference, per Phase 5's principles above) — reuse changes what the zone *looks like*, not how its presence gets toggled. When in doubt, ask: if this zone were removed, would the consumer be able to say why by pointing at something they didn't pass in? If yes, presence is content-driven, no prop needed. If no — there was never anything to pass — derive the boolean.
 
 ---
 
@@ -509,7 +544,7 @@ With all phases complete, write the contract as **one file**, regardless of how 
 
 **Every subsection falls into exactly one of three treatments — decide which before writing it, don't default to one:**
 
-1. **Always shared, no Platform column** — §1 Overview, §2.2 Composition Zones, §3 Properties (all of it), §4.2 Layout Policy, §4.3 Design Tokens, §5.2 State Machine, §6.3 Focus Management. These describe intent, not implementation — cardinality, purpose, token bindings, and internal state don't change because the target platform changed.
+1. **Always shared, no Platform column** — Design Intent, §2.2 Composition Zones, §3.1 Layout Props, §3.2 Visual Variants, §3.3 Behavioral Props, §4.2 Layout Policy, §4.3 Design Tokens, §5.2 State Machine, §6.3 Focus Management. These describe intent, not implementation — cardinality, purpose, prop values, token bindings, and internal state don't change because the target platform changed. Note that §3.1/§3.2/§3.3 now live under three different top-level concerns (Structure, Appearance, Behavior respectively, per the separation-of-concerns structure) rather than one "Properties" section — the treatment classification doesn't care which concern a subsection lives under, only whether its content is intent or implementation.
 2. **State the intent once, then one manifestation row per platform** — §2.1 Semantic Markup, §5.3 Events Emitted, §5.4 Events Received, §6.1 Roles & Attributes. These sections have two distinct layers, and conflating them is the mistake to avoid: an **intent layer** (the abstract interaction archetype, or what an event/accessibility requirement means) that's genuinely platform-agnostic — the same "button-ness" or "announces on dismissal" regardless of platform — and a **manifestation layer** (the concrete tag, event signature, or attribute syntax) that's structurally platform-specific because every platform has its own vocabulary for expressing the same archetype. State the intent once, in plain language, at the top of the subsection — but never label it "Intent" or the table below "Manifestation" in the output itself; this is how you organize the derivation, not vocabulary to hand the reader. A plain opening sentence followed by "Each platform's [equivalent/event/implementation]:" carries the same structure without requiring anyone reading the finished contract to learn a framework they never asked for.
 
    **This is purely an internal organizing distinction — it never surfaces in Phase 1.** The interview only ever asks intent-level questions (what it does, how it's interacted with, what it's called) — it was never going to ask someone to name a tag or an ARIA attribute, so nothing here changes what gets asked. It only changes how what's already derived gets written up in Phase 5.
@@ -538,16 +573,26 @@ With all phases complete, write the contract as **one file**, regardless of how 
 
 **Purpose statement (§1)** — one sentence. What the component is and what need it addresses. Not a description of its parts.
 
-**Ownership** — state clearly whether each property, behaviour, or token is owned by this component or delegated to a child. Use "delegated to [child]", "see [child] contract", "[child] manages this". Reference a child by component name only, e.g. "delegated to Icon" — the child has its own single contract file (`Icon.md`), so there's no platform-specific resolution to worry about anymore.
+**Ownership is a Structure fact, established once in §2.2 — never restated per concern.** Child-parent containment (which children are obligatory, which are optional, and that nothing outside that list is allowed) is what Cardinality and Accepts already state. Record delegation there — "Accepts: Icon component (delegated to Icon — see Icon.md)" — and nowhere else. That single structural statement already implies the child's appearance, behavior, and accessibility live in its own contract too; don't add a second "also delegated" note under Appearance, Behavior, or Accessibility for the same child, and don't preview it as a summary paragraph in Design Intent either. Reference a child by component name only, e.g. "Icon" — it has its own single contract file (`Icon.md`), so there's no platform-specific resolution to worry about.
 
-**Composite shells** — the shell owns: the root element, hard structural rules (e.g., "minimum 2 tabs required"), and platform-specific chrome (e.g., arrow navigation buttons). Everything else belongs to the sub-components. Platform-specific chrome shows up as that platform's own row in the relevant table (§2.1, etc.), same as any other platform-specific fact — it doesn't need special handling beyond the three treatments above.
+**Composite shells** — the shell owns the root element and platform-specific chrome (e.g., arrow navigation buttons); both show up as that platform's own row in the relevant table (§2.1, etc.), same as any other platform-specific fact. "Hard structural rules" like "minimum 2 tabs required" aren't a separate ownership concept either — that's just Cardinality (`2+`) in §2.2, stated the same way as any other zone's. Everything not captured by §2.2's zones belongs to the sub-components, full stop.
+
+**Pattern references are not composition — don't conflate the two.** Composition (§2.2's Accepts column) is ownership transfer: the zone *is* an instance of the child, so its structure, appearance, behavior, and accessibility all live in the child's contract and never get restated here. A **pattern reference** is different — a zone that isn't a composed instance of another component, but should be built to the same compliance bar (Q6's follow-up surfaces this). The zone is still owned here: write out its own §2.1 block, its own §5.1 row, its own §6.1 entry in full, the same as any other owned zone — a pattern reference never licenses skipping that documentation the way real composition does. What it adds is one line in the zone's §2.1 block: "Pattern: follows [Component]'s pattern (see [Component].md) for interaction and accessibility conventions" — stating that this zone's derivation deliberately reused an already-vetted contract's conventions rather than re-deriving them from Q3/Q4 in isolation, so the design system doesn't accumulate near-duplicate, slightly-diverging versions of the same control. If this zone deliberately simplifies or omits part of what the referenced pattern normally provides (e.g., text-only, no icon slot), say so explicitly in that same line — silently matching a pattern "mostly" is worse than not citing one at all, since a reader would otherwise assume full parity.
+
+**Delegation extends to interactions and events, not just structure.** A zone delegated to a sub-component (§2.2's Accepts column) doesn't get its own row in §5.1 Interactions, §5.3 Events Emitted, or §5.4 Events Received — its interaction behavior lives in that child's own contract, same reasoning as the Ownership principle above. But don't just drop it the way an omitted row would read as an oversight rather than a decision: state once, in §5.1, whether the delegated zone's interaction passes straight through untouched (the default, and by far the more common case — e.g. "Footer action buttons: interaction is Button's own concern, see Button.md; not intercepted here") or whether the shell genuinely intercepts it. Only document interception as a fact that was actually confirmed in the interview — never invent a reaction the designer didn't describe just because an action's name (e.g. "Cancel") sounds like it should have one. For a component with an "opens/closes" action (Q3), Q3's own dismissal follow-up is where this gets confirmed or ruled out directly.
+
+That follow-up's answer usually does *not* license writing "intercepted" even when it confirms a footer action dismisses the component — check whether the parent actually has a way to recognize which child did it. When the zone holding that action can hold more than one instance (Footer's "1–3 Button components"), "Cancel dismisses it" identifies the action by label, not by anything the parent itself could check at runtime — the far more common real answer is that the *consumer* wired that specific Button's own callback to also call the close handler, and the parent never distinguished it from its siblings at all. That's still pass-through, just pass-through with a note about the common convention — not interception. Reserve "intercepted" for the rarer case where the interview actually confirms a real detection mechanism (a prop the parent reads on its children, a fixed position it treats specially) — and even then, name that mechanism in §5.1 rather than asserting interception happened by some unspecified means.
 
 **Raw vs. token-bound values** — never invent token names. If no token was found, document the raw value and note it as unbound.
+
+**A Visual Variant's *values* need the same discipline as a token, not just the enum's names.** Naming the options (`size: default | large`) is Q7's job and always answerable from the interview. What each option actually *resolves to* is a separate fact, and for a purely stylistic variant (color, weight) it's already covered — that resolution is the Token Map entry. But a *dimensional* variant (a width, a height, anything spatial) has nothing else in the template that captures its resolved value once §3.1 Layout Props and §4.2 Layout Policy don't apply to it — it's easy to state the enum in §3.2 and consider the section done, leaving the actual numbers to whoever implements it. Treat a dimensional variant's resolved values exactly like §4.3's raw-vs-token-bound rule: if a token exists for each value, bind it there; if a source was given but didn't cover this property, or no source exists at all, say so explicitly next to the variant in §3.2 ("no resolved width was provided for `large` — flag for confirmation") rather than leaving the enum looking complete when it isn't. Never fill the gap with an invented number to make the table look finished.
 
 **Three distinct prop categories — never mix them:**
 - **Layout Props (§3.1)** — control spatial arrangement via CSS; no DOM change, no token reference.
 - **Visual Variants (§3.2)** — switch which visual style is applied; not token values themselves.
 - **Behavioral Props (§3.3)** — configure what the component does; states, feature flags, operational options.
+
+**A duration is not automatically a token — which category it's in depends on what it governs.** A *motion* duration (how long a state change animates — an enter/exit transition, an easing curve) is a real, standard token category (DTCG's `duration` type exists for exactly this) and belongs in §4.3 like any other style value. An *interaction/lifecycle* duration (how long before a toast auto-dismisses, a debounce delay, a show-delay) determines whether and when something happens, not how it renders — that's a Behavioral Prop (§3.3), a numeric operational option with a stated default, the same category `loading`/`disabled` already live in, not a token. This also isn't just a modeling nicety: WCAG 2.2.1 (Timing Adjustable) expects this kind of duration to be configurable per-instance or by the user, which is the opposite of what a token is for — a token is one canonical brand-wide value, a lifecycle timing is closer to a per-instance setting with a sensible default. When in doubt, ask what changes if the value is edited: a repaint/re-render timing edit → token; a DOM-lifecycle edit (something appears, disappears, or fires on a delay) → Behavioral Prop.
 
 When the user answered yes to any item in Q8 (layout flexibility), populate §3.1. If they answered "None of the above", omit §3.1.
 
@@ -574,13 +619,13 @@ platforms: [list every platform selected in Q2, e.g. Web, iOS, Android]
 
 # Component Contract: [Name]
 
-## 1. Overview
+## Design Intent
 
-[One sentence: what the component is and what need it solves. Follow with one short paragraph on what it owns and what it deliberately delegates.]
+[One sentence: what the component is and what need it solves. Ownership and delegation aren't restated here — §2.2 Composition Zones already establishes them precisely, once, and that's the only place they need to live.]
 
 ---
 
-## 2. Structure
+## Structure
 
 ### 2.1 Semantic Markup
 
@@ -599,6 +644,18 @@ The native element named here **is** the compliance condition, not one example a
 Windows and Linux don't have a concrete "control" the way the other platforms do — their reference files ground structure in an accessibility pattern/role, not a control class. For those two, Tag/Control *is* the pattern/role itself (e.g. Windows: `Implementation-defined — any control exposing the Invoke pattern`; Linux: `GTK: GtkButton / Qt: QPushButton`, or `unspecified` if the target toolkit isn't known) — that's not an exception to stating intent separately, just a case where the platform's manifestation and its accessibility identity happen to be the same thing. The concrete wiring (`AutomationProperties.Name` for Windows, the toolkit's accessible-name API for Linux) still goes in §6.1.]
 
 > **Root element choice:** [If multiple valid manifestations exist for a single platform, explain when to use each.]
+
+[For each §2.2 zone that is NOT delegated to a sub-component but has its own semantic identity — an interactive control, a heading bound by `aria-labelledby`, a live region — give it its own block, same shape as the root's. Skip zones that are plain inline content with no independent role (label text, a decorative wrapper), and skip zones the root's own resolution above already names as part of a compound pattern (a radio group's `<legend>` and `<input type="radio">` items are already stated in the root row — they don't get a second block here). Omit this whole part when every non-delegated zone is either plain content or already covered by the root — e.g. Badge's single label zone, or RadioGroup's compound `<fieldset>` root.]
+
+**[Zone name from §2.2]:** [one sentence — what this zone fundamentally is, independent of platform]
+
+[If Q6's follow-up named a pattern for this zone: "Pattern: follows [Component]'s pattern (see [Component].md) for interaction and accessibility conventions." — plus a note on any deliberate simplification (e.g. "text-only, no icon slot"). Omit this line entirely for a zone with no named pattern; don't add it pre-emptively.]
+
+| Platform | Tag / Control | Required | Notes |
+|---|---|---|---|
+[One row per platform, same rules as the root's table above.]
+
+[Repeat this block per owned zone that needs one.]
 
 ### 2.2 Composition Zones
 
@@ -633,10 +690,6 @@ Windows and Linux don't have a concrete "control" the way the other platforms do
 - Web: via CSS Container Queries
 - iOS: via Size Classes
 
----
-
-## 3. Properties
-
 ### 3.1 Layout Props
 
 > Controls spatial arrangement via CSS — no DOM change, no token reference. Omit if the component has no layout flexibility.
@@ -644,33 +697,27 @@ Windows and Linux don't have a concrete "control" the way the other platforms do
 | Prop | Values | Default | What changes |
 |------|--------|---------|--------------|
 
+### 4.2 Layout Policy
+
+[Fixed layout rules always enforced — not configurable via props. Examples: a max-width constraint, clip behaviour. Omit if none.]
+
+---
+
+## Appearance
+
 ### 3.2 Visual Variants
 
 > Switches which visual style is applied. These select a visual mode — they are not token values.
 
 | Prop | Values | Default | Description |
 |------|--------|---------|-------------|
-
-### 3.3 Behavioral Props
-
-> Configures what the component does — states, feature flags, operational options. Omit if no configurable behavior beyond visual variants.
-
-| Prop | Type | Default | Required | Description |
-|------|------|---------|----------|-------------|
-
----
-
-## 4. Appearance
+[For a dimensional variant (width, height, anything spatial — not color/weight), the Description column states each value's resolved token, or flags it explicitly as unconfirmed. See Phase 5's Visual Variant resolution principle above — don't let the enum alone stand in for a value that was never actually established.]
 
 ### 4.1 Interaction States
 
 *(Shared by default, treatment 3 — see Phase 5.)*
 
 [Visual states on the component's root element: default, hover, focus, active, disabled, error, selected. Note which are driven by Behavioral Props and which are pure CSS/native responses to user input. If all states are owned by children, say so. Note which platforms a state applies to only if it's not universal (e.g. hover) — don't add a Platform column if every state applies everywhere.]
-
-### 4.2 Layout Policy
-
-[Fixed layout rules always enforced — not configurable via props. Examples: a max-width constraint, clip behaviour. Omit if none.]
 
 ### 4.3 Design Tokens
 
@@ -681,6 +728,8 @@ Windows and Linux don't have a concrete "control" the way the other platforms do
 #### 4.3.2 Token Map
 
 [Source: Figma / Storybook / tokens.json / description-only — state clearly]
+
+[The Token column below holds the token's canonical name — the confirmed naming-convention form (Q9 / `.claude/design-system-context.yml`), not one platform's syntax. A CSS custom property's `--` prefix and kebab-case, a Swift constant's camelCase — those are that platform's rendering of the same token, not its identity. If the source handed you `--color-overlay-backdrop`, this column holds `color-overlay-backdrop` (or whatever the confirmed convention states); a platform's actual spelling only belongs in the per-platform naming table further below, and only when that table applies.]
 
 [Token-bound properties — the same conceptual token regardless of platform:]
 | Property | Token |
@@ -702,14 +751,22 @@ Windows and Linux don't have a concrete "control" the way the other platforms do
 
 ---
 
-## 5. Behavior
+## Behavior
+
+### 3.3 Behavioral Props
+
+> Configures what the component does — states, feature flags, operational options. Omit if no configurable behavior beyond visual variants.
+
+| Prop | Type | Default | Required | Description |
+|------|------|---------|----------|-------------|
 
 ### 5.1 Interactions
 
-*(Shared by default, treatment 3 — add a Platform column only if Q4's follow-up confirmed a genuine difference.)*
+*(Shared by default, treatment 3 — add a Platform column only if Q4's follow-up confirmed a genuine difference. Zones delegated to a sub-component don't get a row here — see Phase 5's delegation principle. State once whether a delegated zone's interaction passes through untouched or is deliberately intercepted; don't just omit it silently.)*
 
 | Event | Source | Action |
 |-------|--------|--------|
+[One row per interaction on a zone the shell itself owns. Below the table, one sentence per delegated zone: passes through untouched (default), or intercepted (state what the shell actually does).]
 
 ### 5.2 State Machine
 
@@ -721,7 +778,7 @@ Windows and Linux don't have a concrete "control" the way the other platforms do
 
 *(Always one row per platform — see Phase 5, treatment 2. State each distinct event's intent once; repeat the block if the component emits more than one conceptually distinct event.)*
 
-[One sentence: what this event announces and what it means, independent of platform — e.g. "Announces that the component has been dismissed, and why (timeout vs. manual)." If there's no event to emit, say "None" once and omit the table below.]
+[One sentence: what this event announces and what it means, independent of platform — e.g. "Announces that the component has been dismissed, and why (timeout vs. manual)." If there's no event to emit, say "None" once and omit the table below. A delegated zone's event that passes straight through with no re-emission doesn't get a row here either — only a deliberate re-emission (stated in §5.1) becomes an event of the shell's own.]
 
 Each platform's event:
 
@@ -742,7 +799,7 @@ Each platform's implementation:
 
 ---
 
-## 6. Accessibility
+## Accessibility
 
 ### 6.1 Roles & Attributes
 
@@ -786,7 +843,7 @@ Each platform's implementation:
 
 ## Phase 6: JSON schema generation (if requested)
 
-**Generate one `.schema.json` per platform selected in Q2.** This isn't because the content differs — it usually won't, since both §3 Properties and §2.2 Composition Zones are shared sections in the one contract file now, so every platform's schema is typically generated from the exact same inputs. The split exists because each platform's build process consumes its own schema file as a separate step — a compile-time concern, not a content concern. Never add validation rules not stated in the contract. See `references/json-schema-draft-07.md` for the full keyword reference, what NOT to add on your own initiative, and the Draft 07 vs. 2020-12 decision this skill deliberately pins.
+**Generate one `.schema.json` per platform selected in Q2.** This isn't because the content differs — it usually won't, since §3.1/§3.2/§3.3 (Layout Props, Visual Variants, Behavioral Props) and §2.2 Composition Zones are all shared sections in the one contract file now, so every platform's schema is typically generated from the exact same inputs. The split exists because each platform's build process consumes its own schema file as a separate step — a compile-time concern, not a content concern. Never add validation rules not stated in the contract. See `references/json-schema-draft-07.md` for the full keyword reference, what NOT to add on your own initiative, and the Draft 07 vs. 2020-12 decision this skill deliberately pins.
 
 ### Mapping contract to schema
 
