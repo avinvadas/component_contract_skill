@@ -68,6 +68,7 @@ The skill's technical derivations (markup, accessibility, layout mechanics, toke
 | `macos/macos-hig-accessibility.md` | `NSAccessibility` + macOS-specific HIG conventions |
 | `windows/windows-ui-automation.md` | Microsoft UI Automation control patterns |
 | `linux/linux-atspi-accessibility.md` | AT-SPI, with the GTK/Qt toolkit split documented explicitly rather than picking one as canonical |
+| `ios/ios-platform-conventions.md`, `macos/macos-platform-conventions.md`, `android/android-platform-conventions.md`, `windows/windows-platform-conventions.md` | Each platform's own behavioral/compositional conventions (ephemeral-surface lifecycle, window/composition, navigation and gesture) — never colors, spacing, or motion values. Cited to the designer for confirmation within a relevant interview question; never applied as a silent default. Linux doesn't have one of these yet — GNOME, elementary, and KDE each publish a separately-opinionated HIG, so doing this properly means three files, not one. |
 
 **Each file covers exactly one standard, independently of the others.** This is deliberate, not incidental: if you're extending or correcting the skill's handling of one domain (say, adding a missing ARIA pattern, or updating iOS coverage for a new HIG pattern), you should only ever need to touch that one file. SKILL.md's phases link to specific files by name rather than inlining this material, so:
 - Fixing or extending coverage of an existing standard means editing the matching file only.

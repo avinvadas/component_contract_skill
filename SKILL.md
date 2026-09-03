@@ -58,7 +58,18 @@ Q2 (Platform) is multi-select; Phase 3/4 run once per selection, and for any pla
 | `references/windows/windows-ui-automation.md` | Windows |
 | `references/linux/linux-atspi-accessibility.md` | Linux |
 
-Each reference file covers exactly one external standard or concern, independent of the others — CSS mechanics, DOM events, ARIA patterns, WCAG, token file formats, JSON Schema, and each native platform's own accessibility/interaction model don't reference each other's internals. Adding coverage for a new standard means adding a new file, not expanding an existing one's scope; this keeps each file independently correctable by someone who only knows that one domain.
+### Platform convention files — cite-and-confirm only, never a default
+
+A second file for four of the five platforms covers **behavioral/compositional convention** — ephemeral-surface lifecycle, window/composition patterns, navigation and gesture conventions — as published by that platform's own guidelines, strictly excluding anything visual (color, spacing, motion curves, icon sets), which stays out of scope for this skill entirely per the Conflict resolution policy. These are never applied as defaults: see "Citing a platform convention" below Q10 for the only way this material is allowed to reach a contract. Linux doesn't have one of these yet — GNOME, elementary, and KDE each publish a separately-opinionated HIG, and doing this properly for Linux means three files, not one; that's deferred rather than folded in as a single approximate file.
+
+| File | Platform |
+|---|---|
+| `references/ios/ios-platform-conventions.md` | iOS |
+| `references/macos/macos-platform-conventions.md` | macOS |
+| `references/android/android-platform-conventions.md` | Android |
+| `references/windows/windows-platform-conventions.md` | Windows |
+
+Each reference file covers exactly one external standard or concern, independent of the others — CSS mechanics, DOM events, ARIA patterns, WCAG, token file formats, JSON Schema, and each native platform's own accessibility/interaction model or convention set don't reference each other's internals. Adding coverage for a new standard means adding a new file, not expanding an existing one's scope; this keeps each file independently correctable by someone who only knows that one domain.
 
 Every reference file carries a **`Last verified:` date** directly under its "Source of authority" line. Phase 0 uses it.
 
@@ -70,10 +81,10 @@ Two independent checks, both run once, before Phase 1, every time the skill star
 
 ### 0A: Reference freshness check
 
-1. For every file under `references/`, read its `Last verified:` date. Comparing dates is local and free — do this for all 15 files unconditionally.
+1. For every file under `references/`, read its `Last verified:` date. Comparing dates is local and free — do this for every file unconditionally, regardless of count (don't hardcode a number here — it drifts every time a file is added, which is exactly the kind of staleness this check exists to catch elsewhere).
 2. If today is less than **90 days** after that date, the file isn't due. Skip it — no network access, nothing to report.
 3. If 90 days or more have passed **and** web access is available in the current environment: fetch the URL(s) the file cites in its "Source of authority" line and compare against what the file currently says.
-   - **`platform-differences.md` is the one exception** — it aggregates the other 13 files rather than citing an external URL itself, so "checking" it means confirming it still agrees with whichever of those files were also due this run, not fetching anything.
+   - **`platform-differences.md` is the one exception** — it aggregates every other file rather than citing an external URL itself, so "checking" it means confirming it still agrees with whichever of those files were also due this run, not fetching anything.
    - **No material change** (the spec's version/status is the same, nothing the file describes has been renamed, deprecated, or superseded): update that file's `Last verified:` date to today and move on silently — no need to mention this to the user.
    - **Material change found** (a new spec version, a deprecated/renamed API or attribute, a new pattern that supersedes what's documented): stop and tell the user what changed and which file it affects, before proceeding to Phase 1. Ask whether to update the reference file now, defer it, or continue this session with the existing content. Never rewrite a reference file's content on your own initiative — these are curated explanations, not a scrape of the spec, and a drive-by edit from an automated check is exactly the kind of unreviewed change that principle exists to prevent.
 4. If web access isn't available in the current environment, skip step 3 entirely for this run. Only mention the skip if at least one file was actually due (don't report "nothing to check" as if it were a finding) — and never block the interview from starting because a freshness check couldn't run.
@@ -222,7 +233,7 @@ question: "How can it be dismissed? Select all that apply."
   - "A platform-standard gesture or key (Escape, swipe-down, back gesture)"
   - "Automatically, after a delay"
 
-  Don't infer this from the component's name or assume a header close control exists "because that's how it usually works" — a real design might rely on a footer action alone, or on the backdrop/gesture only, with no dedicated control at all. The zone only belongs in §2.2 if this answer actually names it.
+  Don't infer this from the component's name or assume a header close control exists "because that's how it usually works" — a real design might rely on a footer action alone, or on the backdrop/gesture only, with no dedicated control at all. The zone only belongs in §2.2 if this answer actually names it. If one of Q2's selected platforms has a documented dismissal convention for this archetype (a platform convention file, per Reference files above), cite it in this question per "Citing a platform convention" below Q10 — as something to confirm or override, never a default.
 
   If "One of its own action buttons also dismisses it" → open text follow-up:
   header: "§5 Behavior"
@@ -250,6 +261,16 @@ header: "§2 Structure"
 question: "Is the list always visible, or does it open on demand?"
   - "Always visible"
   - "Opens as a dropdown"
+
+If "No direct interaction — it updates on its own" AND the component is transient rather than a persistent piece of layout (a Toast/Snackbar/notification-banner shape, not a Badge) → single-select follow-up:
+header: "§5 Behavior"
+question: "If this is triggered again while one is already showing, what happens?"
+  - "The new one replaces the current one immediately"
+  - "It queues behind the current one and shows after"
+  - "Multiple show at once (stacked)"
+  - "Not applicable — this isn't a repeating/transient surface"
+
+Cite a platform convention here (per "Citing a platform convention" below Q10) when one of Q2's selected platforms has a documented answer — Android's Snackbar queuing is the clearest current example — but ask this regardless of platform, since it's a real design decision either way, documented convention or not.
 
 If Q2 selected two or more platforms → open text follow-up:
 header: "§5 Behavior"
@@ -342,6 +363,10 @@ question: "How should sub-components appear in the schema?"
   - "Written out inline"
 
 Wait for all answers before proceeding to Phase 2.
+
+### Citing a platform convention
+
+The platform convention files (Reference files, above) exist to make a question sharper when a relevant fact is already documented for one of Q2's selected platforms — never to fill in an answer on the designer's behalf. When composing a question or follow-up that a convention file speaks to (Q3's dismissal follow-up and Q4's repeat-trigger follow-up are the two currently wired this way), append the convention as something to confirm or override, in the same shape as any other option's framing — e.g., for a Toast/Snackbar-shaped component targeting Android, Q4's follow-up becomes "...Material's own Snackbar convention queues a new one behind the current one rather than showing both at once or replacing it immediately — does this match, or should it behave differently?" The answer that comes back is what goes in the contract, cited to the interview the normal way; the convention itself never appears in a contract unless an answer confirmed it. If nothing in the relevant platform's convention file bears on the question being asked, say nothing — don't manufacture a citation to seem thorough.
 
 ---
 
@@ -443,6 +468,8 @@ Never use `<div>` or `<span>` for triggered actions.
 **Composite shell**
 → The root element applies to the shell only. Document sub-component markup in their own contracts — but the shell's *own* zones (§2.2 rows not delegated to a sub-component, e.g. a Close button or a Title) aren't sub-components and have no contract to defer to. Resolve each one against this same decision table (or the platform's own resolution table) using its own action/interaction, and give it its own block in §2.1 alongside the root. A zone that's plain inline content with no independent semantic identity (label text, a decorative wrapper) doesn't need a block of its own — only zones that are themselves interactive, or that carry accessibility weight (a control, a heading targeted by `aria-labelledby`, a live region), do.
 
+**A heading zone's Tag/Control is its role, never a specific level.** When an owned zone is a heading (a Title targeted by `aria-labelledby`), name the element as "a heading element" and stop there — never `<h2>`, `<h3>`, or any specific level. Per `references/web/html-semantics.md`, heading level is chosen by the document's outline at the point the component is mounted, not by the component itself; no interview answer could ever resolve this correctly either, since the right level depends on a page this contract doesn't know about. State the row as `Required: Yes`, `Tag/Control: A heading element (<h1>–<h6>) — level set by the consuming page's document outline, not fixed here`. This isn't a gap to flag for confirmation (§3.2's pending-value convention) — it's genuinely out of the contract's scope, and saying so explicitly is the correct, complete answer, not an incomplete one.
+
 This only applies to zones the root's own resolution says nothing about. Some archetypes resolve to a compound pattern that already names its constituent zones' elements as part of the single root entry — a radio group's `<fieldset>` + `<legend>` + `<input type="radio">` items, or a tablist's `role="tab"` / `role="tabpanel"` pair. When a zone's element is already stated there, it doesn't get a second, separate block — that would just restate the same fact under a different heading. Owned-zone blocks exist for zones bolted onto an otherwise single-element root that the root's own resolution never mentions (a `<dialog>` says nothing about its Title or Close button), not for zones a compound pattern already accounts for.
 
 **When multiple actions apply**, the primary action defines the root element. Inner zones follow their own rules per the table above. The primary action is what the component fundamentally *is* to the user.
@@ -541,6 +568,13 @@ The visible focus indicator itself should bind to `:focus-visible`, not bare `:f
 ## Phase 5: Generate the contract
 
 With all phases complete, write the contract as **one file**, regardless of how many platforms it targets. Fill every section from what you now know — never leave a placeholder unless the user explicitly said information is unavailable. Nothing should be left for a reader (human or agent) to infer or ask about — nothing in this file, ever, is a diff against another file, since there is no other file.
+
+**Every concrete fact needs a traceable origin — before writing anything as a requirement, name which of these three it came from:**
+1. **An external, cross-system standard** — something a `references/` file actually states, specifically enough to cover the exact detail being written, not just the general pattern it sits inside. Citing a reference for the archetype ("dialogs need an accessible name via a heading") doesn't license inventing a specific value the reference never gave ("so, `<h2>`") — that's overspecifying past what the citation actually supports. If the specific detail being written isn't in the text of the reference, it isn't grounded by it, even if the section title sounds related.
+2. **An explicit interview answer** (or a persisted `.claude/design-system-context.yml` fact) — the only legitimate source for anything that could reasonably differ between two different design systems, or between two different components' instances of "the same" thing (one Modal's close button and another's aren't guaranteed to agree, so neither can be assumed). If a different team building a different version of this component could reasonably answer differently, it belongs here, never defaulted in Phase 3/4's tables.
+3. **A structural inference from something already established by (1) or (2)** — conditional logic, not a new fact (Q2 selecting 2+ platforms triggering the cross-platform follow-up; a confirmed dismissal action feeding §5.1).
+
+A detail that fits none of the three is an invented assumption, full stop — cut it. There's a fourth case worth naming because it looks like a gap but isn't one: a detail that's resolved by neither the reference nor any possible interview answer, because it depends on where or how the component gets used, decided outside this contract entirely (a heading's specific level, chosen by the page's own outline at mount time — see the heading-zone rule above). Don't treat that as a pending value to flag for later confirmation (§3.2's convention) — state the role precisely and say explicitly that the concrete resolution is out of scope, which is the complete, correct answer, not an incomplete one.
 
 **Every subsection falls into exactly one of three treatments — decide which before writing it, don't default to one:**
 
