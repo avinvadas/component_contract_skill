@@ -107,7 +107,7 @@ This step, like 0A, must never block the interview — if the file can't be read
 
 ### `design-system-context.yml` schema
 
-Only include platform keys this design system actually uses — never write a placeholder for a platform it doesn't target.
+Only include platform keys this design system actually uses — never write a placeholder for a platform it doesn't target. **`web` has no `framework` key, unlike every other platform, and that's deliberate, not an oversight** — see "Native platform technology as the stated level" below Phase 2 for why.
 
 ```yaml
 design_system: [free-text name, optional]
@@ -118,8 +118,6 @@ tokens:
   prefix: [string, e.g. "ds-", "color-", "--ds-"]
 
 platforms:
-  web:
-    framework: react | vue | web-components | vanilla
   ios:
     framework: swiftui | uikit
   android:
@@ -402,6 +400,16 @@ If a token's resolved value here contradicts the design-system context file (Pha
 Leave the token map as pending and note it clearly in the contract:
 
 > Token map pending — no design source was provided. Supply a Figma node URL, Storybook story URL, or CSS/token file to complete this section.
+
+---
+
+### Native platform technology as the stated level — frameworks are never the thing being checked
+
+A contract states intent, always at native-technology grounding — a real `<dialog aria-modal="true">` in the DOM, a real `.isModal`-equivalent trait in the iOS accessibility tree. Verification checks outcome — the actual rendered/runtime result — against that same native-level intent. Whatever produced the outcome sits entirely in between, and the contract has no opinion on it: React, Vue, React Native, Flutter, vanilla JS, hand-written Swift — any of them are equally valid *as long as the outcome satisfies the intent*. A React web component that dispatches a real, bubbling `dismiss` `CustomEvent` on real DOM output is exactly as compliant as vanilla JS producing that same event; a React Native view on iOS is exactly as compliant as SwiftUI if it produces the real underlying UIKit-level trait and focus behavior the contract asked for. This isn't a tolerance or an exception — it's the whole reason manifestation facts are written in native-technology terms to begin with: that's the one description a claim can be checked against regardless of which framework sits in the middle.
+
+Concretely, this is why Phase 0B's config records a `framework`/`toolkit` choice for iOS/macOS/Android/Windows/Linux (Swift with SwiftUI or UIKit, Kotlin with Compose or the View system, GTK or Qt, and so on) — each of those genuinely changes what a *native* implementation looks like, so Phase 3 needs to know which native vocabulary to name (`Button` in SwiftUI vs. `UIButton` in UIKit). It's also why Web has no such key: there's no native-level choice to record, since the platform technology is just the DOM/HTML/CSS/JS, and no third-party library (React, Vue, or anything else) ever changes what the *native* outcome should be — see `references/web/dom-events-model.md`'s framework-agnostic `CustomEvent` grounding, which already had this right.
+
+The same logic applies to any implementation or verification work built *from* a contract: don't restrict what tooling an implementer (or a blind-test agent) uses — restrict what gets checked. Verify against the real, rendered native-level output (actual DOM, actual accessibility tree, actual focus behavior), never against whether a particular framework's idiomatic convention was also present. A framework layering an extra convenience on top (a React `onDismiss` prop wrapping a real DOM event, say) is neither required nor forbidden by the contract — it's outside what the contract measures either way.
 
 ---
 
