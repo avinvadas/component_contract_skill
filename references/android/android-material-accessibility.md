@@ -39,6 +39,31 @@ Where the web decision table resolves Q2 (action) + Q7 (interaction) to an HTML 
 
 A composite shell's root maps to whichever container owns it (a `Scaffold`, a custom composable wrapping a navigation host); sub-components resolve independently via their own contracts.
 
+**Basic dialog vs. full-screen dialog — two different close-affordance and
+margin conventions, not two skins of the same thing.** Material's own
+guidance treats these as distinct archetypes, and a component whose Android
+manifestation is `androidx.compose.ui.window.Dialog` (the centered-dialog row
+above) needs to land in the right one rather than borrowing the other's
+chrome:
+- **Basic dialog** (a centered, content-sized surface — the shape the
+  centered-`Dialog` row above produces): no icon "X" close button. Dismissal
+  is via an action button in the footer (e.g., "Cancel"), tapping the scrim,
+  or the back gesture/button — never a corner icon. It also always keeps a
+  minimum margin from the screen edges (Material specifies 24dp) even when a
+  component's own `size`/max-width prop would otherwise exceed the available
+  window width; a Basic dialog spanning edge-to-edge with no margin is
+  visually indistinguishable from a full-screen one and reads as a mistake,
+  not a compact layout.
+- **Full-screen dialog** (used for a complex task/flow, not a short
+  confirm/info surface): has a top-app-bar-style header, and *that's* where
+  the icon "X" close button belongs.
+A component's contract may confirm a cross-platform "Close button" zone that,
+on Web/iOS, renders as an icon button — that doesn't automatically carry over
+to Android if Android's own manifestation resolves to a Basic dialog shape.
+Flag this explicitly rather than copying the icon-button treatment over by
+default; see Modal.md's §2.1 Close button row for a worked example of
+documenting the resulting per-platform difference.
+
 ## Layout adaptation (feeds §2.3 Adaptive Layout)
 
 Android's analog of container queries is **Window Size Classes** (`compact` / `medium` / `expanded`, evaluated against the window's available width and height, not the physical device) — the same container-relative principle as the web: a component in a split-screen or foldable's smaller pane adapts to the space it's actually given. The legacy View system's equivalent is configuration qualifiers (`sw600dp` resource buckets), which are viewport/device-relative rather than container-relative — note which mechanism a given codebase uses, since they don't behave identically.

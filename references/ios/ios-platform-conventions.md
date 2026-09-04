@@ -4,7 +4,7 @@ Source of authority: Apple's Human Interface Guidelines, the behavioral/composit
 
 **How to use this file: cite, never assume.** Surface the relevant fact as part of the question already being asked, worded so the designer confirms or overrides it — per Phase 1's cite-and-confirm rule, this file never writes a fact into a contract on its own.
 
-**Last verified:** 2026-09-03
+**Last verified:** 2026-09-04
 
 ## Ephemeral surface lifecycle (feeds Q3's dismissal follow-up, §3.3, §5.2)
 
@@ -17,6 +17,7 @@ Source of authority: Apple's Human Interface Guidelines, the behavioral/composit
 - **Four named modal presentation styles, not a general "modal" concept:** `.sheet` (partial-height, interactive dismiss, the default), `.fullScreenCover` (blocks interactive dismiss unless the app opts in), `.popover` (anchored to a source, common on iPad/regular width), `.alert` (short, decision-only, no partial-height concept at all). A component's §2.1 root resolution should land on one of these specifically, not a generic "presents modally" — if the interview's answer doesn't clearly indicate which, that's worth a follow-up rather than a default guess.
 - **`presentationDetents` governs height only, never width** — see the caution already in `ios-hig-accessibility.md`'s layout-adaptation section; a width constraint at a given size class needs a separate mechanism.
 - **Safe area insets are a real platform expectation for any full-bleed content**, not an optional nicety — worth naming in §4.2 Layout Policy when a component's root is edge-to-edge.
+- **A sheet's dismiss/Cancel control sits on the leading (top-left) corner; a confirm/primary action, if any, sits trailing (top-right).** Consistent across system sheets (Mail compose, new Calendar event, Files import, Reminders new list) — the reverse of Web/Android's usual trailing-corner close "X". A component's §2.2 Close-button-zone position shouldn't be assumed to carry the same corner across platforms just because the *intent* ("out of the way of the title, dismissive") is shared — cite this when the interview's answer for iOS doesn't specify a side.
 
 ## Navigation & gesture conventions (feeds §5.1, §6.2)
 
