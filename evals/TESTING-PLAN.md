@@ -1,16 +1,18 @@
 # Testing environment — plan
 
-The purpose of this environment is to battle-test the skill against the four things it claims to be accountable for (see the README's "What this skill is accountable for"). It is deliberately built in tiers, because those four claims are not testable by the same mechanism, at the same cost, or at the same frequency — and running them as one suite is the main way this kind of harness ends up expensive and uninformative.
+The purpose of this environment is to battle-test the skill against the four things it claims to be accountable for (see the README's "What this skill is accountable for"). It is deliberately built as three separate suites, because those four claims are not testable by the same mechanism, at the same cost, or at the same frequency — and running them as one undifferentiated pass is the main way this kind of harness ends up expensive and uninformative.
 
-## Three tiers
+## Three suites
 
-| Tier | Question it answers | Input → output | Accountability axis | Cost |
+Named, not numbered — `tier` is already this repo's word for the primitive/semantic/component axis and a slot in `naming-pattern`, and `layer` is already Phase 5's intent/manifestation distinction.
+
+| Suite | Question it answers | Input → output | Accountability axis | Cost |
 |---|---|---|---|---|
-| 1 | Does it produce the right contract? | interview transcript → `.md` + json | derivation, provenance | cheap; run on every change |
-| 2 | Is the contract sufficient to build from? | contract **only** → an implementation | sufficiency | expensive; run per release |
-| 3 | Do the checks catch real defects? | implementation → findings | validation | medium; needs fixtures |
+| **Generation** | Does it produce the right contract? | interview transcript → `.md` + json | derivation, provenance | cheap; run on every change |
+| **Sufficiency** | Is the contract sufficient to build from? | contract **only** → an implementation | sufficiency | expensive; run per release |
+| **Validation** | Do the checks catch real defects? | implementation → findings | validation | medium; needs fixtures |
 
-**Tier 2 is the one that tests the actual promise.** An agent that has never seen the interview receives only the contract and builds the component. The instrument is *how many questions it has to ask* — that number is a direct measurement of "nothing in it is inferred or left implicit that an implementer would need to ask about." No other test measures that claim, and no amount of Tier 1 passing implies it.
+**The Sufficiency suite is the one that tests the actual promise.** An agent that has never seen the interview receives only the contract and builds the component. The instrument is *how many questions it has to ask* — that number is a direct measurement of "nothing in it is inferred or left implicit that an implementer would need to ask about." No other test measures that claim, and no amount of Generation passing implies it.
 
 ## Two classes of assertion
 
@@ -38,7 +40,7 @@ Contract prose legitimately varies between correct runs, so **assertions are pro
 
 The evals hand-feed all ten answers in a single prompt. That exercises Phases 2–6 and bypasses Phase 1 entirely, along with Phase 0A (freshness) and 0B (context detection and creation). So nothing currently tests whether Q7's options are derived sensibly from Q1, whether a question is asked that shouldn't be, or whether `design-system-context.yml` is detected, written, and honored.
 
-Closing that needs a **simulated respondent** — an agent playing the designer from a persona sheet, answering `AskUserQuestion` calls as they arrive. Worth building in Phase 3; worth knowing we don't have it before then.
+Closing that needs a **simulated respondent** — an agent playing the designer from a persona sheet, answering `AskUserQuestion` calls as they arrive. Worth building at Milestone 3; worth knowing we don't have it before then.
 
 ## Corpus
 
@@ -54,7 +56,7 @@ Known coverage gaps, to fill as the corpus grows:
 
 ## Sequencing
 
-### Phase 0 — prerequisites *(in progress)*
+### Milestone 0 — prerequisites *(in progress)*
 
 Nothing here is harness work; it is removing things that would make a harness test a moving or broken target.
 
@@ -63,17 +65,17 @@ Nothing here is harness work; it is removing things that would make a harness te
 - [ ] **Regenerate SegmentedControl** under current spec as a baseline; the committed one predates several spec changes.
 - [ ] Decide whether `contracts/` and its build artifacts belong in the repo.
 
-### Phase 1 — Tier 1 harness
+### Milestone 1 — the Generation suite
 
 Write the invariants once. Convert each case's prose `expected_output` into invariants + one named regression. Runner executes a case N times and reports pass rate per assertion.
 
-### Phase 2 — Tier 3, Web only
+### Milestone 2 — the Validation suite, Web only
 
 Web's tree is free via a headless browser; native needs simulators, XCUITest, and Compose instrumented tests. Building the entire loop on Web first costs roughly a tenth as much and everything learned transfers.
 
 Needs: one known-good Web implementation per corpus component, a structure-file executor (read DOM, evaluate expectations, emit findings), and a **mutation set**.
 
-**Fault injection is the core of this tier.** One mutation, one expected finding:
+**Fault injection is the core of this suite.** One mutation, one expected finding:
 
 | Mutation | Expected finding |
 |---|---|
@@ -83,16 +85,16 @@ Needs: one known-good Web implementation per corpus component, a structure-file 
 | rename a token to a valid-but-different canonical path | structural mismatch |
 | rename a token to a *plausible* wrong one | passes visual regression; must be caught here |
 
-This yields **sensitivity** (does it catch?) and **specificity** (does it stay silent on the clean build?). Without negative controls, a green run only proves the checker didn't crash. The last row is the case that justifies the validation layer existing at all — a defect that renders acceptably and passes screenshot tests.
+This yields **sensitivity** (does it catch?) and **specificity** (does it stay silent on the clean build?). Without negative controls, a green run only proves the checker didn't crash. The last row is the case that justifies the Validation suite existing at all — a defect that renders acceptably and passes screenshot tests.
 
-### Phase 3 — Tier 2, blind implementation
+### Milestone 3 — the Sufficiency suite (blind implementation)
 
-An agent receives the contract only and builds the component; Phase 2's executor grades the result. Add the simulated respondent here to bring Phases 0–1 of the skill under test.
+An agent receives the contract only and builds the component; Milestone 2's executor grades the result. Add the simulated respondent here to bring the skill's own Phases 0 and 1 under test.
 
-### Phase 4 — native
+### Milestone 4 — native
 
 iOS via `xcodegen` + XCUITest — proven once by hand in this repo, needs to become a repeatable script. Android via Compose instrumented tests for the semantics `uiautomator dump` cannot see. Both ceilings are documented in `references/structural-fact-validation.md`; neither is a tooling detail to paper over.
 
-## Before building the Tier 1 runner
+## Before building the Generation runner
 
 Check whether `anthropic-skills:skill-creator` already covers it — it claims to run skill evals and benchmark performance with variance analysis. Worth twenty minutes before reinventing a runner.
