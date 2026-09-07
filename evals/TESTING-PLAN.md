@@ -61,6 +61,7 @@ Known coverage gaps, to fill as the corpus grows:
 Nothing here is harness work; it is removing things that would make a harness test a moving or broken target.
 
 - [x] **Run the token-name algorithm for the first time.** Done against the 162-token fixture via `harness/tokencheck.py`. Core algorithm confirmed sound — every documented worked example passes, reordered and substituted names fail at every row and depth. Three defects found and fixed in the spec: silent wrong-lock, row ambiguity, depth non-injectivity.
+- [x] **Implement Steps 4-5 in the harness.** `harness/tokenlock.py`, with self-tests that exercise each of the three fixed defects. Surfaced one further spec gap: the two blocking conditions are independent and must both be reported.
 - [x] **Resolve the `rootElement` translation gap.** §2.1 names a native construct; native trees never contain that string. Mapping now specified per platform, with `unresolved` as the honest output when it isn't known.
 - [ ] **Regenerate SegmentedControl** under current spec as a baseline; the committed one predates several spec changes.
 - [ ] Decide whether `contracts/` and its build artifacts belong in the repo.

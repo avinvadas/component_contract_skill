@@ -106,6 +106,8 @@ At depth 0–1 the mapping is injective and the check is sound. From depth 2 it 
 
 So before locking any depth > 1, generate every token in §4.3.2's Token Map at that depth and confirm they are all distinct. If any two collide, the depth is unusable for validation regardless of whether the pipeline really uses it: report that this platform's naming discards too much to verify bindings, and check nothing rather than reporting false passes. Note which failure this is — silently passing a wrong binding is the one outcome this file exists to prevent.
 
+**These two conditions are independent — evaluate both and report every one that applies, rather than stopping at the first.** A single name is frequently both: `radius`, checked against `component.button.radius`, is ambiguous across five rows *and* sits at a depth where three different tokens collapse onto it. Reporting only the ambiguity ("keep looking") would send someone hunting for a disambiguating name at a depth where no valid one can exist, since every token there is equally collapsed. Depth verifiability is a property of the Token Map at that depth, not of the individual name, so it is checked whether or not that name happens to determine a row.
+
 ## Step 5 — every subsequent name is checked against all three locked facts, not re-detected
 
 For every other name checked in the same build:
