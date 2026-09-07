@@ -4,6 +4,22 @@ Source of authority: none external — this is a synthesized algorithm, not a ci
 
 **Last verified:** 2026-09-06
 
+## What this replaces: nothing
+
+This does not generate tokens, transform names, or stand in for Style Dictionary or any equivalent pipeline. The skill's entire involvement with tokens is to **state** a token's canonical identity in the contract and **validate** that a real generated variable — a CSS custom property, a Swift constant, an Android resource — corresponds to it. The pipeline that produced that variable sits in between and is never the thing being checked, exactly as SKILL.md's "Native platform technology as the stated level" treats the framework that produced a rendered DOM node.
+
+That boundary is why the precondition below is a gate and not a preference: with no pipeline, there is no generated variable, so the check has no subject.
+
+## Vocabulary
+
+Three facts, kept distinct throughout this file (see SKILL.md's "Three naming facts"):
+
+- **Canonical path** — the token's identity, one per token: `ds.semantic.color.bg.surface`.
+- **`naming-pattern`** — the ordered slot schema every canonical path in this tree follows, one per design system: `prefix.tier.property.element.level`. Always hyphenated, to stay distinct from this skill's other uses of "pattern."
+- **Naming convention** — how one *platform's* generated output renders a canonical path, one per platform, three independent axes: separator/case row, added prefix, scope depth.
+
+**`namespace`** keeps its narrow meaning here throughout: the *leading* segments a platform's pipeline scopes away. It is never a synonym for the canonical path.
+
 ## Precondition — this only applies when hand-typed values are already out of scope
 
 This validation assumes the design system's own policy is that no component hand-types a token's resolved value or invents its own alias name for one — token values are generated downstream (Style Dictionary or an equivalent pipeline) from the canonical tree, and components consume the generated, named result. That assumption is recorded once, system-wide, as `tokens.generated_downstream` in `.claude/design-system-context.yml` (see SKILL.md's Phase 0B schema) — never re-derived per component, and never assumed true by default for a design system that hasn't confirmed it.
@@ -25,7 +41,7 @@ Two levels of splitting, not one: the token tree's own tier separator (`.`), *an
   lowercase every word     → ["primitive", "color", "purple", "500"]
 ```
 
-A token whose path is `semantic.color.action.primary-hover` splits further at the last segment: `["semantic", "color", "action", "primary", "hover"]`. This flat word list, in this exact order, is the one invariant every valid name must preserve, however much of it a given system's pipeline chooses to keep — see Step 4 for what "chooses to keep" means. Order exists to convey hierarchy (tier → category → concept → scale step); nothing downstream is allowed to reorder it, only to truncate it from the front.
+A token whose path is `semantic.color.action.primary-hover` splits further at the last segment: `["semantic", "color", "action", "primary", "hover"]`. This flat word list, in this exact order, is the one invariant every valid name must preserve, however much of it a given system's pipeline chooses to keep — see Step 4 for what "chooses to keep" means. Order exists to convey hierarchy, in whatever slot sequence this design system's `naming-pattern` defines — `prefix.tier.property.element.level` and `tier → category → concept → scale step` are two possible patterns, not the universal one. This step reads that order off the tree directly, so it doesn't have to be told the pattern in order to compare one name; the pattern is what makes the comparison *meaningful* rather than merely mechanical, and what lets a mismatch be reported as the slot that moved. Whatever the pattern, nothing downstream is allowed to reorder it, only to truncate it from the front.
 
 ## Step 2 — generate every known convention's form from that word list
 
@@ -53,7 +69,7 @@ A candidate is valid if it exactly equals the generated form of *some* row at *s
 
 **Why only leading truncation.** A namespace is a prefix concept — dropping `primitive.color` because the file you're in already scopes everything to `color` is a real, common pattern (Style Dictionary configs routinely strip leading path segments this way). Dropping a *middle* word (`purple` vanishing while `primitive`, `color`, and `500` remain) isn't scoping, it's a different word — that's indistinguishable from an abbreviation or a typo, which this file deliberately does not try to accommodate (see the fails list below). Restricting truncation to the front is what keeps those two cases apart.
 
-## Step 4 — lock the full convention on first success: row, prefix, *and* truncation depth
+## Step 4 — lock the naming convention on first success: all three of its axes
 
 The first name checked for a given platform fixes three things at once, not just the separator/case row:
 1. **The row** (kebab, camel, flat, …).
@@ -79,7 +95,7 @@ For every other name checked in the same build:
 | Finding | Severity | Cause | Example |
 |---|---|---|---|
 | Unknown token | Alert | The word sequence doesn't correspond to any path in the token tree at all, at any truncation depth | referencing a token that doesn't exist, or a typo severe enough to change the words |
-| Structural mismatch | Alert | The right token's words exist, but reordered, or with a word substituted, or a *non-leading* word missing | `--primitive-color-500-purple` (reordered), `--base-color-purple-500` (`base` isn't `primitive`) |
+| Structural mismatch | Alert | The right token's words exist, but reordered, or with a word substituted, or a *non-leading* word missing. Where a `naming-pattern` is on record, report which slot moved ("puts `level` before `element`; this system's `naming-pattern` is `…element.level`") rather than a bare "reordered" | `--primitive-color-500-purple` (reordered), `--base-color-purple-500` (`base` isn't `primitive`) |
 | Inconsistent convention | Alert | The name matches a real token's word sequence, under a row *other than* this build's locked row | `--primitive_color_purple_500` appearing in a build already locked to kebab-case |
 | Inconsistent scoping | Alert | The name matches the locked row, but at a truncation depth other than the one locked for this platform | a depth-2 name appearing in a platform locked to depth-0 |
 | Namespace scoping detected | Warning, once, then locked | The *first* name checked only matches at depth > 0 | `--color-purple-500` as the very first name checked, confirming `primitive` is consistently dropped |
@@ -100,3 +116,15 @@ Token: `primitive.color.purple.500` → canonical words `["primitive", "color", 
 - `--base-color-purple-500` — structural mismatch (`base` isn't a canonical word at any depth)
 - `--primitive-color-purple-500` followed elsewhere in the same build by `--primitive_color_purple_500` — inconsistent convention (second name, different row)
 - `--purple-500` followed elsewhere in a build locked to depth 0 by `--color-purple-500` — inconsistent scoping (different depth than locked, even though each would independently look plausible)
+
+## What this deliberately does not check
+
+This validates the *style logic* — that the token named in a real implementation is the token the contract stated. It is a check on the reference chain, not on anything at the end of it.
+
+- **Not the value behind the token.** If `semantic.color.bg.surface` aliases to a grey someone later judges wrong, that is a design decision recorded in the tree, not a naming defect. The reference is correct and this check passes — correctly. Re-deriving value correctness would mean second-guessing the design system's own tree, which is the one thing SKILL.md's Conflict resolution policy explicitly treats as authoritative.
+- **Not the resolved output of the pipeline.** Whether Style Dictionary (or an equivalent) emitted the right literal for the right platform is that tool's job. This never re-verifies a pipeline it presupposes.
+- **Not the rendered result.** Whether the component actually *looks* right is visual regression testing's job, and it answers a different question. Note the two are not redundant: a wrong-but-plausible token reference can render something that looks entirely acceptable, passing visual regression while the style logic is broken. That gap is precisely what this check covers, and why it isn't made obsolete by having good screenshot tests.
+
+The inverse also holds, and is worth stating because it looks counterintuitive: a component that renders correctly while referencing a token the contract never stated **is** a finding here. Nothing is visibly wrong; the logic connecting intent to implementation is.
+
+This mirrors `structural-fact-validation.md`'s closing boundary — that file confirms the right node exists with the right role, not that a screen reader announces it usefully. Same division: these checks establish that what was specified is what got built, never that what was specified was a good idea.

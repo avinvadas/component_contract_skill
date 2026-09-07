@@ -4,7 +4,7 @@ Source of authority: Microsoft's [UI Automation (UIA)](https://learn.microsoft.c
 
 **Last verified:** 2026-08-25
 
-Consulted by SKILL.md's Phase 3 ("Component / structure resolution" section) and Phase 4 ("Accessibility API" section) whenever Q8 includes Windows.
+Consulted by SKILL.md's Phase 3 ("Component / structure resolution" section) and Phase 4 ("Accessibility API" section) whenever Q2 (Platform) includes Windows.
 
 ---
 
@@ -24,7 +24,7 @@ In XAML, these are wired up via `AutomationProperties.Name` (accessible name —
 
 ## Component / structure resolution
 
-Resolve Q2 (action) + Q7 (interaction) to the UIA control pattern the native control must expose, not to a specific XAML control class (since a design system may implement its own custom control rather than using a stock one) — the pattern is the accessibility contract; the visual control is implementation:
+Resolve Q3 (action) + Q4 (interaction) to the UIA control pattern the native control must expose, not to a specific XAML control class (since a design system may implement its own custom control rather than using a stock one) — the pattern is the accessibility contract; the visual control is implementation:
 
 | Action / interaction | Required control pattern |
 |---|---|

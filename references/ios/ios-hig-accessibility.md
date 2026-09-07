@@ -4,7 +4,7 @@ Sources of authority: Apple's [Accessibility documentation](https://developer.ap
 
 **Last verified:** 2026-08-25
 
-Consulted by SKILL.md's Phase 3 ("Component / structure resolution" section) and Phase 4 ("Accessibility API" section) whenever Q8 includes iOS.
+Consulted by SKILL.md's Phase 3 ("Component / structure resolution" section) and Phase 4 ("Accessibility API" section) whenever Q2 (Platform) includes iOS.
 
 ---
 
@@ -20,7 +20,7 @@ Consulted by SKILL.md's Phase 3 ("Component / structure resolution" section) and
 
 ## Component / structure resolution
 
-Where the web decision table resolves Q2 (action) + Q7 (interaction) to an HTML element, iOS resolves the same inputs to a native SwiftUI control or presentation style:
+Where the web decision table resolves Q3 (action) + Q4 (interaction) to an HTML element, iOS resolves the same inputs to a native SwiftUI control or presentation style:
 
 | Action / interaction | Native equivalent |
 |---|---|

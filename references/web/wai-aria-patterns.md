@@ -77,7 +77,7 @@ Only re-purpose a generic element with ARIA when no native element for the neede
 
 ## Combobox (text input + filtered/attached listbox — autocomplete, typeahead select)
 
-This pattern has no equivalent in SKILL.md's condensed table — always consult it in full here when Q2/Q7 indicate a searchable or type-to-filter selection input.
+This pattern has no equivalent in SKILL.md's condensed table — always consult it in full here when Q3 (action) / Q4 (interaction) indicate a searchable or type-to-filter selection input.
 
 - Structure: a text `<input>` with `role="combobox"`, `aria-expanded`, `aria-controls` (pointing to the popup listbox id), and `aria-autocomplete` (`"list"`, `"both"`, or `"none"` depending on whether typing filters/suggests). The popup is `role="listbox"` with `role="option"` children, same as Listbox above.
 - The currently-highlighted option (as the user arrows through suggestions without committing) is tracked via `aria-activedescendant` on the input, referencing the option's id — focus stays on the input the entire time.

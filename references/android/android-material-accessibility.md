@@ -4,7 +4,7 @@ Sources of authority: [Android Accessibility developer documentation](https://de
 
 **Last verified:** 2026-09-04
 
-Consulted by SKILL.md's Phase 3 ("Component / structure resolution" section) and Phase 4 ("Accessibility API" section) whenever Q8 includes Android.
+Consulted by SKILL.md's Phase 3 ("Component / structure resolution" section) and Phase 4 ("Accessibility API" section) whenever Q2 (Platform) includes Android.
 
 ---
 
@@ -20,7 +20,7 @@ Compose exposes accessibility through the `Modifier.semantics { }` block; the Vi
 
 ## Component / structure resolution
 
-Where the web decision table resolves Q2 (action) + Q7 (interaction) to an HTML element, Android resolves the same inputs to a native Compose component:
+Where the web decision table resolves Q3 (action) + Q4 (interaction) to an HTML element, Android resolves the same inputs to a native Compose component:
 
 | Action / interaction | Native equivalent |
 |---|---|

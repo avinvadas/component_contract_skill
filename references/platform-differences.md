@@ -1,6 +1,6 @@
 # Cross-platform comparison
 
-Pure comparison content — not routing logic. This file exists so the five cross-cutting concerns that recur across every platform file can be scanned side by side, then followed into the relevant platform directory for depth. It does not decide *which* platform file applies to a given component — that's Q8's job, resolved in SKILL.md's Phase 3/4, which branch to the matching platform file for every platform Q8 names.
+Pure comparison content — not routing logic. This file exists so the five cross-cutting concerns that recur across every platform file can be scanned side by side, then followed into the relevant platform directory for depth. It does not decide *which* platform file applies to a given component — that's Q2 (Platform)'s job, resolved in SKILL.md's Phase 3/4, which branch to the matching platform file for every platform Q2 names.
 
 **Last verified:** 2026-08-25
 
@@ -9,10 +9,12 @@ This is the multi-platform extension of the principle §5.1 already applies to i
 | Concern | Web | iOS | Android | macOS | Windows | Linux |
 |---|---|---|---|---|---|---|
 | Accessibility API | WAI-ARIA roles/states/properties | `UIAccessibility` traits + label/hint/value | Compose `semantics{}` / `AccessibilityNodeInfo`, `Role` + `contentDescription` | `NSAccessibility` roles (AppKit) or shared SwiftUI modifiers | UI Automation control patterns (Invoke, Toggle, SelectionItem, Value, RangeValue…) | AT-SPI roles/states (toolkit-agnostic; GTK native, Qt via bridge) |
-| Component/structure resolution | HTML element + ARIA role, from Q2+Q7 | Native SwiftUI control/presentation, from Q2+Q7 | Native Compose component, from Q2+Q7 | Same as iOS, plus macOS-only conventions (hover, context menu, sheet vs. window vs. popover) | UIA control pattern (not a specific XAML class), from Q2+Q7 | AT-SPI role (not a specific widget), from Q2+Q7 |
+| Component/structure resolution | HTML element + ARIA role, from Q3+Q4 | Native SwiftUI control/presentation, from Q3+Q4 | Native Compose component, from Q3+Q4 | Same as iOS, plus macOS-only conventions (hover, context menu, sheet vs. window vs. popover) | UIA control pattern (not a specific XAML class), from Q3+Q4 | AT-SPI role (not a specific widget), from Q3+Q4 |
 | Layout adaptation ("container query" equivalent) | CSS Container Queries (`@container`, container-relative) | Size Classes (compact/regular), container-relative | Window Size Classes (compact/medium/expanded), container-relative | Same mechanism as iOS; wider practical range due to user-resizable windows | `VisualStateManager` adaptive triggers on window/container width | GTK: `AdwBreakpoint`. Qt: layout managers / QML anchors — no unified equivalent |
 | RTL / directionality | CSS Logical Properties (`inline-start`/`-end`) vs. `dir` attribute (content-level only) | Leading/trailing (Auto Layout, SwiftUI `.leading`/`.trailing`) | Start/end (predates CSS logical properties) | Same as iOS | `FlowDirection`, but `Margin`/`Padding` stay physical (Left/Top/Right/Bottom) — messier, often needs explicit handling | GTK4: native start/end. Qt: `LayoutDirection` + direction-aware anchoring |
 | Reduced motion signal | `prefers-reduced-motion` media feature | `UIAccessibility.isReduceMotionEnabled` | System animator-duration-scale setting | `NSWorkspace.accessibilityDisplayShouldReduceMotion` | `UISettings.AnimationsEnabled` | No cross-desktop standard; GNOME/KDE each have their own setting, XDG Settings Portal emerging for sandboxed apps |
+
+Question numbers above refer to SKILL.md's Phase 1 interview: Q2 = Platform, Q3 = action, Q4 = interaction.
 
 ## How to read the RTL/directionality row
 

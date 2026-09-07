@@ -6,7 +6,7 @@ Source of authority: [AT-SPI (Assistive Technology Service Provider Interface)](
 
 **Read this caveat before anything else in the file.** Unlike the other four platforms, "Linux" is not one platform with one component/interaction model — there is no single toolkit or design guidance layer analogous to UIKit+HIG or WinUI+UIA. Two toolkit ecosystems dominate (GTK/libadwaita and Qt/KDE), each with its own component conventions and its own adaptive-layout mechanism, and neither is canonical the way this skill avoids treating Fluent or Material as canonical for their platforms. This file anchors on AT-SPI — the one thing both ecosystems actually implement — and documents the toolkit split explicitly rather than picking a side.
 
-Consulted by SKILL.md's Phase 3 ("Component / structure resolution" section) and Phase 4 ("Accessibility API" section) whenever Q8 includes Linux.
+Consulted by SKILL.md's Phase 3 ("Component / structure resolution" section) and Phase 4 ("Accessibility API" section) whenever Q2 (Platform) includes Linux.
 
 ---
 
@@ -20,7 +20,7 @@ AT-SPI exposes roles, states, and actions to assistive technology (primarily the
 
 ## Component / structure resolution — toolkit-dependent
 
-Resolve Q2 (action) + Q7 (interaction) to the *AT-SPI role/state the implementation must expose*, same principle as the Windows file resolving to a control pattern rather than a specific XAML class — this keeps the resolution toolkit-agnostic even though the concrete widget differs:
+Resolve Q3 (action) + Q4 (interaction) to the *AT-SPI role/state the implementation must expose*, same principle as the Windows file resolving to a control pattern rather than a specific XAML class — this keeps the resolution toolkit-agnostic even though the concrete widget differs:
 
 | Action / interaction | Required AT-SPI role | GTK4/libadwaita widget | Qt/KDE widget |
 |---|---|---|---|
