@@ -5,7 +5,7 @@ Answer a structured interview about a UI component, and it will generate a forma
 
 ## What it generates
 
-One interview, **one contract file** per component, covering any combination of target platforms (Web, iOS, Android, macOS, Windows, Linux) within that single document — plus, per platform, a structure file and optionally a JSON Schema, both split per platform because each platform's build process consumes its own.
+One interview, **one contract file** per component, covering any combination of supported target platforms (Web, iOS, Android, macOS) within that single document — plus, per platform, a structure file and optionally a JSON Schema, both split per platform because each platform's build process consumes its own.
 
 ```
 ComponentName/
@@ -37,6 +37,12 @@ A component contract captures **design intent**: what a component is and what it
 Two separate checkable artifacts come with it, and they check different subjects — worth keeping straight, since it's easy to credit the first with the second's job. The **JSON schema** validates a consumer-supplied props instance (is this a legal set of props for this component?). The **structure file** validates a real implementation's *rendered output* — the live DOM, or a runtime accessibility tree — against the contract's semantic markup and accessibility claims.
 
 This creates a documentation-driven process, in which design and engineering both build from — and test against — the same explicit statement of intent, instead of each inferring it separately from whatever specific artifact happens to be at hand.
+
+## Supported platforms
+
+**Web, iOS, Android, macOS.** Windows and Linux are on the roadmap and not supported yet: their reference material is researched and kept in `references/`, but neither is offered by the interview and no contract should target them.
+
+The blocker is specific. `references/structural-fact-validation.md` has no verified way to obtain a real rendered tree on either platform, so a contract targeting them could be written but never checked — which would contradict the accountability below. They are revisited once the four supported platforms are stable, tested, and validated.
 
 ## What this skill is accountable for
 

@@ -5,7 +5,7 @@ description: Creates structured component contract markdown files for design sys
 
 ## What this skill produces
 
-One interview produces **one component contract file**, capturing the design intent of a UI component, covering any combination of target platforms (Web, iOS, Android, macOS, Windows, Linux) within that single document. The contract opens with a short Design Intent statement, then organizes everything else under four concerns — a plain separation-of-concerns structure so a reader always knows where to look for a given fact, rather than a grab-bag "Properties" section spanning several unrelated ones:
+One interview produces **one component contract file**, capturing the design intent of a UI component, covering any combination of **supported** target platforms (Web, iOS, Android, macOS) within that single document. Windows and Linux are on the roadmap and deliberately not supported yet — see "Supported platforms" below. The contract opens with a short Design Intent statement, then organizes everything else under four concerns — a plain separation-of-concerns structure so a reader always knows where to look for a given fact, rather than a grab-bag "Properties" section spanning several unrelated ones:
 
 - **Structure** — the correct native markup/control per platform, composition zones and their ownership/cardinality, adaptive layout, and the layout props/policy that control spatial arrangement
 - **Appearance** — visual variants, interaction states, and design tokens
@@ -19,6 +19,18 @@ Two checkable artifacts are generated separately, both split per platform becaus
 The person using this skill does not need to know HTML, ARIA, native accessibility APIs, or any platform's interaction conventions. The skill derives all technical decisions from plain-language answers about the component's purpose and how users interact with it.
 
 ---
+
+## Supported platforms
+
+**Supported: Web, iOS, Android, macOS.** These are the platforms Q2 offers and the only ones a contract may target.
+
+**On the roadmap, not supported: Windows, Linux.** Their reference material stays in `references/` because the research in it is sound and reviewed — but it is *not wired into the interview*, Q2 does not offer them, and no contract should include a Windows or Linux row today.
+
+The reason is specific rather than a matter of priority: `references/structural-fact-validation.md` has no verified way to obtain a real rendered tree for either platform, so a contract targeting them could be written but never checked. Every other supported platform has at least one demonstrated route to its real tree. Shipping a platform whose claims cannot be tested would contradict what this skill says it is accountable for.
+
+Linux carries a second, independent gap: it has no platform-conventions file, because GNOME, elementary, and KDE each publish a separately-opinionated HIG and doing it properly means three files rather than one approximation.
+
+Both are revisited once the four supported platforms are stable, tested, and validated — not before.
 
 ## Reference files
 
@@ -57,8 +69,8 @@ Q2 (Platform) is multi-select; Phase 3/4 run once per selection, and for any pla
 | `references/ios/ios-hig-accessibility.md` | iOS |
 | `references/android/android-material-accessibility.md` | Android |
 | `references/macos/macos-hig-accessibility.md` | macOS |
-| `references/windows/windows-ui-automation.md` | Windows |
-| `references/linux/linux-atspi-accessibility.md` | Linux |
+| `references/windows/windows-ui-automation.md` | Windows — **roadmap, not supported**; not reachable from Q2 |
+| `references/linux/linux-atspi-accessibility.md` | Linux — **roadmap, not supported**; not reachable from Q2 |
 
 ### Platform convention files — cite-and-confirm only, never a default
 
@@ -69,7 +81,7 @@ A second file for four of the five platforms covers **behavioral/compositional c
 | `references/ios/ios-platform-conventions.md` | iOS |
 | `references/macos/macos-platform-conventions.md` | macOS |
 | `references/android/android-platform-conventions.md` | Android |
-| `references/windows/windows-platform-conventions.md` | Windows |
+| `references/windows/windows-platform-conventions.md` | Windows — **roadmap, not supported** |
 
 Each reference file covers exactly one external standard or concern, independent of the others — CSS mechanics, DOM events, ARIA patterns, WCAG, token file formats, JSON Schema, and each native platform's own accessibility/interaction model or convention set don't reference each other's internals. Adding coverage for a new standard means adding a new file, not expanding an existing one's scope; this keeps each file independently correctable by someone who only knows that one domain.
 
@@ -246,8 +258,6 @@ Multi-select:
 - "iOS"
 - "Android"
 - "macOS"
-- "Windows"
-- "Linux"
 
 This answer drives which reference file(s) Phase 3/4 consult, how many platform rows appear in the contract's per-platform tables, and how many per-platform schema files Phase 6 writes. It's scope, not §5 Behavior content — no follow-up here asks about behavior differences yet; that's Q4's job, once there's an actual interaction to ask "does this differ" about.
 
@@ -467,7 +477,7 @@ Two different things happen in this phase, at different frequencies — don't ru
 **§2.1 Semantic Markup runs once per platform selected in Q2.** The same Q3 (action) and Q4 (interaction) answers feed every run — what changes is which table resolves them to a concrete structure. Never infer the element/control from the component's name — the same visual form can require completely different structure depending on what the component actually does, and that holds on every platform.
 
 - **Web** → use the decision table below.
-- **iOS / Android / macOS / Windows / Linux** → use the "Component / structure resolution" table in that platform's reference file instead of the table below (`references/ios/ios-hig-accessibility.md`, `references/android/android-material-accessibility.md`, `references/macos/macos-hig-accessibility.md`, `references/windows/windows-ui-automation.md`, `references/linux/linux-atspi-accessibility.md`). Same Q3/Q4 inputs, that platform's native vocabulary as output.
+- **iOS / Android / macOS** → use the "Component / structure resolution" table in that platform's reference file instead of the table below (`references/ios/ios-hig-accessibility.md`, `references/android/android-material-accessibility.md`, `references/macos/macos-hig-accessibility.md`, `references/windows/windows-ui-automation.md`, `references/linux/linux-atspi-accessibility.md`). Same Q3/Q4 inputs, that platform's native vocabulary as output.
 
 Each platform's result becomes one row in §2.1's table (see Phase 5) — never a separate document, and never merged with another platform's row even when the two values happen to match.
 
@@ -570,7 +580,7 @@ Derive from the interview answers and each platform's Phase 3 structure decision
 
 **§6.1 Roles & Attributes runs once per platform selected in Q2** — every platform has its own vocabulary, so this always gets a row per platform, same frequency as §2.1:
 - **Web** → the ARIA-specific subsections below.
-- **iOS / Android / macOS / Windows / Linux** → that platform's reference file, "Accessibility API" section, for the role/state/trait model. There is no separate decision table to duplicate here — the platform files already state what each requires.
+- **iOS / Android / macOS** → that platform's reference file, "Accessibility API" section, for the role/state/trait model. There is no separate decision table to duplicate here — the platform files already state what each requires.
 
 **§6.2 Keyboard/Gesture Navigation and §6.4 Screen Reader / Assistive Technology Expectations are shared by default.** Derive once using the web subsections below for the common cases, and add a platform-specific note only where the actual key or gesture genuinely differs (e.g. `Escape` has no touch equivalent) — not as a matter of course.
 
