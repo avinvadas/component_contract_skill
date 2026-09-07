@@ -111,6 +111,18 @@ An agent receives the contract only and builds the component; Milestone 2's exec
 
 iOS via `xcodegen` + XCUITest — proven once by hand in this repo, needs to become a repeatable script. Android via Compose instrumented tests for the semantics `uiautomator dump` cannot see. Both ceilings are documented in `references/structural-fact-validation.md`; neither is a tooling detail to paper over.
 
-## Before building the Generation runner
+## skill-creator: evaluated, does not replace this — but contributed two things
 
-Check whether `anthropic-skills:skill-creator` already covers it — it claims to run skill evals and benchmark performance with variance analysis. Worth twenty minutes before reinventing a runner.
+Checked before building the runner. It does **not** cover what this harness needs:
+
+- **No run-to-run variance.** It spawns one with-skill and one baseline run per case per iteration. The `mean ± stddev` in its benchmark is computed across *different evals*, not across repeated runs of the same eval. The only place it repeats a query is description optimization, which runs each 3× to measure *triggering*, not output stability.
+- **Assertions are LLM-judged**, represented as text strings graded into `{text, passed, evidence}`. It does advise writing scripts for programmatically-checkable assertions, so `invariants.py` could feed it through an adapter — but that is integration work, not a plug-in point.
+- **Different shape of loop.** Its cycle is human-in-the-loop skill *development* — draft, run, review in a browser, improve. This harness is automated regression detection. Both are useful; neither substitutes for the other.
+
+Two things from it are worth adopting:
+
+**Baseline comparison, and this was a genuine gap.** It runs every case both with and without the skill. That answers a question nothing here asked: *does the skill actually beat no-skill?* All four accountability axes assume it adds value, and no invariant can detect that it doesn't — a naive run producing a comparable contract would pass every check we have. `harness/generate.py --baseline` now supports this.
+
+**Triggering is untested.** `run_loop.py` optimizes a skill's description against should-trigger / should-not-trigger queries. Whether this skill fires when it should — and stays quiet when it shouldn't — has never been measured, and its description is long and deliberately pushy. Worth running once the skill itself is stable.
+
+## Before building the Generation runner
