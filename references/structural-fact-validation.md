@@ -30,6 +30,23 @@ Unchanged from before: §2.1 (root Tag/Control), §2.2 (Order/Position), §6.1�
 
 No regex patterns this time — the expectations are role/attribute/tag facts about a tree, not string shapes to match in a file.
 
+### `rootElement` is written in tree-observable terms, not in §2.1's own words
+
+§2.1's Tag/Control column names a **native construct** — `<dialog>`, SwiftUI `Picker` with `.pickerStyle(.segmented)`, Compose `TabRow`. On Web that construct appears in the tree literally, so extraction is a copy. **On every native platform it does not**: no accessibility-tree dump anywhere contains the string `Picker`, because the tree exposes what the construct *became*, not what produced it — which is the whole point of checking outcome rather than source.
+
+So extracting `rootElement` from §2.1 involves a translation step, and leaving it unstated means two runs of Phase 6 produce different `expect` values for the same contract — which quietly makes the artifact non-comparable and any test built on it flaky for a reason that has nothing to do with the implementation. Use this mapping:
+
+| Platform | Tree | `expect` is written as | Worked example |
+|---|---|---|---|
+| Web | live DOM | the tag, or the ARIA role when the contract's compliance condition is the role | `tag=dialog`, `role=tablist` |
+| Android | `uiautomator dump` XML | the node `class`, or the semantics role where the dump exposes it | `class=android.widget.Button`, `role=Tab` |
+| iOS | XCUITest `app.debugDescription` | the `XCUIElement.ElementType` the construct resolves to | `elementType=segmentedControl` |
+| macOS | AX API | the `NSAccessibility` role | `role=AXRadioGroup` |
+
+**When the mapping isn't certain, say so in the file rather than guessing a plausible value.** A construct with no confidently known tree representation should be written as `expect: "unresolved"` with a note naming the construct — an honest gap that a human closes once, and that never silently becomes a wrong expectation every future run inherits. Windows and Linux have no row above because this file's Step 2 has no verified tree-acquisition method for them yet; contracts targeting those platforms get `unresolved` until one exists.
+
+Note what this mapping is *not*: a claim that the named construct is interchangeable with anything else producing the same tree node. §2.1 already settles that question — the native element **is** the compliance condition. This only says how to observe it.
+
 ## Step 2 — obtain the real rendered tree, per platform
 
 | Platform | How to get a real tree to check |
