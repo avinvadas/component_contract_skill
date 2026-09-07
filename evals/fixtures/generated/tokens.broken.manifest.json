@@ -1,0 +1,41 @@
+{
+  "source": "tokens.css",
+  "convention": {
+    "row": "kebab",
+    "depth": 0,
+    "file_prefix": "--"
+  },
+  "purpose": "Negative control for the Validation suite. The clean file must yield zero findings; this file must yield exactly these, one per finding category.",
+  "mutations": [
+    {
+      "was": "--primitive-color-gray-500",
+      "now": "--primitive_color_gray_500",
+      "expect_finding": "Inconsistent convention",
+      "why": "snake in a build locked to kebab"
+    },
+    {
+      "was": "--primitive-color-blue-500",
+      "now": "--color-blue-500",
+      "expect_finding": "Inconsistent scoping",
+      "why": "depth 1 in a build locked to depth 0"
+    },
+    {
+      "was": "--primitive-color-red-500",
+      "now": "--primitive-color-500-red",
+      "expect_finding": "Unknown token / structural mismatch",
+      "why": "words reordered; no depth produces this shape"
+    },
+    {
+      "was": "--primitive-color-green-500",
+      "now": "--base-color-green-500",
+      "expect_finding": "Unknown token / structural mismatch",
+      "why": "'base' is not a canonical word at any depth"
+    },
+    {
+      "was": "--primitive-color-amber-500",
+      "now": "--primitive-color-turquoise-500",
+      "expect_finding": "Unknown token / structural mismatch",
+      "why": "token does not exist in the tree"
+    }
+  ]
+}

@@ -63,6 +63,8 @@ Nothing here is harness work; it is removing things that would make a harness te
 - [x] **Run the token-name algorithm for the first time.** Done against the 162-token fixture via `harness/tokencheck.py`. Core algorithm confirmed sound — every documented worked example passes, reordered and substituted names fail at every row and depth. Three defects found and fixed in the spec: silent wrong-lock, row ambiguity, depth non-injectivity.
 - [x] **Implement Steps 4-5 in the harness.** `harness/tokenlock.py`, with self-tests that exercise each of the three fixed defects. Surfaced one further spec gap: the two blocking conditions are independent and must both be reported.
 - [x] **Resolve the `rootElement` translation gap.** §2.1 names a native construct; native trees never contain that string. Mapping now specified per platform, with `unresolved` as the honest output when it isn't known.
+- [x] **Exercise `generated_downstream: true` end to end.** `harness/run_token_validation.py` against real generated fixtures for two platforms on different conventions: 324 correct names produce zero findings, 5 injected defects are all caught with none extra. First negative control in the repo.
+- [x] **Retarget the two platform-blocked eval cases.** Toast to Web/Android/macOS (preserves its regression and closes the macOS gap), RadioGroup to Web/iOS; the Windows and Linux regressions are parked in `evals.json` with what unblocks them.
 - [ ] **Regenerate SegmentedControl** under current spec as a baseline; the committed one predates several spec changes.
 - [ ] Decide whether `contracts/` and its build artifacts belong in the repo.
 
