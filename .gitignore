@@ -1,1 +1,5 @@
 .DS_Store
+
+# Past test generations — output of running the skill, not part of it.
+# Reference outputs used by the testing environment live under evals/fixtures/.
+contracts/
