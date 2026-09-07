@@ -1,0 +1,113 @@
+"""Generation store — stored skill outputs, keyed on what produced them.
+
+The problem this solves is the one the old contracts/ directory had: outputs
+accumulated with no record of which version of the skill produced them, so
+nobody could tell a current sample from a stale one without reading both. A
+generation here carries its provenance, and staleness is detected rather than
+noticed.
+
+Layout:
+
+    evals/generations/<case>/<skill-hash>/run-<n>/
+        provenance.json     case, skill hash, run index, date, model
+        <Component>.md
+        <Component>.<Platform>.structure.json
+        <Component>.<Platform>.schema.json      (when the case requested one)
+
+The skill hash covers SKILL.md AND every reference file, because a reference
+change can change output just as much as a SKILL.md change can. Any stored
+generation whose hash differs from the current one is stale by construction —
+`python3 genstore.py` reports which, and that is the signal to regenerate.
+
+Cost note: generation is ~100% of the harness's cost (roughly 37K in / 14K out
+per run) while assertions are free local Python. So generations are produced
+once and asserted against many times; only a change to the skill itself
+invalidates them. Iterating on assertions costs nothing.
+"""
+import hashlib, json, os, sys, datetime
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
+GENS = os.path.join(ROOT, "evals", "generations")
+
+
+def skill_inputs():
+    """Every file whose content can change what the skill produces."""
+    files = [os.path.join(ROOT, "SKILL.md")]
+    refs = os.path.join(ROOT, "references")
+    for dirpath, _, names in os.walk(refs):
+        for n in sorted(names):
+            if n.endswith(".md"):
+                files.append(os.path.join(dirpath, n))
+    return sorted(files)
+
+
+def skill_hash():
+    """Content hash of the skill as a whole. Path-relative so it is stable
+    across checkouts; sorted so it is independent of filesystem order."""
+    h = hashlib.sha256()
+    for f in skill_inputs():
+        h.update(os.path.relpath(f, ROOT).encode())
+        h.update(open(f, "rb").read())
+    return h.hexdigest()[:12]
+
+
+def generation_dir(case, run, hash_=None):
+    return os.path.join(GENS, case, hash_ or skill_hash(), f"run-{run}")
+
+
+def write_provenance(case, run, model="unknown", extra=None):
+    d = generation_dir(case, run)
+    os.makedirs(d, exist_ok=True)
+    rec = {
+        "case": case,
+        "run": run,
+        "skill_hash": skill_hash(),
+        "generated": datetime.date.today().isoformat(),
+        "model": model,
+        "note": "Regenerate when skill_hash no longer matches the current skill.",
+    }
+    if extra:
+        rec.update(extra)
+    json.dump(rec, open(os.path.join(d, "provenance.json"), "w"), indent=2)
+    return d
+
+
+def stored():
+    """Every stored generation, as (case, hash, run, path)."""
+    out = []
+    if not os.path.isdir(GENS):
+        return out
+    for case in sorted(os.listdir(GENS)):
+        cdir = os.path.join(GENS, case)
+        if not os.path.isdir(cdir):
+            continue
+        for h in sorted(os.listdir(cdir)):
+            hdir = os.path.join(cdir, h)
+            if not os.path.isdir(hdir):
+                continue
+            for run in sorted(os.listdir(hdir)):
+                p = os.path.join(hdir, run)
+                if os.path.isdir(p):
+                    out.append((case, h, run, p))
+    return out
+
+
+def report():
+    cur = skill_hash()
+    rows = stored()
+    print(f"current skill hash: {cur}  ({len(skill_inputs())} files)")
+    if not rows:
+        print("\nno generations stored yet — nothing to compare against.")
+        print("This is expected until the skill is run against the corpus.")
+        return True
+    fresh = [r for r in rows if r[1] == cur]
+    stale = [r for r in rows if r[1] != cur]
+    print(f"\n{len(fresh)} current, {len(stale)} stale")
+    for case, h, run, _ in stale:
+        print(f"  STALE  {case}/{run}  produced by {h}, skill is now {cur}")
+    return not stale
+
+
+if __name__ == "__main__":
+    sys.exit(0 if report() else 1)

@@ -30,6 +30,14 @@ Keeping these apart is what stops corpus growth from being linear in effort.
 
 **Case regressions** are the one specific mistake a case exists to catch — Drawer's "convention, not interception"; Toast's "3 rows, not 6". The current `evals.json` already names these well; they are the part that must be authored per case.
 
+## Storing generations
+
+Generation is ~100% of the harness's cost — roughly 37K in / 14K out per run — while assertions are free local Python. So generations are produced once and asserted against many times, and **only a change to the skill invalidates them**. Iterating on assertions costs nothing, which matters because assertions get iterated on a lot.
+
+`harness/genstore.py` keys each stored output on a content hash of **SKILL.md plus every reference file** — a reference change can alter output just as much as a SKILL.md change can. Any generation whose hash differs from the current skill is stale by construction, and the harness says so rather than leaving someone to notice. That is the specific failure the old `contracts/` directory had: outputs with no record of what produced them, indistinguishable from current ones without reading both.
+
+Run-1 of each case is committed as the reviewable reference, so a diff shows what a skill change actually did to real output. Runs 2+ are gitignored — they exist only to measure variance and would be noise in review.
+
 ## Determinism
 
 Contract prose legitimately varies between correct runs, so **assertions are property-based, never diff-based**. For prose-shaped expectations an LLM judge with one specific named regression is more robust than regexing markdown tables; it is also noisier, which is what variance handles.

@@ -1,7 +1,8 @@
 """Run every self-verifying check in the harness. Exit non-zero if any fails."""
 import subprocess, sys, os
 HERE = os.path.dirname(os.path.abspath(__file__))
-CHECKS = [("token lock rules (Steps 4-5)", "tokenlock.py"),
+CHECKS = [("generation store freshness", "genstore.py"),
+          ("token lock rules (Steps 4-5)", "tokenlock.py"),
           ("token validation end-to-end", "run_token_validation.py"),
           ("contract invariants", "invariants.py")]
 fail = []
