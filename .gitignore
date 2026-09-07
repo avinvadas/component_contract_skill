@@ -7,5 +7,5 @@ contracts/
 # Generation store: keep run-1 per case as the reviewable reference — diffs against
 # it show what a skill change actually did. Runs 2+ exist only to measure variance
 # and would be noise in review.
-evals/generations/*/*/run-[2-9]/
-evals/generations/*/*/run-[1-9][0-9]/
+evals/generations/*/*/*/run-[2-9]/
+evals/generations/*/*/*/run-[1-9][0-9]/

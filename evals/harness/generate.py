@@ -28,6 +28,20 @@ import genstore
 
 EVALS = os.path.join(ROOT, "evals", "evals.json")
 
+# Two different measurements, not one with a parameter:
+#
+#   claude-sonnet-5  production reality — what a user of this skill actually gets.
+#                    This is the default, because that is the honest number.
+#   claude-opus-5    quality ceiling — isolates skill defects from model limits.
+#                    A failure here is the skill's fault, not the model's.
+#
+# The GAP between them is itself a finding. This skill's stated accountability
+# includes "nothing left implicit that an implementer would need to ask about";
+# if it holds on Opus but degrades on Sonnet, the skill is leaning on model
+# capability to fill gaps it should have stated outright. Generations are keyed
+# by model so the two never overwrite each other.
+DEFAULT_MODEL = "claude-sonnet-5"
+
 
 def preflight():
     """The CLI needs its own credentials — a subprocess does not inherit the
@@ -67,15 +81,15 @@ def build_prompt(case, outdir, with_skill):
 
 def run_one(case, slug, run_idx, with_skill=True, model=None, timeout=1800):
     kind = "with_skill" if with_skill else "baseline"
-    outdir = genstore.generation_dir(f"{slug}/{kind}" if not with_skill else slug, run_idx)
+    outdir = genstore.generation_dir(f"{slug}/{kind}" if not with_skill else slug,
+                                     run_idx, model=model or DEFAULT_MODEL)
     if os.path.isdir(outdir):
         shutil.rmtree(outdir)
     os.makedirs(outdir, exist_ok=True)
 
     cmd = ["claude", "-p", build_prompt(case, outdir, with_skill),
-           "--output-format", "json", "--permission-mode", "acceptEdits"]
-    if model:
-        cmd += ["--model", model]
+           "--output-format", "json", "--permission-mode", "acceptEdits",
+           "--model", model or DEFAULT_MODEL]
 
     t0 = time.time()
     r = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT, timeout=timeout)
@@ -92,7 +106,7 @@ def run_one(case, slug, run_idx, with_skill=True, model=None, timeout=1800):
         meta = {"parse_error": True, "stdout_tail": r.stdout[-800:]}
 
     genstore.write_provenance(f"{slug}/{kind}" if not with_skill else slug, run_idx,
-                              model=model or "default",
+                              model=model or DEFAULT_MODEL,
                               extra={"duration_seconds": round(dt, 1),
                                      "exit_code": r.returncode,
                                      "with_skill": with_skill, **meta})
@@ -111,7 +125,7 @@ if __name__ == "__main__":
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--runs", type=int, default=1)
     ap.add_argument("--baseline", action="store_true", help="also run without the skill")
-    ap.add_argument("--model")
+    ap.add_argument("--model", default=DEFAULT_MODEL)
     a = ap.parse_args()
     cases = load_cases()
 
@@ -134,6 +148,7 @@ if __name__ == "__main__":
     todo = list(cases.items()) if a.all else [(a.case, cases[a.case])]
     est = len(todo) * a.runs * (2 if a.baseline else 1)
     print(f"skill hash: {genstore.skill_hash()}")
+    print(f"model: {a.model}")
     print(f"{est} generation(s) — roughly {est * 37}K in / {est * 14}K out\n")
     for slug, case in todo:
         print(f"{case['name']}")

@@ -8,11 +8,16 @@ noticed.
 
 Layout:
 
-    evals/generations/<case>/<skill-hash>/run-<n>/
+    evals/generations/<case>/<skill-hash>/<model>/run-<n>/
         provenance.json     case, skill hash, run index, date, model
         <Component>.md
         <Component>.<Platform>.structure.json
         <Component>.<Platform>.schema.json      (when the case requested one)
+
+Keyed on model as well as skill hash: a Sonnet run and an Opus run of the same
+case are different measurements, not interchangeable samples. The gap between
+them measures how far the skill leans on model capability rather than explicit
+instruction, which for this skill is a defect signal.
 
 The skill hash covers SKILL.md AND every reference file, because a reference
 change can change output just as much as a SKILL.md change can. Any stored
@@ -52,12 +57,16 @@ def skill_hash():
     return h.hexdigest()[:12]
 
 
-def generation_dir(case, run, hash_=None):
-    return os.path.join(GENS, case, hash_ or skill_hash(), f"run-{run}")
+def generation_dir(case, run, hash_=None, model="unknown"):
+    """Keyed on model as well as skill hash. Two models' runs of the same case
+    are different measurements, not interchangeable samples — the whole point of
+    running both is to compare them, which requires that neither overwrite the
+    other."""
+    return os.path.join(GENS, case, hash_ or skill_hash(), model, f"run-{run}")
 
 
 def write_provenance(case, run, model="unknown", extra=None):
-    d = generation_dir(case, run)
+    d = generation_dir(case, run, model=model)
     os.makedirs(d, exist_ok=True)
     rec = {
         "case": case,
@@ -86,10 +95,14 @@ def stored():
             hdir = os.path.join(cdir, h)
             if not os.path.isdir(hdir):
                 continue
-            for run in sorted(os.listdir(hdir)):
-                p = os.path.join(hdir, run)
-                if os.path.isdir(p):
-                    out.append((case, h, run, p))
+            for model in sorted(os.listdir(hdir)):
+                mdir = os.path.join(hdir, model)
+                if not os.path.isdir(mdir):
+                    continue
+                for run in sorted(os.listdir(mdir)):
+                    p = os.path.join(mdir, run)
+                    if os.path.isdir(p):
+                        out.append((case, h, f"{model}/{run}", p))
     return out
 
 

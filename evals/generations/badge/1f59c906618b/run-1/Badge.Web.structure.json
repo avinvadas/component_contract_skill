@@ -1,0 +1,32 @@
+{
+  "component": "Badge",
+  "platform": "Web",
+  "rootElement": {
+    "expect": "tag=div,role=status"
+  },
+  "order": [
+    {
+      "zone": "Label",
+      "expect": "Fixed — centred within badge",
+      "cardinality": "1"
+    }
+  ],
+  "accessibility": {
+    "6.1": [
+      {
+        "element": "Root",
+        "attributes": ["role=\"status\""],
+        "implicit": ["aria-live=\"polite\"", "aria-atomic=\"true\""]
+      }
+    ],
+    "6.2": {
+      "keyboardTriggers": []
+    },
+    "6.3": {
+      "focusTrap": false,
+      "tabIndex": null,
+      "onOpen": null,
+      "onClose": null
+    }
+  }
+}

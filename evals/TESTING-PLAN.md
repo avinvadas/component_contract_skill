@@ -32,9 +32,11 @@ Keeping these apart is what stops corpus growth from being linear in effort.
 
 ## Storing generations
 
-Generation is ~100% of the harness's cost — roughly 37K in / 14K out per run — while assertions are free local Python. So generations are produced once and asserted against many times, and **only a change to the skill invalidates them**. Iterating on assertions costs nothing, which matters because assertions get iterated on a lot.
+Generation is ~100% of the harness's cost — **measured, not estimated: one Badge run on Opus took 263s over 19 turns, reading 763K cached tokens and writing 19K, at $0.98** — while assertions are free local Python. So generations are produced once and asserted against many times, and **only a change to the skill invalidates them**. Iterating on assertions costs nothing, which matters because assertions get iterated on a lot.
 
 `harness/genstore.py` keys each stored output on a content hash of **SKILL.md plus every reference file** — a reference change can alter output just as much as a SKILL.md change can. Any generation whose hash differs from the current skill is stale by construction, and the harness says so rather than leaving someone to notice. That is the specific failure the old `contracts/` directory had: outputs with no record of what produced them, indistinguishable from current ones without reading both.
+
+That measured figure corrects an earlier estimate here of "37K in / 14K out", which assumed a single inference. The skill runs as an agentic loop — 19 turns for the *simplest* case — so context is re-read each turn and cache reads dominate. Plan sweeps on roughly **$1/run on Opus**: the full corpus at N=3 with baselines is 30 runs, so ~$30. Sonnet is the cheaper default for exactly this reason.
 
 Run-1 of each case is committed as the reviewable reference, so a diff shows what a skill change actually did to real output. Runs 2+ are gitignored — they exist only to measure variance and would be noise in review.
 
