@@ -68,9 +68,14 @@ Nothing here is harness work; it is removing things that would make a harness te
 - [ ] **Regenerate SegmentedControl** under current spec as a baseline; the committed one predates several spec changes.
 - [ ] Decide whether `contracts/` and its build artifacts belong in the repo.
 
-### Milestone 1 — the Generation suite
+### Milestone 1 — the Generation suite *(in progress)*
 
-Write the invariants once. Convert each case's prose `expected_output` into invariants + one named regression. Runner executes a case N times and reports pass rate per assertion.
+- [x] **Invariants implemented** — `harness/invariants.py`, seven properties derived from SKILL.md, verified against a conforming fixture (zero violations) and a fixture violating each one (all six categories caught). Building the negative control alongside found two bugs in the checker itself that a positive-only test would have missed.
+- [x] **Unified runner** — `harness/run_all.py`; 3/3 suites passing.
+- [ ] Convert each case's prose `expected_output` into invariants + one named regression.
+- [ ] Execute a case N times and report pass rate per assertion (needs a way to invoke the skill programmatically).
+
+`skill-creator` could not be inspected from disk — it loads on demand — so whether its runner fits is still open. The invariants are ours regardless; the execution layer is kept thin so another runner can be substituted rather than rewritten.
 
 ### Milestone 2 — the Validation suite, Web only
 
