@@ -74,6 +74,8 @@ v1 §4.1 enumerates hover, focus, active, disabled, error, selected, and which a
 
 What v1 bought with one element name, itemised. This is the instrument the rest of the conversion must satisfy.
 
+**The complete catalogue now lives in `v1-implicit-guarantees-catalogue.md`** — all four platforms, every construct v1 names. The entries below are the subset this audit worked through in detail; the catalogue supersedes them and is what a re-run of T1 must measure against.
+
 ### `<button>`
 
 | Free behaviour | Must become |
