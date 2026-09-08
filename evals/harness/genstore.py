@@ -29,7 +29,7 @@ per run) while assertions are free local Python. So generations are produced
 once and asserted against many times; only a change to the skill itself
 invalidates them. Iterating on assertions costs nothing.
 """
-import hashlib, json, os, sys, datetime
+import hashlib, json, os, sys, datetime, socket, getpass, subprocess
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -65,6 +65,29 @@ def generation_dir(case, run, hash_=None, model="unknown"):
     return os.path.join(GENS, case, hash_ or skill_hash(), model, f"run-{run}")
 
 
+def invocation_identity():
+    """Who launched this run, concretely enough to attribute it later.
+
+    provenance.json previously recorded only what the runner *believed* — case,
+    model, skill hash. That is not attribution: two runs of unknown origin once
+    sat in this store looking authoritative, and a comparison was built on them
+    before anyone noticed nobody could say where they came from. A stored
+    generation nobody can trace is not evidence, so record the invocation."""
+    try:
+        head = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT,
+                              capture_output=True, text=True).stdout.strip()
+    except Exception:
+        head = None
+    return {
+        "argv": " ".join(sys.argv),
+        "pid": os.getpid(),
+        "ppid": os.getppid(),
+        "user": getpass.getuser(),
+        "host": socket.gethostname(),
+        "harness_commit": head or "unknown",
+    }
+
+
 def write_provenance(case, run, model="unknown", extra=None):
     d = generation_dir(case, run, model=model)
     os.makedirs(d, exist_ok=True)
@@ -75,6 +98,7 @@ def write_provenance(case, run, model="unknown", extra=None):
         "generated": datetime.date.today().isoformat(),
         "model": model,
         "note": "Regenerate when skill_hash no longer matches the current skill.",
+        "invocation": invocation_identity(),
     }
     if extra:
         rec.update(extra)
@@ -89,7 +113,7 @@ def stored():
         return out
     for case in sorted(os.listdir(GENS)):
         cdir = os.path.join(GENS, case)
-        if not os.path.isdir(cdir):
+        if not os.path.isdir(cdir) or case.startswith("_"):
             continue
         for h in sorted(os.listdir(cdir)):
             hdir = os.path.join(cdir, h)
