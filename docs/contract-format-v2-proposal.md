@@ -23,9 +23,32 @@ All three come from the same root: **the contract states *how* rather than *what
 
 An app shipped on iOS is an iOS app. React Native, a WebView wrapper, Flutter, hand-written Swift — all of them are judged against the same iOS binding, because the person using the app experiences one platform and does not care what rendered it. There is no `ios-react-native` binding and no softer standard for being cross-platform. A technology that cannot meet the iOS requirements fails them.
 
-**This forces the discipline that makes the whole format work: a binding must bind to the platform's observable surface — its accessibility tree, its runtime behaviour — and never to a widget class.** "Expect a `UISegmentedControl`" is not a legal binding, because it describes an implementation. "Expect an element exposing tab semantics" is, because every technology that ships on iOS ultimately produces entries in the same accessibility tree, and that is what a real assistive-technology user meets.
+### What a binding may and may not check
 
-So the React Native question dissolves rather than being accommodated. It was never a question about React Native — it was v1 binding to widget classes instead of outcomes.
+> **Legal:** anything readable from the **rendered artifact**.
+> **Illegal:** anything readable only from **source**.
+
+This is the line, and it is not the same as "never name a control type." On the Web, `tagName` is *in the rendered DOM* — checking that the root is a `<button>` is checking output, exactly as observable as the ARIA role beside it. On iOS, XCUITest exposes `elementType`. Both are legal. What is illegal is a React component name, a SwiftUI view struct, or a Kotlin function name: things that exist only in source and are gone before anything renders.
+
+**This matters because the alternative loses semantic-error detection entirely.** The classic error is a `<div>` patched with `role="button"`, `tabindex="0"` and a keydown handler. Against a semantics-only check it passes — the tree reports a focusable, activatable button. Against a rendered-tag check it fails immediately. A binding forbidden from looking at the tag cannot catch the most common structural defect on the Web, which is exactly what v1's compliance-condition rule was protecting.
+
+So a binding stays free to require a native control where that is the actual requirement. Whether it does is a **policy decision the requirements state**, not something that happens by accident — and a cross-platform technology that cannot meet a strict iOS requirement fails as an iOS app should. What is ruled out is giving it a softer standard of its own, not holding it to a strict one.
+
+### What v1 got for free, and v2 must state
+
+`<button>` in v1 was a one-word promise standing in for a bundle of behaviours — Enter *and* Space both activate, operable before scripting loads, reachable by sequential focus, participates in form submission — **none of which v1 ever tested.** It named the element and trusted the platform for the rest.
+
+v2 makes those explicit requirements, and therefore testable:
+
+| Check | Catches a patched `div` with a button role? |
+|---|---|
+| role alone | no |
+| rendered tagName | yes |
+| Enter *and* Space both activate | yes — most patched divs handle only Enter |
+| operable with scripting disabled | yes, and v1 never checked this |
+| reachable by sequential focus | yes |
+
+v2 is therefore **strictly better if the requirements are complete, and strictly worse if they are lazy.** That is the real trade: v1 bought a bundle of untested guarantees with one word; v2 asks you to name them, and then actually verifies them.
 
 ## Requirement anatomy
 
@@ -158,7 +181,8 @@ One per target. Each binds requirement ids to observables. **The contract above 
   "contract_version": "2.0",
   "observe_via": "rendered DOM + computed accessibility tree",
   "bindings": [
-    { "id": "STR-01", "observe": "role",   "expect": "dialog",        "note": "native <dialog> preferred; role must resolve to dialog" },
+    { "id": "STR-01", "observe": "role",   "expect": "dialog" },
+    { "id": "STR-01", "observe": "tag",    "expect": "dialog", "note": "rendered tagName, not source — a div patched to role=dialog fails here" },
     { "id": "STR-02", "observe": "state",  "expect": "aria-modal=true and background inert" },
     { "id": "STR-03", "observe": "name",   "expect": "accessible name non-empty, sourced from title node" },
     { "id": "STR-04", "observe": "role",   "expect": "heading", "note": "any level; level is out of contract scope" },
