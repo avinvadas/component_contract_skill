@@ -4,7 +4,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 CHECKS = [("generation store freshness", "genstore.py"),
           ("token lock rules (Steps 4-5)", "tokenlock.py"),
           ("token validation end-to-end", "run_token_validation.py"),
-          ("contract invariants", "invariants.py")]
+          ("contract invariants", "invariants.py"),
+          ("stored generations", "check_generations.py")]
 fail = []
 for label, script in CHECKS:
     r = subprocess.run([sys.executable, os.path.join(HERE, script)], capture_output=True, text=True)
