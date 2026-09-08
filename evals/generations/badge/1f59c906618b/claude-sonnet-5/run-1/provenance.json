@@ -1,0 +1,44 @@
+{
+  "case": "badge",
+  "run": 1,
+  "skill_hash": "1f59c906618b",
+  "generated": "2026-09-07",
+  "model": "claude-sonnet-5",
+  "note": "Regenerate when skill_hash no longer matches the current skill.",
+  "duration_seconds": 183.0,
+  "exit_code": 0,
+  "with_skill": true,
+  "total_cost_usd": 1.0237259999999997,
+  "usage": {
+    "input_tokens": 5829,
+    "cache_creation_input_tokens": 86674,
+    "cache_read_input_tokens": 1017430,
+    "output_tokens": 14918,
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 67250,
+      "ephemeral_5m_input_tokens": 19424
+    },
+    "inference_geo": "not_available",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 408,
+        "cache_read_input_tokens": 86298,
+        "cache_creation_input_tokens": 376,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 376,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard"
+  },
+  "num_turns": 16,
+  "session_id": "a30132e4-0d7e-4912-9af4-e679fbb9349b"
+}

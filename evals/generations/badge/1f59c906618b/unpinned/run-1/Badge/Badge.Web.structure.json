@@ -1,0 +1,36 @@
+{
+  "component": "Badge",
+  "platform": "Web",
+  "contract_version": "1.0",
+  "generated": "2026-09-07",
+  "rootElement": { "expect": "tag=span" },
+  "order": [],
+  "orderNote": "§2.2 defines a single zone (Label), so there is no relative order to check. Centring within the badge is a §4.2 Layout Policy rule, not a tree-observable child order.",
+  "accessibility": [
+    {
+      "fact": "badge root is not in the tab order",
+      "expect": "tabindex=absent"
+    },
+    {
+      "fact": "badge root is not hidden from assistive technology",
+      "expect": "aria-hidden=absent"
+    },
+    {
+      "fact": "badge root exposes its label text as its accessible content",
+      "expect": "textContent=non-empty"
+    },
+    {
+      "fact": "badge root is a polite live region when its content updates in place",
+      "expect": "role=status",
+      "condition": "Applies only to the updating-content configuration in §2.1's Root element choice. In the fixed-content configuration the expectation inverts: role must be absent. Which configuration a given instance uses was not established by the interview (see §3.3) — check against the configuration the instance under test is built for, and do not treat the fixed-content case as a miss."
+    },
+    {
+      "fact": "badge root does not use an interrupting live-region role",
+      "expect": "role!=alert"
+    }
+  ],
+  "notes": [
+    "Generated from Badge.md §2.1 (root element), §2.2 (order), and §6.1–§6.3. Check against a real rendered DOM from a running instance, never against source — see references/structural-fact-validation.md.",
+    "§6.1's accessible-name requirement for a numeric badge is deliberately not encoded as an expectation. The contract flags it as unresolved (aria-label on the badge vs. the host component's own name incorporating the count), and encoding either one would turn an open question into a wrong expectation that every future run inherits."
+  ]
+}

@@ -200,6 +200,25 @@ def check_structure(path):
     return []
 
 
+def check_output_shape(rundir, component):
+    """SKILL.md's Output section: every component gets its own directory,
+    [ComponentName]/, holding everything the interview produced. Checked at the
+    directory level because no amount of reading one contract file can tell you
+    the file landed in the wrong place — and a consumer looking for
+    Badge/Badge.md does not find Badge.md."""
+    v, comp = [], os.path.join(rundir, component)
+    loose = [f for f in os.listdir(rundir)
+             if f.startswith(component + ".") and os.path.isfile(os.path.join(rundir, f))]
+    if not os.path.isdir(comp):
+        v.append(Violation("output shape",
+                           f"no {component}/ directory; SKILL.md's Output section requires one"))
+    if loose:
+        v.append(Violation("output shape",
+                           f"{len(loose)} file(s) written loose beside {component}/ "
+                           f"instead of inside it: {', '.join(sorted(loose))}"))
+    return v
+
+
 if __name__ == "__main__":
     FIX = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "fixtures", "contracts")
     man = json.load(open(os.path.join(FIX, "manifest.json")))

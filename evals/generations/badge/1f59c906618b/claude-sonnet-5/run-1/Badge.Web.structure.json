@@ -1,0 +1,9 @@
+{
+  "rootElement": { "expect": "role=status" },
+  "order": [],
+  "accessibility": [
+    { "fact": "root is an advisory status live region", "expect": "role=status" },
+    { "fact": "root's accessible name matches its visible Label text", "expect": "accessibleName=matches visible label text" },
+    { "fact": "root is not part of the tab order", "expect": "not focusable" }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "case": "badge",
+  "run": 1,
+  "skill_hash": "1f59c906618b",
+  "generated": "2026-09-07",
+  "model": "default",
+  "note": "Regenerate when skill_hash no longer matches the current skill.",
+  "duration_seconds": 694.7,
+  "exit_code": 0,
+  "with_skill": true,
+  "total_cost_usd": 1.29533135,
+  "usage": {
+    "input_tokens": 19,
+    "cache_creation_input_tokens": 76014,
+    "cache_read_input_tokens": 1009607,
+    "output_tokens": 35954,
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 74283,
+      "ephemeral_5m_input_tokens": 1731
+    },
+    "inference_geo": "not_available",
+    "iterations": [
+      {
+        "input_tokens": 1,
+        "output_tokens": 485,
+        "cache_read_input_tokens": 94022,
+        "cache_creation_input_tokens": 463,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 463,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard"
+  },
+  "num_turns": 21,
+  "session_id": "a80a4751-4665-426a-8088-45323bf48653"
+}
