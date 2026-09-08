@@ -50,6 +50,52 @@ v2 makes those explicit requirements, and therefore testable:
 
 v2 is therefore **strictly better if the requirements are complete, and strictly worse if they are lazy.** That is the real trade: v1 bought a bundle of untested guarantees with one word; v2 asks you to name them, and then actually verifies them.
 
+## No platform is checked more weakly than another
+
+A requirement is stated once and binds on every platform. What differs is only *how* it is observed — never *how strictly*. Two things enforce that.
+
+### 1. Every binding entry declares its observation method
+
+A binding entry carries a `method`: the specific artifact and tool the check reads. This matters because on several platforms the cheap tool cannot see the fact. `uiautomator dump` exposes a node's class and `content-desc`, but Compose's `heading()` marker has **no representation in that format at all** — it is not a value to compare, the attribute does not exist there. Confirming it needs a Compose instrumented test.
+
+A binding that quietly checked the class instead would report a pass for a requirement it never examined.
+
+### 2. Unverified is a third result, never folded into pass
+
+The harness reports **pass**, **fail**, or **unverified** — and `unverified` is never counted as satisfied. If a binding declares a method the run could not perform (no UI test target, no Accessibility permission granted, no instrumented test available), that requirement is reported as unchecked on that platform, by name.
+
+This is the whole guard. A platform whose tooling is harder ends up with *visible gaps*, not with a quietly lower bar. The repo already documents two such ceilings from hands-on runs — iOS needing a real XCUITest target, Android needing an instrumented test for semantics — and today those are prose. Under v2 they become machine-visible per requirement.
+
+### The strongest available check, per platform
+
+For each `observe` type, this is the highest-fidelity thing readable from the rendered artifact. A binding should use this level, not a weaker proxy that happens to be cheaper.
+
+| observe | Web | iOS | macOS | Android |
+|---|---|---|---|---|
+| **identity** | rendered `tagName` | `XCUIElement.elementType` | `AXRole` + `AXSubrole` | node class, plus Compose `Role` |
+| **role** | *computed* ARIA role, not the attribute | accessibility traits | `AXRole` | Compose `Role` |
+| **name** | full accessible-name computation | `accessibilityLabel` | `AXTitle` / `AXDescription` | `contentDescription` / `text` |
+| **state** | computed `aria-*` state | traits + `accessibilityValue` | `AXValue` / `AXEnabled` | `stateDescription`, `checked`, `selected` |
+| **order** | DOM child order | element order in the tree | `AXChildren` order | node index order |
+| **focus** | `activeElement`, `:focus-visible` | `hasKeyboardFocus` | `AXFocused` | `isFocused` |
+| **announcement** | live region fires an AT event | announcement actually posted | `AXAnnouncementRequested` | live region fires a TalkBack event |
+
+Two notes on reading that table. **Computed, not authored** — the Web row says *computed* ARIA role deliberately: reading the `role` attribute checks what someone typed, while the computed role checks what the browser resolved, which is what assistive technology receives. The same applies everywhere. And **identity is a separate row from role** on purpose: that separation is what catches a generic element patched to report the right role.
+
+### Method availability, and what it costs
+
+| method | Platform | Available how | Known ceiling |
+|---|---|---|---|
+| `dom` | Web | headless browser | none — richest surface |
+| `axtree` | Web | computed accessibility tree | none |
+| `xcuitest` | iOS | real UI-test target in an Xcode project | public `AXUIElement` cannot reach a Simulator guest app; a UI-test target is required, not optional |
+| `axapi` | macOS | `NSAccessibility` | needs one-time Accessibility permission, granted by a human |
+| `uiautomator` | Android | `adb shell uiautomator dump` | cannot see Compose semantics — no `heading()`, no `Role` |
+| `compose-semantics` | Android | instrumented test | heavier than an adb command; the only way to reach the above |
+| `interaction` | all | drive the running instance | the only method for any `behavior` requirement |
+
+Nothing here is a reason to lower a requirement. It is a reason for a run to report **unverified** and say which method it lacked.
+
 ## Requirement anatomy
 
 Every requirement carries five fields, so it is readable as prose and parseable as data:
@@ -181,14 +227,14 @@ One per target. Each binds requirement ids to observables. **The contract above 
   "contract_version": "2.0",
   "observe_via": "rendered DOM + computed accessibility tree",
   "bindings": [
-    { "id": "STR-01", "observe": "role",   "expect": "dialog" },
-    { "id": "STR-01", "observe": "tag",    "expect": "dialog", "note": "rendered tagName, not source — a div patched to role=dialog fails here" },
-    { "id": "STR-02", "observe": "state",  "expect": "aria-modal=true and background inert" },
-    { "id": "STR-03", "observe": "name",   "expect": "accessible name non-empty, sourced from title node" },
-    { "id": "STR-04", "observe": "role",   "expect": "heading", "note": "any level; level is out of contract scope" },
-    { "id": "CMP-06", "observe": "order",  "expect": ["icon","title","body","footer","close"] },
-    { "id": "BEH-02", "observe": "event",  "trigger": "key:Escape", "expect": "dismiss event fires" },
-    { "id": "ACC-02", "observe": "focus",  "trigger": "Tab x N", "expect": "focus never leaves subtree" }
+    { "id": "STR-01", "observe": "identity", "method": "dom",         "expect": "tagName=dialog", "note": "rendered tag, not source — a div patched to role=dialog fails here" },
+    { "id": "STR-01", "observe": "role",     "method": "axtree",      "expect": "computed role = dialog" },
+    { "id": "STR-02", "observe": "state",    "method": "axtree",      "expect": "modal, and nothing outside is in the a11y tree" },
+    { "id": "STR-03", "observe": "name",     "method": "axtree",      "expect": "computed accessible name non-empty, sourced from the title node" },
+    { "id": "STR-04", "observe": "role",     "method": "axtree",      "expect": "computed role = heading", "note": "any level; level is out of contract scope" },
+    { "id": "CMP-06", "observe": "order",    "method": "dom",         "expect": ["icon","title","body","footer","close"] },
+    { "id": "BEH-02", "observe": "event",    "method": "interaction", "trigger": "key:Escape", "expect": "dismiss event fires" },
+    { "id": "ACC-02", "observe": "focus",    "method": "interaction", "trigger": "Tab x N",    "expect": "focus never leaves the subtree" }
   ]
 }
 ```
@@ -202,9 +248,10 @@ One per target. Each binds requirement ids to observables. **The contract above 
   "contract_version": "2.0",
   "observe_via": "XCUITest accessibility tree",
   "bindings": [
-    { "id": "STR-01", "observe": "role",  "expect": "element is a modally-presented surface" },
-    { "id": "STR-02", "observe": "state", "expect": "elements outside the sheet are not accessibility-visible" },
-    { "id": "STR-04", "observe": "role",  "expect": "header trait present", "note": "iOS heading is binary; STR-04 fully satisfied" },
+    { "id": "STR-01", "observe": "identity", "method": "xcuitest", "expect": "elementType is a modally-presented surface" },
+    { "id": "STR-02", "observe": "state",    "method": "xcuitest", "expect": "elements outside the sheet are not accessibility-visible" },
+    { "id": "STR-03", "observe": "name",     "method": "xcuitest", "expect": "accessibilityLabel non-empty, sourced from the title" },
+    { "id": "STR-04", "observe": "role",     "method": "xcuitest", "expect": "header trait present", "note": "iOS heading is binary; STR-04 fully satisfied, not approximated" },
     { "id": "BEH-02", "observe": "event", "trigger": "gesture:swipe-down", "expect": "dismiss event fires",
       "note": "iOS standard dismissal is the sheet drag, not a key" },
     { "id": "ACC-05", "observe": "announcement", "trigger": "open",
