@@ -128,3 +128,26 @@ Two things from it are worth adopting:
 **Triggering is untested.** `run_loop.py` optimizes a skill's description against should-trigger / should-not-trigger queries. Whether this skill fires when it should — and stays quiet when it shouldn't — has never been measured, and its description is long and deliberately pushy. Worth running once the skill itself is stable.
 
 ## Before building the Generation runner
+
+---
+
+## Open proposal — classify each manifestation row as state or behavior
+
+**Status: proposed, not implemented.** Raised 2026-09-08; recorded here so it is not lost.
+
+SKILL.md's treatment-2 fidelity rule currently frames a platform's difference as a deficiency — *"can't fully carry what the intent requires... or is only approximated."* That is the wrong lens when a platform meets the same intent by a different mechanism rather than a weaker one. iOS has no declarative live region; it posts an announcement when a value changes. That fully achieves "the user is informed without focus moving" — it is a different axis, not an inferior match, and recording it as approximate is inaccurate.
+
+The proposal is to have each manifestation row declare what **kind** of fact it is:
+
+- **State** — a property present in the tree at rest (`aria-live="polite"`, `liveRegion = Polite`). Verifiable by snapshot.
+- **Behavior** — something that must happen at a moment (iOS posting an announcement). Verifiable only by triggering and observing.
+
+Three consequences, each fixing a current defect:
+
+1. Fidelity is measured against the intent, not against the other rows' shape — so a different-mechanism match records cleanly, and "only approximated" is reserved for genuine shortfalls.
+2. `structure.json` stops implying a node exists where none can. Its presence check looks for a node in a snapshot; a behavioral row has none, and today would be either silently omitted or written as an expectation that always fails.
+3. Specificity is bounded by the platform rather than levelled across platforms. "Post an announcement when the value changes" is the complete requirement on iOS, not a vaguer version of the Web one.
+
+This is general rather than an iOS special case, and it tells the harness which rows it can verify from a snapshot at all — a distinction Milestone 2 needs regardless.
+
+Touches: treatment 2's fidelity paragraph in SKILL.md, the §2.1/§6.1 template notes, and `structural-fact-validation.md`'s extraction rules.
