@@ -14,12 +14,18 @@ All three come from the same root: **the contract states *how* rather than *what
 
 ## The v2 split
 
-> The contract states requirements. A binding file states how each requirement is observed on one platform, in one rendering technology.
+> The contract states requirements. A binding file states how each requirement is observed on one platform — whatever technology produced it.
 
 - **`[Component].md`** — platform-neutral. Every requirement is a testable claim about observable outcomes. No markup, no API, no framework.
-- **`[Component].[target].binding.json`** — one per *target*, where a target is platform **plus rendering technology**: `web`, `ios-swiftui`, `ios-react-native`, `ios-webview`, `android-compose`. Binds each requirement id to what a test must look at on that target.
+- **`[Component].[platform].binding.json`** — one per platform: `web`, `ios`, `macos`, `android`. Binds each requirement id to what a test must observe there.
 
-This solves all three problems at once. React Native is not a compliance question any more — it is a different binding of the same requirements. A hybrid is a target like any other. And a platform that meets a requirement by a different mechanism binds it differently without the contract calling it approximate.
+### Rendering technology is not an axis
+
+An app shipped on iOS is an iOS app. React Native, a WebView wrapper, Flutter, hand-written Swift — all of them are judged against the same iOS binding, because the person using the app experiences one platform and does not care what rendered it. There is no `ios-react-native` binding and no softer standard for being cross-platform. A technology that cannot meet the iOS requirements fails them.
+
+**This forces the discipline that makes the whole format work: a binding must bind to the platform's observable surface — its accessibility tree, its runtime behaviour — and never to a widget class.** "Expect a `UISegmentedControl`" is not a legal binding, because it describes an implementation. "Expect an element exposing tab semantics" is, because every technology that ships on iOS ultimately produces entries in the same accessibility tree, and that is what a real assistive-technology user meets.
+
+So the React Native question dissolves rather than being accommodated. It was never a question about React Native — it was v1 binding to widget classes instead of outcomes.
 
 ## Requirement anatomy
 
@@ -51,7 +57,7 @@ component: Modal
 version: 2.0
 status: Draft
 last_updated: 2026-09-08
-targets: [web, ios-swiftui, android-compose]
+platforms: [web, ios, android]
 ---
 
 # Component Contract: Modal
@@ -62,7 +68,7 @@ A surface that presents focused content over the rest of the interface and preve
 interaction with it until dismissed.
 
 Everything below is a requirement. Nothing below names a platform, a markup element,
-or an API — that binding lives in the per-target files.
+or an API — that binding lives in the per-platform files.
 
 ## 2. Structure
 
@@ -77,7 +83,7 @@ What the component *is*, independent of what it contains.
 
 > STR-04 states the title is a heading. It deliberately does not state a heading *level* —
 > level is a property of the document the component is mounted in, which this contract
-> cannot know. Targets whose platform has no level concept satisfy this fully.
+> cannot know. Platforms with no level concept satisfy this fully.
 
 ## 3. Composition
 
@@ -163,11 +169,11 @@ One per target. Each binds requirement ids to observables. **The contract above 
 }
 ```
 
-### `Modal.ios-swiftui.binding.json`
+### `Modal.ios.binding.json`
 
 ```json
 {
-  "target": "ios-swiftui",
+  "target": "ios",
   "contract": "Modal.md",
   "contract_version": "2.0",
   "observe_via": "XCUITest accessibility tree",
@@ -184,32 +190,13 @@ One per target. Each binds requirement ids to observables. **The contract above 
 }
 ```
 
-### `Modal.ios-react-native.binding.json` — the case v1 could not express
-
-```json
-{
-  "target": "ios-react-native",
-  "contract": "Modal.md",
-  "contract_version": "2.0",
-  "observe_via": "XCUITest accessibility tree",
-  "bindings": [
-    { "id": "STR-01", "observe": "role", "expect": "element exposes modal semantics",
-      "note": "renders a generic view with accessibilityViewIsModal, not a UIKit sheet class. The requirement is the exposed semantic, so this passes." },
-    { "id": "STR-04", "observe": "role", "expect": "header trait present" },
-    { "id": "ACC-06", "observe": "state", "trigger": "VoiceOver navigation",
-      "expect": "every interactive zone reachable",
-      "note": "a generic view does not inherit native control behaviour for free — this binding must be tested, not assumed." }
-  ]
-}
-```
-
-The contract did not change. React Native is not more or less compliant — it is a different binding, tested on its own terms.
+Note what is *not* in that file: any mention of `.sheet`, `UIViewController`, or any other class. Every expectation is phrased against what the accessibility tree exposes. That is what lets a React Native or WebView-hosted implementation be tested by the identical binding — it either produces those semantics or it does not, and if it does not, it fails as an iOS app should.
 
 ---
 
 ## What this buys
 
-**One source of intent.** The `.md` is the only place a requirement is stated. Adding a target adds a file; it never edits the contract.
+**One source of intent.** The `.md` is the only place a requirement is stated. Adding a platform adds a file; it never edits the contract.
 
 **Requirements survive platform churn.** A new SwiftUI API changes a binding, not the contract.
 
@@ -223,13 +210,14 @@ The contract did not change. React Native is not more or less compliant — it i
 
 **The contract can no longer tell an implementer what to type.** v1's §2.1 handed you `<dialog aria-modal="true">`. v2 hands you "exposed as a modal surface" and expects the binding, or the implementer's platform knowledge, to supply the rest. For a skill whose stated promise is that the reader *"does not need to know HTML, ARIA, or native accessibility APIs"*, this is a real regression in one direction — and needs a decision, not a hand-wave. The likely answer is that the binding file becomes the implementer's reference, which means bindings must be generated with the same care §2.1 rows are today.
 
-**More files.** One contract plus N bindings, where N counts rendering technologies, not platforms.
+**More files.** One contract plus one binding per platform — the same count v1 already produces in `structure.json` files.
 
 **The role vocabulary must be maintained.** A closed set is what makes binding possible; it also means an archetype outside the set has nowhere to go until the set grows.
 
 ## Open questions
 
-1. Does the interview change? Probably not much — it already asks intent-level questions. But Q2 now asks for *targets*, not platforms.
+1. Does the interview change? Probably not much — it already asks intent-level questions, and Q2 still asks for platforms.
 2. Do bindings get generated per component, or once per target as a reusable mapping? Much of a binding is archetype-level, not component-level.
 3. What happens to the existing `structure.json`? It becomes the binding file, with a wider remit.
-4. Is `required: always` ever conditional on target? It should not be — a requirement true only on some platforms is a sign it was written at the wrong level.
+4. Is `required: always` ever conditional on platform? It should not be — a requirement true only on some platforms is a sign it was written at the wrong level.
+5. **What replaces §2.1's compliance-condition rule?** v1 says the named native element *is* the condition, not one option among role-equivalents — imported from the first rule of ARIA use. Under v2 that rule cannot survive as written, because bindings name outcomes rather than elements. The concern behind it is real, though: a generic view patched with semantics does not inherit the keyboard handling, Dynamic Type, and rotor behaviour a native control gives for free. The answer is probably that those become their own explicit requirements rather than being smuggled in by naming a class — which is more honest anyway, since today they are assumed rather than tested.
