@@ -5,6 +5,39 @@
 `references/` holds **external standards** — WAI-ARIA, WCAG, HIG, Material, UIA. A contract
 never reads them. They are the source material from which the layer below is *authored*, once.
 
+## Where opinion is allowed to live
+
+The risk in a shipped vocabulary is that the skill starts telling a design system what to
+think. The boundary that prevents it is already in `v1-implicit-guarantees-catalogue.md`:
+
+> an entry belongs here only if the platform provides it *automatically*, without the
+> implementer doing anything.
+
+An archetype bundle is therefore **not** an opinion about good design. It is an inventory of
+what a platform gives you free, and therefore what you must reproduce yourself if you do not
+use the native control. That is a factual claim about platforms, checkable against their
+documentation, and wrong in a way that can be demonstrated.
+
+**The skill ships facts about platforms. The design system ships opinions** — in
+`system/policy.md`, which is shipped blank.
+
+Four of the five vocabularies below describe the substrate rather than design: `observe` is
+what a platform's accessibility layer exposes, `capabilities` derives from it, `expect` is a
+minimal comparison algebra, `conditions` is a set of named predicates. If one is incomplete
+that is a bug, not a stance.
+
+### Where the skill *is* opinionated, stated plainly
+
+Not neutrality, and pretending otherwise would be worse than admitting it. The six chapters
+are a taxonomy of concerns. The three prop categories are a stance. Mandatory divergence
+reasons are a stance. So is the three-state result, and so is refusing to let a requirement
+be dropped silently.
+
+These are opinions about **documentation practice**, not about design — a design system can
+disagree with every aesthetic and compositional choice it makes and still use this format.
+But they are opinions, and a team that rejects them should know that up front rather than
+discover it in chapter four.
+
 ## Three layers, three owners
 
 | Layer | Contents | Owner | Changes when |
@@ -71,11 +104,23 @@ hardware_keyboard:
 `requires_prop` is a real lint rule the pipeline example would already fail without: a
 condition naming a prop no chapter declares is a dangling reference.
 
-### `roles.yml`
+### ~~`roles.yml`~~ — deleted; the archetype library *is* the role registry
 
-The closed role set, each with what it denotes on each platform — the concept, never the
-attribute. `dialog` means "exposed as a modal surface", satisfied by `<dialog>`, by a trait,
-by a pane title.
+A closed role set is the one vocabulary here that is genuinely a **taxonomy**, and taxonomies
+are opinions. Naming the set *button, link, tab, dialog, heading, status…* claims what kinds
+of thing components are — imported wholesale from ARIA, a web taxonomy applied to native. It
+has already failed once: `combobox` is not in it.
+
+So it does not exist as a separate list. An archetype already names a role; the role
+vocabulary is nothing more than **the index of archetypes that exist**. Adding an archetype
+adds a role. `text` and `image` become archetypes with near-empty bundles, which is legal —
+`tab` already proves an empty bundle is a valid outcome.
+
+**The set is then closed by cost, not by decree.** Add any archetype you like; the price is
+stating what it means on each platform you target, which is work required before anything
+could verify it anyway. It is not a vocabulary you are constrained to — it is a registry of
+concepts whose cross-platform meaning has been established, extended by doing the
+establishing.
 
 ### `expect.yml`
 
@@ -185,8 +230,8 @@ whether the role set is complete.
 
 In order:
 
-1. `system/vocabulary/` — all five files. Nothing else can be written against a vocabulary
-   that is still implicit.
+1. `system/vocabulary/` — four files, not five. Nothing else can be written against a
+   vocabulary that is still implicit.
 2. The provenance convention applied to tier 1, so the audit trail exists from the first
    archetype rather than being retrofitted.
 3. `system/policy.md` as a template, with the decision list drawn from T1's G5 and G6 —
