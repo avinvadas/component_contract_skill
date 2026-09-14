@@ -26,6 +26,59 @@ what a platform's accessibility layer exposes, `capabilities` derives from it, `
 minimal comparison algebra, `conditions` is a set of named predicates. If one is incomplete
 that is a bug, not a stance.
 
+### When the platform does not provide it
+
+The scope rule says a bundle entry must be something the platform gives automatically. That
+raises the obvious question, and it hides three different situations.
+
+**Nothing provides it anywhere.** Tabs: roving focus, arrow-key movement, panel association —
+free on no platform, as the catalogue records explicitly. Still a requirement, just not an
+*inherited* one. So a bundle holds two kinds of entry:
+
+| Kind | Meaning | Provenance |
+|---|---|---|
+| **inherited** | the platform provides it; you must reproduce it if you substitute | `catalogue:Web/button` |
+| **authored** | nobody provides it; every implementation builds it | `apg:tabs` · `hig:...` · `material:...` |
+
+Both cite something outside the skill. That is what keeps an authored requirement from being
+our opinion — it is a published convention, not a preference.
+
+**Some platforms provide it, others do not — but the concept exists everywhere.**
+**"Not free" does not mean "not required."** Live regions are declarative on Android and
+imperative on iOS; both satisfy *"opening is announced"*. The requirement binds identically —
+iOS simply requires code where Android requires a modifier. Free-ness decides where a
+requirement is **sourced**, never whether it binds.
+
+**The concept has no referent at all.** `binds: false` with a reason. The test is referent,
+not difficulty: *"no platform-level form model exists on iOS"* qualifies; *"this is hard on
+Android"* does not.
+
+### The decision procedure
+
+```
+Is it true of every component of this archetype?
+├─ no  → component-local requirement, in the contract
+└─ yes → Does some platform provide it automatically?
+         ├─ yes → archetype bundle, provenance = catalogue
+         └─ no  → Does a published standard or convention specify it?
+                  ├─ yes → archetype bundle, provenance = that standard
+                  └─ no  → it is an opinion → policy.md, or the contract
+```
+
+### State it where every platform has a referent
+
+The positive form of the scope rule, and it catches a class of problem before it becomes an
+exclusion.
+
+iOS's header trait is binary — there is no level — which is why v3's Modal states *"the title
+is exposed as a heading"* and deliberately not *"as an h2"*. The first binds everywhere; the
+second would have needed a `binds: false` on iOS for no gain.
+
+**If no level of abstraction lets every platform have a referent, the requirement is
+over-specified.** Cheaper to find while writing the requirement than while writing the fourth
+binding — and a `binds: false` that could have been avoided by rewording is a defect in the
+requirement, not an honest exclusion.
+
 ### Where the skill *is* opinionated, stated plainly
 
 Not neutrality, and pretending otherwise would be worse than admitting it. The six chapters
