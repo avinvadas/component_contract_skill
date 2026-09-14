@@ -30,7 +30,7 @@ Not new. It is how every durable integration boundary works.
 In each, the format outlived most of the tools that first implemented it. That is the
 property being bought.
 
-## The four things we have to make
+## The five things we have to make
 
 ### 1. The canonical requirement document
 
@@ -98,6 +98,43 @@ xcresult, Cucumber JSON, SARIF. Every CI system already consumes these.
 If a cross-platform view is wanted later, define a *mapping* from those into one report —
 not a new format that everyone must emit.
 
+### 5. A conformance suite for verifiers
+
+**Who adjudicates the checklist:** the verifier does. It observes, compares against `expect`,
+and reports in its own format. It has to work that way — a verifier that reports raw
+observations for something central to judge is v3's manifest, which this proposal deletes.
+
+That raises the obvious question: if every verifier does its own comparison, what stops a
+lenient or buggy one from reporting green? Nothing, unless the format ships a suite that
+validates implementations. Every interchange format that survived has one — the **JSON
+Schema Test Suite** is the closest analogue, a shared corpus of schema + instance + expected
+result that every validator runs to claim conformance. Without it a format grows dialects
+within two years.
+
+Two halves, with very different costs:
+
+**Comparison conformance — platform-neutral, nearly free.** Given *these* observations and
+*this* `expect`, what is the verdict? Pure fixture data, shared by every verifier on every
+platform. It catches the main divergence risk: two implementations reading `expect`
+differently.
+
+This is where open question 4 below earns its keep. A tiny grammar — `present`, `equals`,
+`one_of`, `min`, `order` — leaves almost nowhere to disagree. An expression language would
+make this half impossible to specify, which is the real argument against one.
+
+**Observation conformance — per platform, expensive, and the half that buys trust.** A
+verifier claiming it can observe `role` must be shown a component that exposes it and one
+that does not, and get both right. That needs reference components per platform: one
+correct, several mutated.
+
+The second half is the instrument this repo already uses — build the failing case alongside
+the passing one — applied one level up. The mutation set from T3 in the v2 validation plan
+is exactly the fixture corpus it needs, so it is less new work than existing work acquiring
+a second job.
+
+A verifier's published conformance result, alongside its capability declaration, is what
+makes a third-party implementation trustworthy without anyone here having read its code.
+
 ## What lives outside the skill
 
 **Verifiers.** One per (platform × toolchain), owned by whoever owns that toolchain,
@@ -141,4 +178,9 @@ versioned format**.
 3. **Who writes the first verifier.** The format is unfalsifiable until two exist, and two is
    the number that matters — one can always be accidentally shaped around its own document.
 4. **Whether `expect` stays declarative.** The moment it needs an expression language, the
-   format has become a programming language and the second implementation stops being cheap.
+   format has become a programming language, the second implementation stops being cheap,
+   and comparison conformance stops being specifiable. Treat pressure to add expressions as
+   evidence a requirement is written at the wrong level.
+5. **What the web JSON Schema keeps doing.** Unchanged from v1: it validates a
+   consumer-supplied props instance against the API chapter. That is a schema over data, not
+   a checklist item, and it stays in the compile tier.
