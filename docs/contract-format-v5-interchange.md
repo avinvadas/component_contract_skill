@@ -65,7 +65,8 @@ The reason a verifier is finite work rather than endless work.
 
 - **observe**: `role · name · state · order · containment · focus · announcement · event · layout · token · prop`
 - **roles**: the closed set already defined in v3
-- **scenario dimensions**: props configuration × interaction state × adaptive condition
+- **scenario dimensions**: props predicate × interaction state × adaptive condition —
+  a *predicate* over declared props, never a reference to a concrete instance
 - **conditions**: the closed set a `required:` clause may name
 
 That last one is easy to miss and is a genuine gap. A contract reads
@@ -171,15 +172,39 @@ its stack gets results in reporting it already has, at no new infrastructure cos
 per-client rendering choice, not an architectural one — which is this proposal working as
 intended.
 
-**The closer prior art is Storybook.** On web, the scenario model here —
-`scenario: { props: { disabled: true } }` — is essentially a story's `args`. A story *is* a
-scenario; a play function *is* a driven check. So a web verifier could consume a team's
-existing stories rather than mounting components itself, which is the strongest available
-form of connecting to what a team already has: they have already written the scenarios.
+**Storybook is closer prior art, but it sits a level below the contract.** A story is a
+*witness*: one concrete, single-platform instance with fully-specified args. A contract
+scenario is a *predicate*: a class of instances. `when:disabled` means "in any instance where
+disabled holds", not "the story named Disabled". Conflating the two pulls the contract down a
+level of abstraction it exists to stay above.
 
-Worth checking whether the native equivalents hold the same way — SwiftUI `#Preview` and
-Compose `@Preview` are scenario declarations too, though neither carries interaction the way
-a play function does.
+Getting that right makes the mechanism better, not worse:
+
+- **Matching is predicate satisfaction, not lookup.** A verifier asks whether a witness
+  exists whose args satisfy `{disabled: true}`. There may be zero, one, or several. Check all
+  of them — three stories rendering a disabled Button where one fails is a real finding.
+- **Zero witnesses is a useful result.** Reported `unverified`, with a message saying no
+  witness satisfies the predicate. That tells a team their scenario coverage has a hole
+  exactly where their contract has a requirement, which nothing currently tells them.
+- **Witness-finding cannot be the only strategy.** Stories are written for documentation and
+  visual review, not contract coverage, so a verifier reading only stories will have gaps.
+
+So a verifier satisfies a scenario by **finding a witness or constructing one**, and declares
+which in its capability declaration. Finding is cheap and connects to what a team already
+has; constructing is complete and platform-specific. Most verifiers should do both.
+
+This holds identically for SwiftUI `#Preview` and Compose `@Preview`, which are witness
+declarations in exactly the same sense — though neither carries interaction the way a play
+function does, so they likely serve the `mounted` tier and not the `driven` one.
+
+### Why predicates can be platform-neutral at all
+
+A dependency worth stating, because the whole mechanism rests on it: **scenario predicates
+are neutral only because the API chapter fixes prop names across platforms.**
+`{disabled: true}` is meaningful on every platform precisely because the contract declares
+that prop and each platform's schema, protocol or interface enforces it. If props could vary
+per platform, scenarios could not be expressed once — so the API chapter is load-bearing for
+far more than schema generation.
 
 For reference, what this domain actually runs:
 
