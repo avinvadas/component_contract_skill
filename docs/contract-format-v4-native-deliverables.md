@@ -43,7 +43,7 @@ adding a platform is a template, never a re-derivation of intent.
 
 | Platform | API surface | Everything else | Consumed by |
 |---|---|---|---|
-| **Web** | `Button.schema.json` — JSON Schema | `Button.contract.spec.ts` — Playwright / Vitest + Testing Library | the test runner already in the repo |
+| **Web** | `Button.schema.json` — JSON Schema | `Button.contract.spec.ts` — Playwright / Vitest + Testing Library, plus stylelint config | the test runner already in the repo |
 | **iOS** | `ButtonContract.swift` — a protocol the component must conform to | `ButtonContractTests.swift` — XCTest / XCUITest | `xcodebuild test` |
 | **Android** | `ButtonContract.kt` — an interface | `ButtonContractTest.kt` — JUnit + Compose test rule | `./gradlew test` |
 | **macOS** | as iOS | as iOS | as iOS |
@@ -118,27 +118,50 @@ BTN-05 — SKIPPED: unverified — no hardware keyboard attached
 
 Both appear in xcresult, in JUnit XML, in every CI dashboard, with reasons.
 
-## The one honest fork: tokens
+## Tokens: why it is lint, and where it splits
 
-Everything above is a test. Token data-flow is not naturally a test — "no literal appears in
-a contract-relevant style property" is a **lint rule**, and lint is where each ecosystem
-already puts exactly this kind of check.
+**The reason it is not a test:** by the time the code runs, the fact being checked is gone.
+A test observes a background of `#0B5FFF` and cannot tell whether that arrived from
+`DesignTokens.color.action.primary.bg` or from a hardcoded literal — the runtime erased the
+provenance. The source still carries it. The fact lives in source, so the tool must read
+source, which makes it lint and not a test.
 
-| Platform | Idiomatic home |
-|---|---|
-| Web | stylelint config, or a generated ESLint rule |
-| iOS | SwiftLint custom rule |
-| Android | detekt or Android Lint rule |
+Three consequences worth having:
 
-A value-comparison test is not a substitute: reading a rendered view's resolved colour and
-comparing it to the token's value passes a literal that happens to coincide, which is
-exactly the `.opacity(0.4)` case. Source scanning is the right mechanism, and lint is its
-native home.
+- **Cost.** No build, no test target, no mounted component, no device. It runs in the editor
+  as you type and in a thirty-second CI job. Cheapest check in the system.
+- **Coverage.** A test only sees the states it instantiates. A literal in a rarely-hit
+  branch is invisible to a suite that never renders it, and obvious to lint.
+- **Limit.** Lint sees the reference and stops. It cannot confirm the value reached the
+  rendered output — a correct reference overridden by a later CSS rule passes.
 
-Recommendation: emit lint configuration where the ecosystem supports rule config as data
-(stylelint), and a generated test using the platform's syntax library where it does not, with
-the lint rule as the stated end state. This is the one place v4 does not yet land cleanly,
-and saying so is better than forcing it.
+### The split, which the fork above understated
+
+"Tokens" is two different checks, and they land in different places.
+
+**POL-04 — no literal in a contract-relevant style property.** Global, applies across all
+component source, genuinely idiomatic lint. Every ecosystem supports it directly.
+
+**APP-01…07 — this property resolves through this specific token.** *Not* naturally a lint
+rule: lint rules are global, and this is per-component and per-declaration — it has to know
+which file is Button and which declaration is its background. That is a different, named
+category: **architecture tests** — ArchUnit on the JVM, Konsist for Kotlin — tests in
+location, static assertions in nature.
+
+| Check | Web | iOS | Android |
+|---|---|---|---|
+| POL-04 · deny literals | stylelint `declaration-property-value-allowed-list` | SwiftLint custom rule | detekt rule |
+| APP-01…07 · specific slot | **runtime test** via CDP matched-styles — sees the reference *and* the cascade | source assertion, SwiftSyntax-based | Konsist, or a source-reading test |
+
+On web the second row is a genuine runtime test and is *stronger* than the native
+equivalent, because CDP exposes the authored `var()` alongside the computed value. On native
+it is a static assertion. That is not an exception to this document's principle — it is the
+principle applied honestly: the same requirement takes the form each ecosystem supports, and
+where a platform can do better, it does.
+
+A value-comparison test is not a substitute anywhere: reading a rendered view's resolved
+colour and comparing it against the token's value passes a literal that happens to coincide,
+which is exactly the `.opacity(0.4)` case that motivated POL-04.
 
 ## What this deletes
 
@@ -173,12 +196,16 @@ already does — rather than requiring a bespoke format from everyone.
 
 ## Open
 
-1. **Emitter fidelity.** Generated tests must read as idiomatic or they will be rewritten by
+1. **Who writes the custom lint rules.** stylelint takes POL-04 as configuration — data,
+   generatable. SwiftLint and detekt need an actual rule implementation, which is a one-time
+   per-ecosystem build, not per component. Until those exist, POL-04 on native falls back to
+   a source-reading test.
+2. **Emitter fidelity.** Generated tests must read as idiomatic or they will be rewritten by
    hand, and then drift is back. This is the main risk and it is a craft problem, not an
    architectural one.
-2. **Generated code in the repo.** Same discipline as generated schemas: generated-only,
+3. **Generated code in the repo.** Same discipline as generated schemas: generated-only,
    header says so, CI regenerates and diffs.
-3. **Test harness assumptions.** The emitter must know how a component is mounted in this
+4. **Test harness assumptions.** The emitter must know how a component is mounted in this
    repo — a Storybook story, a preview, a factory. That is per-repo configuration, probably
    in `.claude/design-system-context.yml`.
-4. **Does the interview change?** No.
+5. **Does the interview change?** No.
