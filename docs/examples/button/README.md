@@ -147,6 +147,26 @@ that makes a conformance tool actively harmful.
 carrying `x-not-applicable` and its reason, rather than being dropped. Dropping it would let
 a hard platform quietly shrink its own bar — which was the second bug found here.
 
+## What the token checks are, and are not
+
+The `tokens` section validates **data-flow correctness**: that the implementation reflects
+the same token structure the contract names. It does not check that a token's value is the
+right colour, that the rendered result looks correct, or that the palette meets contrast —
+those belong to the design system's own token tree and to visual regression testing. This
+does not replace or compete with either.
+
+The distinction is not academic. If `color.action.primary.disabled.bg` happens to resolve
+to roughly what `.opacity(0.4)` produces, a visual regression test **passes** — the pixels
+match — and APP-06 still fails, because the value did not come through the token. Reverse
+it: change that token to neon green and APP-06 **passes**, because the reference is intact,
+while visual regression fails on sight.
+
+Two tools, disjoint failure modes, neither substituting for the other.
+
+This is also why the human chapter is called *Appearance* and the manifest section is called
+*tokens*. The chapter holds the whole decision; the section is named for the narrow thing a
+machine can actually prove about it.
+
 ## What this example does and does not prove
 
 **Does:** the contract is platform-neutral and readable; requirements route to manifest

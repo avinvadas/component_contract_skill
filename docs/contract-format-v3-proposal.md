@@ -448,12 +448,28 @@ declaration *is* the consumer-facing interface, and no rendered artifact carries
 on native); two have a rendered subject. The rule governs the latter. This is also why
 v1's `schema.json` / `structure.json` split was right.
 
-**Token checking is weaker on iOS than on Web, and that ceiling should be recorded.** On
-Web, CDP verifies both that the declaration references the token *and* that the computed
-value matches the resolved token value. On iOS nothing exposes computed styling to a UI
-test, so only the reference is checkable: a `.cornerRadius(12)` that happens to equal
-`radius.modal` is caught on Web and invisible on iOS. This belongs in
-`structural-fact-validation.md` alongside the two ceilings already recorded there.
+**What the `tokens` section checks is data-flow, and only data-flow.** It verifies that a
+value *arrived through the token the contract names* — not that the token's value is
+correct, not that the result looks right, not that the palette is accessible. Those belong
+to the design system's own tree and to visual regression testing. This is README
+accountability #4, applied to one section, and it should be restated wherever the check is
+described, because `literal: false` is easy to misread as "appearance is validated."
+
+The two are complementary in both directions, and the disabled-button case shows it. If
+`color.action.primary.disabled.bg` resolves to roughly what `.opacity(0.4)` produces,
+**visual regression passes** — the pixels match — while the contract check fails, because
+the flow is wrong. Invert it: change that token's value to neon green and the contract
+check **passes** — the reference is intact — while visual regression fails immediately.
+Neither tool sees the other's failures.
+
+**The Web/iOS ceiling here is narrower than first recorded.** A literal is visible in source
+on every platform — `.cornerRadius(12)` is caught on iOS by SwiftSyntax under POL-04, not
+missed. The genuine Web-only delta is a token reference that is *present in source but
+overridden at render time by a later cascade rule*, which CDP's matched-styles view catches
+and a source scan cannot. That is a CSS-specific hazard: a Swift or Kotlin constant
+reference cannot be silently overridden the same way, so the failure mode barely exists
+off the web. Worth recording in `structural-fact-validation.md` in those terms rather than
+as a general weakness.
 
 **And one platform wrinkle worth knowing before writing the adapter:** XCUITest exposes
 `elementType` but *not* `accessibilityTraits`, so `.isHeader`, `.adjustable` and friends
