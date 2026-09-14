@@ -153,16 +153,45 @@ The skill ships **reference verifiers for one or two ecosystems in separate repo
 to prove the format and seed adoption — never inside this one. When Compose's test API
 changes, that verifier changes. The skill does not.
 
-### Gherkin is worth considering as a renderer
+### Renderers: what design systems actually use
 
-A `.feature` file is a plain-text, platform-neutral rendering of the same checklist, and
-mature runners already exist: Cucumber-JVM, Cucumber.js, Reqnroll on .NET. Step definitions
-bind the closed vocabulary to platform code **once per platform**, never per component.
+**Gherkin is a feature-pipeline tool and has almost no footing here.** Recorded because it
+looks attractive at first glance and is not.
 
-Two honest caveats. Swift's Gherkin tooling is weak — `Cucumberish` and `XCTest-Gherkin`
-exist but are not well maintained — which is the same thin spot iOS has shown at every layer.
-And Gherkin would be a *rendering* of the canonical JSON, not a replacement for it; the JSON
-stays the machine-readable source.
+Two reasons it misfits. **Granularity** — Gherkin is written at journey level, while a
+component contract operates at "this element exposes role button"; wrapping one assertion in
+Given/When/Then is three lines of ceremony around one fact. **Audience** — Gherkin exists so
+non-technical stakeholders can read acceptance criteria, but this document is read by
+designers and engineers, both of whom read a table faster. And Cucumber's step definitions
+*are* a verifier, written inside Cucumber's conventions rather than freely, so it saves none
+of that work.
+
+It stays legitimate in exactly one situation: an organisation already running Cucumber across
+its stack gets results in reporting it already has, at no new infrastructure cost. That is a
+per-client rendering choice, not an architectural one — which is this proposal working as
+intended.
+
+**The closer prior art is Storybook.** On web, the scenario model here —
+`scenario: { props: { disabled: true } }` — is essentially a story's `args`. A story *is* a
+scenario; a play function *is* a driven check. So a web verifier could consume a team's
+existing stories rather than mounting components itself, which is the strongest available
+form of connecting to what a team already has: they have already written the scenarios.
+
+Worth checking whether the native equivalents hold the same way — SwiftUI `#Preview` and
+Compose `@Preview` are scenario declarations too, though neither carries interaction the way
+a play function does.
+
+For reference, what this domain actually runs:
+
+| Concern | Tooling |
+|---|---|
+| Docs and scenarios | Storybook (CSF, play functions); SwiftUI and Compose previews |
+| Component tests | Testing Library + Jest/Vitest, Playwright, Compose test rule, XCTest |
+| Visual regression | Chromatic, Percy, Loki; Paparazzi/Roborazzi; swift-snapshot-testing |
+| Accessibility | axe-core, ATF, `performAccessibilityAudit()`, Axe.Windows |
+
+A verifier that plugs into the first two rows is connecting to existing tools. One that asks
+a team to adopt a new format is not.
 
 ## What the skill stops doing
 
