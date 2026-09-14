@@ -471,12 +471,14 @@ reference cannot be silently overridden the same way, so the failure mode barely
 off the web. Worth recording in `structural-fact-validation.md` in those terms rather than
 as a general weakness.
 
-**And one platform wrinkle worth knowing before writing the adapter:** XCUITest exposes
-`elementType` but *not* `accessibilityTraits`, so `.isHeader`, `.adjustable` and friends
-are not directly readable — and several archetype requirements depend on them. The
-workaround is a second, in-process extractor: host the view in a `UIHostingController`,
-force layout, walk the tree with the `UIAccessibility` APIs. iOS therefore wants two
-structure extractors: in-process for semantics, XCUITest for behaviour in a real app.
+**And one platform wrinkle to resolve before writing the adapter:** `XCUIElement` exposes
+`elementType` but no `accessibilityTraits` property, and several archetype requirements
+depend on traits. Whether `app.debugDescription`'s tree dump carries enough trait detail is
+**untested** — the one hands-on iOS run in this repo used it for labels, where it worked
+well enough to surface a real defect, and never probed for traits. If it does not, the
+likely second extractor is an in-process host (`UIHostingController`, forced layout, walked
+with `UIAccessibility`), which is also untested. Establish this empirically before
+committing to a two-extractor design.
 
 ---
 

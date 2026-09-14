@@ -64,7 +64,7 @@ This is the finding, and it holds three for three:
 | Platform | The obvious tool | What it cannot see | The better tool |
 |---|---|---|---|
 | Web | jsdom (already in most test suites) | no layout — `getBoundingClientRect` returns zeros; no computed accessible name or ARIA role | headless Chrome + CDP |
-| iOS | XCUITest | `accessibilityTraits` — no `.isHeader`, no `.adjustable` | `UIHostingController` in a unit test, walked with `UIAccessibility` |
+| iOS | XCUITest | `XCUIElement` exposes no `accessibilityTraits` property; whether `app.debugDescription`'s dump carries enough trait detail for `heading`/`adjustable` is **untested here** | possibly `UIHostingController` in a unit test — also untested |
 | Android | `adb shell uiautomator dump` | Compose semantics — no `Role`, no `heading()` | Compose test rule under Robolectric |
 
 Two of these invert the usual cost assumption. On iOS the **heavier** tool sees less: XCUITest
