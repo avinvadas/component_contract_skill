@@ -59,11 +59,26 @@ Android"* does not.
 Is it true of every component of this archetype?
 ├─ no  → component-local requirement, in the contract
 └─ yes → Does some platform provide it automatically?
-         ├─ yes → archetype bundle, provenance = catalogue
+         ├─ yes → how many platforms?
+         │        ├─ several → archetype bundle, provenance = catalogue
+         │        └─ exactly one → CANDIDATE, not an inheritance. Is the behaviour a
+         │                          user-facing expectation across platforms, or a
+         │                          convention of the platform that automates it?
+         │                          ├─ expectation → archetype bundle
+         │                          └─ convention  → not a bundle entry at all
          └─ no  → Does a published standard or convention specify it?
                   ├─ yes → archetype bundle, provenance = that standard
                   └─ no  → it is an opinion → policy.md, or the contract
 ```
+
+**The single-platform branch was added after `combobox`.** CBX-09 — *the entry remains
+editable after a candidate is committed* — is sourced only from macOS's `NSComboBox`, and it
+passes: remaining editable is what distinguishes a combobox from a picker everywhere, and one
+that locks after selection is a picker wearing the wrong role. Contrast macOS `Window`'s
+*"position and size restored between launches"*, also single-platform and squarely a desktop
+convention, which fails the same test.
+
+Without this branch, one platform automating something would silently impose it on four.
 
 ### State it where every platform has a referent
 
@@ -265,16 +280,22 @@ over-applied.
 
 ## Two known gaps, before anyone starts
 
-**`combobox` is not in the role vocabulary.** T5 named it deliberately as the pattern
-"absent from the condensed tables", and F5 predicted exactly this failure mode. It needs
-either a new role plus four bindings, or a decision that it is a composed pattern like tabs.
-That decision should be made before tier 1, not after tier 4, because it tests whether the
-closed set can close at all.
+**`combobox` — RESOLVED.** It needs an archetype, now built at
+`system/archetypes/combobox.md`. Composing it from `text` + `list` fails immediately, and the
+reason generalises into a criterion worth more than the case:
 
-**Drag-to-reorder has no archetype and may not need one.** The catalogue records its bundle
-as empty on every platform. If it resolves as `list` + `listitem` plus component-local
-requirements, that is evidence the layering is right. If it needs its own archetype, the
-closed set is less closed than claimed.
+> **An archetype is needed exactly when the platform's accessibility layer reports a distinct
+> role for the thing.** You cannot compose your way to a role — no arrangement of a text
+> archetype and a list archetype produces something VoiceOver calls a combo box.
+
+The registry extended by cost, exactly as designed: the price was four bindings, and paying
+it was routine.
+
+**Drag-to-reorder — PREDICTED, not yet confirmed.** The criterion above answers it without
+building anything: assistive technology reports a reorderable list as a **list**, not as a
+distinct role, so it should resolve as `list` + `listitem` plus component-local requirements
+and needs no archetype. Worth confirming when the component is actually converted, but it is
+now a prediction the model makes rather than an open question.
 
 Both are T5's job, and T5 is now the test that decides whether the **format** ships, not just
 whether the role set is complete.
