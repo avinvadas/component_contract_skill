@@ -66,6 +66,14 @@ The reason a verifier is finite work rather than endless work.
 - **observe**: `role · name · state · order · containment · focus · announcement · event · layout · token · prop`
 - **roles**: the closed set already defined in v3
 - **scenario dimensions**: props configuration × interaction state × adaptive condition
+- **conditions**: the closed set a `required:` clause may name
+
+That last one is easy to miss and is a genuine gap. A contract reads
+`required: when a hardware keyboard is present`, which is good prose and unparseable. A
+verifier needs a token it can evaluate against its own capabilities —
+`hardware_keyboard`, `touch_input`, `reduced_motion`, `disabled`, `inside_form`. Conditions
+are as much a closed vocabulary as roles are, and the contract's prose must map onto them
+deterministically or the resolver cannot produce a canonical document at all.
 
 Closed vocabulary means a verifier implements *eleven observation types once* and then
 handles every component the design system will ever write. A new component ships a new
