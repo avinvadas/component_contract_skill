@@ -3,36 +3,184 @@
   "contract_version": "1.0",
   "platform": "ios",
   "conformance_level": 3,
-  "implementation": { "framework": "SwiftUI", "commit": "a1b2c3d" },
+  "implementation": {
+    "framework": "SwiftUI",
+    "commit": "a1b2c3d"
+  },
   "sections": {
-    "api": { "status": "extracted", "method": "swiftsyntax", "props": {
-      "label":    { "type": "string",  "required": true },
-      "variant":  { "type": "enum", "values": ["primary","secondary","ghost"], "required": false, "default": "primary" },
-      "disabled": { "type": "boolean", "required": false, "default": false },
-      "iconName": { "type": "string",  "required": false },
-      "onPress":  { "type": "function","required": true } } },
-    "tokens": { "status": "extracted", "method": "swiftsyntax", "resolved": {
-      "APP-01": { "slot": "color.action.primary.bg", "reference": "DesignTokens.color.action.primary.bg", "literal": false },
-      "APP-02": { "slot": "color.action.primary.fg", "reference": "DesignTokens.color.action.primary.fg", "literal": false },
-      "APP-03": { "slot": "radius.control",          "reference": "DesignTokens.radius.control",          "literal": false },
-      "APP-04": { "slot": "space.inline.sm",         "reference": "DesignTokens.space.inline.sm",         "literal": false } } },
-    "structure": { "status": "extracted", "method": "inprocess-ax", "captures": {
-      "default": { "tree": {
-        "zone": "root", "identity": "Button", "role": "button", "name": "Save changes",
-        "states": [], "focusable": true, "box": { "w": 148, "h": 44 },
-        "children": [
-          { "zone": "icon",  "identity": "Image", "role": "none", "name": "", "box": { "w": 17, "h": 17 } },
-          { "zone": "label", "identity": "Text",  "role": "text", "name": "Save changes", "box": { "w": 99, "h": 22 } } ] } },
-      "disabled": { "tree": {
-        "zone": "root", "identity": "Button", "role": "button", "name": "Save changes",
-        "states": [], "focusable": true, "box": { "w": 148, "h": 44 } } },
-      "focused": { "tree": {
-        "zone": "root", "identity": "Button", "role": "button", "name": "Save changes",
-        "states": ["focused"], "focusable": true, "focus_indicator": true, "box": { "w": 148, "h": 44 } } } } },
-    "behavior": { "status": "extracted", "method": "xcuitest", "checks": {
-      "BTN-04": { "result": "pass", "trigger": "voiceover:double-tap", "observed": "onPress fired" },
-      "BTN-05": { "result": "pass", "trigger": ["key:Return","key:Space"], "observed": "onPress fired for both under Full Keyboard Access" },
-      "BTN-06": { "result": "pass", "trigger": "key:Space", "observed": "scroll offset unchanged" },
-      "BTN-09": { "result": "pass", "trigger": "tap while disabled", "observed": "no onPress - guarded in the action closure" } } }
+    "api": {
+      "status": "extracted",
+      "method": "swiftsyntax",
+      "props": {
+        "label": {
+          "type": "string",
+          "required": true
+        },
+        "variant": {
+          "type": "enum",
+          "values": [
+            "primary",
+            "secondary",
+            "ghost"
+          ],
+          "required": false,
+          "default": "primary"
+        },
+        "disabled": {
+          "type": "boolean",
+          "required": false,
+          "default": false
+        },
+        "iconName": {
+          "type": "string",
+          "required": false
+        },
+        "onPress": {
+          "type": "function",
+          "required": true
+        }
+      }
+    },
+    "tokens": {
+      "status": "extracted",
+      "method": "swiftsyntax",
+      "resolved": {
+        "APP-01": {
+          "slot": "color.action.primary.bg",
+          "reference": "DesignTokens.color.action.primary.bg",
+          "literal": false
+        },
+        "APP-02": {
+          "slot": "color.action.primary.fg",
+          "reference": "DesignTokens.color.action.primary.fg",
+          "literal": false
+        },
+        "APP-03": {
+          "slot": "radius.control",
+          "reference": "DesignTokens.radius.control",
+          "literal": false
+        },
+        "APP-04": {
+          "slot": "space.inline.sm",
+          "reference": "DesignTokens.space.inline.sm",
+          "literal": false
+        },
+        "APP-06": {
+          "slot": "color.action.primary.disabled.bg",
+          "reference": ".opacity(0.4)",
+          "literal": true
+        }
+      },
+      "literals_found": [
+        {
+          "property": "opacity",
+          "value": 0.4,
+          "location": "Button.swift:42",
+          "exempt": false
+        }
+      ]
+    },
+    "structure": {
+      "status": "extracted",
+      "method": "inprocess-ax",
+      "captures": {
+        "default": {
+          "tree": {
+            "zone": "root",
+            "identity": "Button",
+            "role": "button",
+            "name": "Save changes",
+            "states": [],
+            "focusable": true,
+            "box": {
+              "w": 148,
+              "h": 44
+            },
+            "children": [
+              {
+                "zone": "icon",
+                "identity": "Image",
+                "role": "none",
+                "name": "",
+                "box": {
+                  "w": 17,
+                  "h": 17
+                }
+              },
+              {
+                "zone": "label",
+                "identity": "Text",
+                "role": "text",
+                "name": "Save changes",
+                "box": {
+                  "w": 99,
+                  "h": 22
+                }
+              }
+            ]
+          }
+        },
+        "disabled": {
+          "tree": {
+            "zone": "root",
+            "identity": "Button",
+            "role": "button",
+            "name": "Save changes",
+            "states": [],
+            "focusable": true,
+            "box": {
+              "w": 148,
+              "h": 44
+            }
+          }
+        },
+        "focused": {
+          "tree": {
+            "zone": "root",
+            "identity": "Button",
+            "role": "button",
+            "name": "Save changes",
+            "states": [
+              "focused"
+            ],
+            "focusable": true,
+            "focus_indicator": true,
+            "box": {
+              "w": 148,
+              "h": 44
+            }
+          }
+        }
+      }
+    },
+    "behavior": {
+      "status": "extracted",
+      "method": "xcuitest",
+      "checks": {
+        "BTN-04": {
+          "result": "pass",
+          "trigger": "voiceover:double-tap",
+          "observed": "onPress fired"
+        },
+        "BTN-05": {
+          "result": "pass",
+          "trigger": [
+            "key:Return",
+            "key:Space"
+          ],
+          "observed": "onPress fired for both under Full Keyboard Access"
+        },
+        "BTN-06": {
+          "result": "pass",
+          "trigger": "key:Space",
+          "observed": "scroll offset unchanged"
+        },
+        "BTN-09": {
+          "result": "pass",
+          "trigger": "tap while disabled",
+          "observed": "no onPress - guarded in the action closure"
+        }
+      }
+    }
   }
 }

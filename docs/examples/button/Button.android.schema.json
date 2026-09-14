@@ -7,7 +7,7 @@
     "component": "Button",
     "version": "1.0",
     "platform": "android",
-    "source_hash": "sha256:8eb0c610250ecd7a"
+    "source_hash": "sha256:c44112ac1015a0a6"
   },
   "type": "object",
   "required": [
@@ -139,7 +139,8 @@
           "type": "object",
           "required": [
             "status",
-            "resolved"
+            "resolved",
+            "literals_found"
           ],
           "properties": {
             "resolved": {
@@ -149,7 +150,9 @@
                 "APP-02",
                 "APP-03",
                 "APP-04",
-                "APP-05"
+                "APP-05",
+                "APP-06",
+                "APP-07"
               ],
               "properties": {
                 "APP-01": {
@@ -235,6 +238,56 @@
                     "literal": {
                       "const": false
                     }
+                  }
+                },
+                "APP-06": {
+                  "$comment": "APP-06",
+                  "title": "disabled background resolves through color.action.primary.disabled.bg",
+                  "type": "object",
+                  "required": [
+                    "slot",
+                    "literal"
+                  ],
+                  "properties": {
+                    "slot": {
+                      "const": "color.action.primary.disabled.bg"
+                    },
+                    "literal": {
+                      "const": false
+                    }
+                  }
+                },
+                "APP-07": {
+                  "$comment": "APP-07",
+                  "title": "disabled label colour resolves through color.action.primary.disabled.fg",
+                  "type": "object",
+                  "required": [
+                    "slot",
+                    "literal"
+                  ],
+                  "properties": {
+                    "slot": {
+                      "const": "color.action.primary.disabled.fg"
+                    },
+                    "literal": {
+                      "const": false
+                    }
+                  }
+                }
+              }
+            },
+            "literals_found": {
+              "$comment": "POL-04",
+              "title": "no literal value appears in a contract-relevant style property",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "exempt"
+                ],
+                "properties": {
+                  "exempt": {
+                    "const": true
                   }
                 }
               }

@@ -37,6 +37,8 @@ Only what is specific to Button appears below.
 | APP-03 | corner radius | `radius.control` | always |
 | APP-04 | icon–label gap | `space.inline.sm` | when CMP-02 present |
 | APP-05 | pressed background | `color.action.primary.pressed` | while pressed |
+| APP-06 | disabled background | `color.action.primary.disabled.bg` | when disabled |
+| APP-07 | disabled label colour | `color.action.primary.disabled.fg` | when disabled |
 
 ## 4. Accessibility
 

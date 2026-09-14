@@ -23,7 +23,7 @@ def req(cid, title):
     return {"$comment": cid, "title": title}
 
 def schema_for(platform):
-    tokens_required = ["APP-01", "APP-02", "APP-03", "APP-04", "APP-05"]
+    tokens_required = ["APP-01", "APP-02", "APP-03", "APP-04", "APP-05", "APP-06", "APP-07"]
     behavior_ids = ["BTN-04", "BTN-05", "BTN-06", "BTN-09", "BTN-13"]
 
     # A requirement that does not bind here stays VISIBLE, marked n/a with a reason.
@@ -87,13 +87,18 @@ def schema_for(platform):
                   "onPress":  {**req("API-05", "onPress: handler, required"),
                                "properties": {"required": {"const": True}}, "required": ["required"]}}}}},
 
-            "tokens": {"type": "object", "required": ["status", "resolved"], "properties": {
+            "tokens": {"type": "object", "required": ["status", "resolved", "literals_found"], "properties": {
               "resolved": {"type": "object", "required": tokens_required, "properties": {
                 "APP-01": token_slot("APP-01", "background resolves through color.action.primary.bg", "color.action.primary.bg"),
                 "APP-02": token_slot("APP-02", "label colour resolves through color.action.primary.fg", "color.action.primary.fg"),
                 "APP-03": token_slot("APP-03", "corner radius resolves through radius.control", "radius.control"),
                 "APP-04": token_slot("APP-04", "icon-label gap resolves through space.inline.sm", "space.inline.sm"),
-                "APP-05": token_slot("APP-05", "pressed background resolves through color.action.primary.pressed", "color.action.primary.pressed")}}}},
+                "APP-05": token_slot("APP-05", "pressed background resolves through color.action.primary.pressed", "color.action.primary.pressed"),
+                "APP-06": token_slot("APP-06", "disabled background resolves through color.action.primary.disabled.bg", "color.action.primary.disabled.bg"),
+                "APP-07": token_slot("APP-07", "disabled label colour resolves through color.action.primary.disabled.fg", "color.action.primary.disabled.fg")}},
+              "literals_found": {**req("POL-04", "no literal value appears in a contract-relevant style property"),
+                "type": "array", "items": {"type": "object", "required": ["exempt"],
+                  "properties": {"exempt": {"const": True}}}}}},
 
             "structure": {"type": "object", "required": ["status", "captures"], "properties": {
               "captures": {"type": "object", "required": ["default", "disabled", "focused"], "properties": {

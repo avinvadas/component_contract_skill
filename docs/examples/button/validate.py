@@ -40,8 +40,13 @@ def collect_requirements(schema):
 
 def requirement_for_error(schema, err):
     """Resolve a validation error back to the nearest requirement id."""
+    path = list(err.absolute_schema_path)
+    # a 'required' failure points at the required ARRAY; the property that is missing
+    # lives on the parent, so stop one short or the lookup below sees a list.
+    if err.validator == "required" and path and path[-1] == "required":
+        path = path[:-1]
     node, best = schema, None
-    for step in err.absolute_schema_path:
+    for step in path:
         if isinstance(node, dict) and isinstance(step, str) and step in node:
             node = node[step]
         elif isinstance(node, list) and isinstance(step, int) and step < len(node):
