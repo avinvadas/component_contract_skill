@@ -4,21 +4,37 @@ Every property a v3 contract can hold, by chapter, with where and when it is che
 Companion to `contract-format-v3-proposal.md`. Building this surfaced five gaps, listed
 at the end.
 
-## Three validation moments, not two
+## Four validation moments
 
-| Moment | Subject | Needs an implementation? |
-|---|---|---|
-| **Lint** | the contract and its generated schemas, checked against each other and against L0/L1 | no |
-| **Build** | source-level facts: API surface, token references | yes — compiles only |
-| **Run** | rendered facts (`structure`) and driven facts (`behavior`) | yes — runs |
+All four happen **inside one build pipeline**. None requires a deployment, a manual step, or
+a person opening a simulator. "Mounted" means the component is instantiated in isolation —
+a story, a preview host, a test rule — not the application it will ship in. You do not need
+a working app to validate a Button; you need the Button rendered and inspectable.
 
-Lint has been mentioned piecemeal throughout (reasons are mandatory, alignment is an
-invariant, archetypes must be complete) without being named as a moment. It is the cheapest
-of the three and catches a whole class the others cannot: a contract that is wrong about
-itself.
+| Moment | Subject | What actually runs | Typical cost |
+|---|---|---|---|
+| **lint** | the contract and its schemas, against each other and against L0/L1 | nothing — no implementation involved | instant |
+| **compile** | source-level facts: API surface, token references | a compiler pass: TS compiler API, SwiftSyntax, KSP | milliseconds, no device |
+| **mounted** | rendered facts at rest (`structure`) | component instantiated and its tree read: jsdom or headless Chrome · `UIHostingController` in a unit test · Compose + Robolectric on the JVM | seconds, **no simulator or emulator** |
+| **driven** | facts only true by doing something (`behavior`) | real runtime, real input: Playwright · XCUITest in a Simulator · instrumented test on a device | tens of seconds to minutes |
 
-Conformance levels map onto the last two: **L1** = build, **L2** = build + rendered,
-**L3** = build + rendered + driven. Lint runs at every level, including level 0.
+Two things to read off that table.
+
+**Lint had been mentioned piecemeal throughout** — reasons are mandatory, alignment is an
+invariant, archetypes must be complete — without being named as a moment. It is the cheapest
+and catches a class the others cannot: a contract that is wrong about itself. It needs no
+implementation, so it runs even at conformance level 0.
+
+**The expensive gate is narrower than "native needs a simulator" suggests.** `mounted` is
+achievable cheaply on every platform via an in-process path — `UIHostingController` does not
+boot a Simulator, Robolectric does not boot an emulator. Only `driven` needs the heavy
+runtime. So conformance level 2 is within reach of a pipeline that would balk at level 3.
+
+Levels map on directly: **L1** = lint + compile · **L2** = + mounted · **L3** = + driven.
+
+Because the schema is generated from the contract, it can be committed **before any
+implementation exists**, and the build fails the moment a non-conformant one appears. That
+is the documentation-driven claim cashing out rather than being a slogan.
 
 ---
 
@@ -26,8 +42,8 @@ Conformance levels map onto the last two: **L1** = build, **L2** = build + rende
 
 | Property | Section | Moment | Level | Notes |
 |---|---|---|---|---|
-| `component` | — | build | 1 | `manifest.contract` must match |
-| `version` | — | build | 1 | `manifest.contract_version` must match |
+| `component` | — | compile | 1 | `manifest.contract` must match |
+| `version` | — | compile | 1 | `manifest.contract_version` must match |
 | source hash | — | lint | 0 | schema embeds it; a stale schema is detectable |
 | `archetype` | — | lint | 0 | every archetype id must appear in the generated schema |
 | `policy` | — | lint | 0 | as above |
@@ -46,26 +62,26 @@ requirement below legible; it is not itself a claim about an implementation.
 
 | Property | Section | Moment | Level | Notes |
 |---|---|---|---|---|
-| zone id | `structure` | run | 2 | via the zone tag — `data-zone`, `accessibilityIdentifier`, `testTag`, `AutomationId` |
-| zone accepts — content type | `structure` | run | 2 | what actually rendered in the zone |
-| zone accepts — delegated component | `structure` | run | 2 | containment only; **the child's own conformance is a separate run** — see G3 |
-| cardinality, as a consumer constraint | `api` | build | 1 | what a caller may legally pass |
-| cardinality, as rendered | `structure` | run | 2 | what actually appeared — genuinely two facts, not one |
-| position / arrangement | `structure` | run | 2 | geometric relation between zone boxes |
-| layout constraints (max size, overflow) | `structure` | run | 2 | geometry |
-| absent behaviour | `structure` | run | 2 | needs a capture with the zone absent — see G1 |
-| adaptive conditions | `structure` | run | 2 | needs one capture per named condition |
+| zone id | `structure` | mounted | 2 | via the zone tag — `data-zone`, `accessibilityIdentifier`, `testTag`, `AutomationId` |
+| zone accepts — content type | `structure` | mounted | 2 | what actually rendered in the zone |
+| zone accepts — delegated component | `structure` | mounted | 2 | containment only; **the child's own conformance is a separate run** — see G3 |
+| cardinality, as a consumer constraint | `api` | compile | 1 | what a caller may legally pass |
+| cardinality, as rendered | `structure` | mounted | 2 | what actually appeared — genuinely two facts, not one |
+| position / arrangement | `structure` | mounted | 2 | geometric relation between zone boxes |
+| layout constraints (max size, overflow) | `structure` | mounted | 2 | geometry |
+| absent behaviour | `structure` | mounted | 2 | needs a capture with the zone absent — see G1 |
+| adaptive conditions | `structure` | mounted | 2 | needs one capture per named condition |
 
 ## 3 · Appearance
 
 | Property | Section | Moment | Level | Notes |
 |---|---|---|---|---|
-| token slot (property → token) | `tokens` | build | 1 | reference resolves through the named token |
-| literal denial (POL-04) | `tokens` | build | 1 | deny-by-default across the declared property set |
-| cascade override | `tokens` | run | 2 | **web only** — a reference present in source but overridden at render |
-| state-driven appearance | `structure` | run | 2 | one capture per state: pressed, disabled, focused, error |
-| motion token reference | `tokens` | build | 1 | the reference only |
-| motion actually suppressed under reduced-motion | `behavior` | run | 3 | set the preference, then observe |
+| token slot (property → token) | `tokens` | compile | 1 | reference resolves through the named token |
+| literal denial (POL-04) | `tokens` | compile | 1 | deny-by-default across the declared property set |
+| cascade override | `tokens` | mounted | 2 | **web only** — a reference present in source but overridden at render |
+| state-driven appearance | `structure` | mounted | 2 | one capture per state: pressed, disabled, focused, error |
+| motion token reference | `tokens` | compile | 1 | the reference only |
+| motion actually suppressed under reduced-motion | `behavior` | driven | 3 | set the preference, then observe |
 
 All of the above is **data-flow only** — that a value arrived through the named token. Not
 that the value is right, not that it looks right. That boundary is stated in the proposal
@@ -75,37 +91,37 @@ and in the worked example, and it is the one most likely to drift.
 
 | Property | Section | Moment | Level | Notes |
 |---|---|---|---|---|
-| interaction requirement | `behavior` | run | 3 | drive and observe |
-| events emitted | `behavior` | run | 3 | signature presence is `api`/build; that it *fires* is level 3 |
-| events received | `behavior` | run | 3 | dispatch the external event, observe the response |
-| state machine transitions | `behavior` | run | 3 | one driven check per transition |
-| no observable intermediate state | `structure` | run | 2 | a snapshot claim, despite living in this chapter |
+| interaction requirement | `behavior` | driven | 3 | drive and observe |
+| events emitted | `behavior` | driven | 3 | signature presence is `api`/build; that it *fires* is level 3 |
+| events received | `behavior` | driven | 3 | dispatch the external event, observe the response |
+| state machine transitions | `behavior` | driven | 3 | one driven check per transition |
+| no observable intermediate state | `structure` | mounted | 2 | a snapshot claim, despite living in this chapter |
 
 ## 5 · Accessibility
 
 | Property | Section | Moment | Level | Notes |
 |---|---|---|---|---|
-| rendered identity | `structure` | run | 2 | the check that catches a generic element given a role |
-| semantic role | `structure` | run | 2 | computed, never authored |
-| accessible name | `structure` | run | 2 | computed name |
-| name **source** (which zone) | `structure` | run | 2 | **web-strong, native-weak** — see G2 |
-| grouping | `structure` | run | 2 | |
-| traversal order | `structure` | run | 2 | accessibility-tree order |
-| traversal order matches arrangement | `structure` | run | 2 | compares two facts inside one capture |
-| state conveyed to AT | `structure` | run | 2 | per-state capture |
-| focus policy — initial, containment, return | `behavior` | run | 3 | driven |
-| announcements | `behavior` | run | 3 | driven |
-| keyboard / gesture input | `behavior` | run | 3 | driven |
+| rendered identity | `structure` | mounted | 2 | the check that catches a generic element given a role |
+| semantic role | `structure` | mounted | 2 | computed, never authored |
+| accessible name | `structure` | mounted | 2 | computed name |
+| name **source** (which zone) | `structure` | mounted | 2 | **web-strong, native-weak** — see G2 |
+| grouping | `structure` | mounted | 2 | |
+| traversal order | `structure` | mounted | 2 | accessibility-tree order |
+| traversal order matches arrangement | `structure` | mounted | 2 | compares two facts inside one capture |
+| state conveyed to AT | `structure` | mounted | 2 | per-state capture |
+| focus policy — initial, containment, return | `behavior` | driven | 3 | driven |
+| announcements | `behavior` | driven | 3 | driven |
+| keyboard / gesture input | `behavior` | driven | 3 | driven |
 
 ## 6 · API
 
 | Property | Section | Moment | Level | Notes |
 |---|---|---|---|---|
-| prop name | `api` | build | 1 | |
-| prop type | `api` | build | 1 | |
-| required / optional | `api` | build | 1 | |
-| default value | `api` | build | 1 | |
-| enum members | `api` | build | 1 | |
+| prop name | `api` | compile | 1 | |
+| prop type | `api` | compile | 1 | |
+| required / optional | `api` | compile | 1 | |
+| default value | `api` | compile | 1 | |
+| enum members | `api` | compile | 1 | |
 | **prop category** (layout / visual / behavioral) | — | **never** | — | see G4 |
 
 ## 7 · Divergences

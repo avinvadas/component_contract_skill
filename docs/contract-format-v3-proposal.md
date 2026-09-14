@@ -568,7 +568,10 @@ skill; leave the rest as documented shapes.
    the system, with additions requiring a bundle *and* four bindings.
 3. **Adapter reference implementations.** At least Web and one native, or the format is
    unfalsifiable in practice.
-4. **Does `structure` extraction at build time need a running app?** On native, yes —
-   which means "build-time validation" is really two gates: a compile-time gate on
-   `api`/`tokens`, and a test-gate on `structure`/`behavior`. Worth naming both rather
-   than promising one.
+4. **Resolved — "build time" is four moments inside one pipeline**, and none of them needs
+   a running application: `lint` (no implementation involved), `compile` (a compiler pass),
+   `mounted` (the component instantiated in isolation — a story, a preview host, a test
+   rule), `driven` (real runtime, real input). Only `driven` needs a simulator or emulator;
+   `mounted` runs in-process via `UIHostingController` or Robolectric, so conformance level
+   2 is within reach of a pipeline that would balk at level 3. See
+   `contract-property-validation-map.md`.
