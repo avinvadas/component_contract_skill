@@ -1,0 +1,225 @@
+{
+  "format_version": "1.0",
+  "contract": "Button",
+  "contract_version": "1.0",
+  "platform": "web",
+  "archetype": "button",
+  "requirements": [
+    {
+      "id": "BTN-01",
+      "statement": "The control is exposed to assistive technology as a button.",
+      "observe": "role",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "equals": "button"
+      },
+      "needs": [
+        "a11y-tree"
+      ],
+      "also": {
+        "identity": {
+          "one_of": [
+            "button",
+            "input"
+          ]
+        }
+      }
+    },
+    {
+      "id": "BTN-02",
+      "statement": "The control has a non-empty accessible name.",
+      "observe": "name",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "present": true
+      },
+      "needs": [
+        "a11y-tree"
+      ]
+    },
+    {
+      "id": "BTN-03",
+      "statement": "The control is reachable by sequential focus navigation.",
+      "observe": "focus",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "equals": true
+      },
+      "needs": [
+        "focus"
+      ]
+    },
+    {
+      "id": "BTN-05",
+      "statement": "Where a hardware keyboard exists, both standard activation keys perform the action.",
+      "observe": "event",
+      "kind": "behavior",
+      "scenario": {
+        "environment": {
+          "hardware_keyboard": true
+        }
+      },
+      "expect": {
+        "equals": "activated"
+      },
+      "needs": [
+        "interaction"
+      ],
+      "trigger": [
+        "key:Enter",
+        "key:Space"
+      ]
+    },
+    {
+      "id": "BTN-08",
+      "statement": "When disabled, the control is removed from sequential focus navigation.",
+      "observe": "focus",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true
+        }
+      },
+      "expect": {
+        "equals": false
+      },
+      "needs": [
+        "focus"
+      ]
+    },
+    {
+      "id": "BTN-10",
+      "statement": "When disabled, that state is conveyed to assistive technology.",
+      "observe": "state",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true
+        }
+      },
+      "expect": {
+        "contains": "disabled"
+      },
+      "needs": [
+        "a11y-tree"
+      ]
+    },
+    {
+      "id": "BTN-11",
+      "statement": "The control meets the platform's minimum touch-target size.",
+      "observe": "layout",
+      "kind": "state",
+      "scenario": {
+        "environment": {
+          "touch_input": true
+        }
+      },
+      "expect": {
+        "min": 24
+      },
+      "needs": [
+        "geometry"
+      ],
+      "unit": "css-px"
+    },
+    {
+      "id": "BTN-13",
+      "statement": "The control submits its containing form without scripting.",
+      "observe": "event",
+      "kind": "behavior",
+      "scenario": {
+        "environment": {
+          "inside_form": true
+        }
+      },
+      "expect": {
+        "equals": "submitted"
+      },
+      "needs": [
+        "interaction"
+      ],
+      "trigger": "activate:no-script"
+    },
+    {
+      "id": "POL-02",
+      "statement": "A focused control renders a focus indicator distinguishable from its unfocused appearance.",
+      "observe": "state",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "equals": true
+      },
+      "needs": [
+        "a11y-tree",
+        "geometry"
+      ]
+    },
+    {
+      "id": "STR-01",
+      "statement": "The control does not exceed the inline size of its container.",
+      "observe": "layout",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "max_ratio": 1.0
+      },
+      "needs": [
+        "geometry"
+      ]
+    },
+    {
+      "id": "CMP-03",
+      "statement": "Zones are arranged along the inline axis, icon before label.",
+      "observe": "order",
+      "kind": "state",
+      "scenario": {
+        "zones": {
+          "icon": "present"
+        }
+      },
+      "expect": {
+        "order": [
+          "icon",
+          "label"
+        ]
+      },
+      "needs": [
+        "a11y-tree"
+      ]
+    },
+    {
+      "id": "ACC-01",
+      "statement": "The icon contributes nothing to the accessible name.",
+      "observe": "name",
+      "kind": "state",
+      "scenario": {
+        "zones": {
+          "icon": "present"
+        }
+      },
+      "expect": {
+        "absent_from": "name"
+      },
+      "needs": [
+        "a11y-tree"
+      ]
+    },
+    {
+      "id": "ACC-02",
+      "statement": "The label is the sole source of the accessible name.",
+      "observe": "name",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "source": "label"
+      },
+      "needs": [
+        "a11y-tree",
+        "name-provenance"
+      ]
+    }
+  ]
+}

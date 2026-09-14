@@ -1,0 +1,9 @@
+{
+  "comment": "Witnesses: concrete instances a verifier can observe. A contract scenario is a PREDICATE; these are what satisfy it. In a real repo these would be Storybook stories rather than inline HTML.",
+  "witnesses": [
+    { "name": "Default",  "props": { "disabled": false, "iconName": "info" },
+      "html": "<div role=\"button\" tabindex=\"0\" data-zone=\"root\"><span data-zone=\"icon\" aria-hidden=\"true\">i</span><span data-zone=\"label\">Save changes</span></div>" },
+    { "name": "Disabled", "props": { "disabled": true, "iconName": "info" },
+      "html": "<div role=\"button\" tabindex=\"0\" data-zone=\"root\" class=\"is-disabled\"><span data-zone=\"icon\" aria-hidden=\"true\">i</span><span data-zone=\"label\">Save changes</span></div>" }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "comment": "Component-local bindings. Archetype ids bind in the archetype's own file; this holds only ids this contract introduces. Most entries are tiny because `needs` is derived from `observe` — only `expect` must be authored, and only where it is not derivable.",
+  "contract": "Button", "version": "1.0",
+  "bindings": {
+    "STR-01": {
+      "web":     { "expect": { "max_ratio": 1.0 } },
+      "ios":     { "expect": { "max_ratio": 1.0 } },
+      "android": { "expect": { "max_ratio": 1.0 } }
+    },
+    "ACC-01": {
+      "web":     { "expect": { "absent_from": "name" } },
+      "ios":     { "expect": { "absent_from": "name" } },
+      "android": { "expect": { "absent_from": "name" } }
+    }
+  }
+}

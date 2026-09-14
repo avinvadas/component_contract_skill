@@ -1,0 +1,11 @@
+{
+  "verifier": "compose-robolectric",
+  "format_version": "1.0",
+  "strategy": ["witness", "construct"],
+  "can_observe": ["a11y-tree", "identity", "focus", "geometry", "interaction"],
+  "cannot_observe": {
+    "announcement":    "no TalkBack in a JVM test — live-region events are not emitted",
+    "name-provenance": "contentDescription is a string on the node with no provenance",
+    "source":          "token references are a compile-tier concern, not this verifier's"
+  }
+}

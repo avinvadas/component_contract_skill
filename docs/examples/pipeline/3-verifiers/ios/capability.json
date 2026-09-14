@@ -1,0 +1,11 @@
+{
+  "verifier": "xctest-inprocess",
+  "format_version": "1.0",
+  "strategy": ["witness", "construct"],
+  "can_observe": ["a11y-tree", "identity", "focus", "geometry", "interaction"],
+  "cannot_observe": {
+    "announcement":    "posting and capturing VoiceOver announcements needs a device with VoiceOver running",
+    "name-provenance": "UIAccessibility exposes a label string with no indication of which subview supplied it",
+    "source":          "token references are a compile-tier concern, not this verifier's"
+  }
+}

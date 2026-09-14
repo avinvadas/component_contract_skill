@@ -1,5 +1,11 @@
 # Worked example — Button, on web / iOS / Android
 
+> **Superseded.** This demonstrates the **v3** manifest architecture — the build emits JSON,
+> a schema validates it — which `contract-format-v5-interchange.md` replaces. It is kept
+> because the defects it found are still valid, and because the reasoning that retired it is
+> easier to follow with the thing itself in front of you.
+> The current pipeline is in [`../pipeline/`](../pipeline/README.md).
+
 A runnable demonstration of v3: one contract, three platforms, four outcomes.
 
 ```bash

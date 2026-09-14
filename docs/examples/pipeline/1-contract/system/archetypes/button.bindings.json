@@ -1,0 +1,242 @@
+{
+  "archetype": "button",
+  "version": "1.0",
+  "bindings": {
+    "BTN-01": {
+      "web": {
+        "expect": {
+          "equals": "button"
+        },
+        "also": {
+          "identity": {
+            "one_of": [
+              "button",
+              "input"
+            ]
+          }
+        }
+      },
+      "ios": {
+        "expect": {
+          "equals": "button"
+        }
+      },
+      "android": {
+        "expect": {
+          "equals": "button"
+        }
+      }
+    },
+    "BTN-02": {
+      "web": {
+        "expect": {
+          "present": true
+        }
+      },
+      "ios": {
+        "expect": {
+          "present": true
+        }
+      },
+      "android": {
+        "expect": {
+          "present": true
+        }
+      }
+    },
+    "BTN-03": {
+      "web": {
+        "expect": {
+          "equals": true
+        }
+      },
+      "ios": {
+        "expect": {
+          "equals": true
+        }
+      },
+      "android": {
+        "expect": {
+          "equals": true
+        }
+      }
+    },
+    "BTN-05": {
+      "web": {
+        "expect": {
+          "equals": "activated"
+        },
+        "trigger": [
+          "key:Enter",
+          "key:Space"
+        ]
+      },
+      "ios": {
+        "expect": {
+          "equals": "activated"
+        },
+        "trigger": [
+          "key:Return",
+          "key:Space"
+        ]
+      },
+      "android": {
+        "expect": {
+          "equals": "activated"
+        },
+        "trigger": [
+          "key:Enter",
+          "key:Space"
+        ]
+      }
+    },
+    "BTN-08": {
+      "web": {
+        "expect": {
+          "equals": false
+        }
+      },
+      "ios": {
+        "expect": {
+          "equals": false
+        }
+      },
+      "android": {
+        "expect": {
+          "equals": false
+        }
+      }
+    },
+    "BTN-10": {
+      "web": {
+        "expect": {
+          "contains": "disabled"
+        }
+      },
+      "ios": {
+        "expect": {
+          "contains": "disabled"
+        }
+      },
+      "android": {
+        "expect": {
+          "contains": "disabled"
+        }
+      }
+    },
+    "BTN-11": {
+      "web": {
+        "expect": {
+          "min": 24
+        },
+        "unit": "css-px"
+      },
+      "ios": {
+        "expect": {
+          "min": 44
+        },
+        "unit": "pt"
+      },
+      "android": {
+        "expect": {
+          "min": 48
+        },
+        "unit": "dp"
+      }
+    },
+    "BTN-13": {
+      "web": {
+        "expect": {
+          "equals": "submitted"
+        },
+        "trigger": "activate:no-script"
+      },
+      "ios": {
+        "binds": false,
+        "reason": "no platform-level form model exists off the web"
+      },
+      "android": {
+        "binds": false,
+        "reason": "no platform-level form model exists off the web"
+      }
+    },
+    "POL-02": {
+      "web": {
+        "expect": {
+          "equals": true
+        },
+        "needs_also": [
+          "geometry"
+        ]
+      },
+      "ios": {
+        "expect": {
+          "equals": true
+        },
+        "needs_also": [
+          "geometry"
+        ]
+      },
+      "android": {
+        "expect": {
+          "equals": true
+        },
+        "needs_also": [
+          "geometry"
+        ]
+      }
+    },
+    "CMP-03": {
+      "web": {
+        "expect": {
+          "order": [
+            "icon",
+            "label"
+          ]
+        }
+      },
+      "ios": {
+        "expect": {
+          "order": [
+            "icon",
+            "label"
+          ]
+        }
+      },
+      "android": {
+        "expect": {
+          "order": [
+            "icon",
+            "label"
+          ]
+        }
+      }
+    },
+    "ACC-02": {
+      "web": {
+        "expect": {
+          "source": "label"
+        },
+        "needs_also": [
+          "name-provenance"
+        ]
+      },
+      "ios": {
+        "expect": {
+          "source": "label"
+        },
+        "needs_also": [
+          "name-provenance"
+        ]
+      },
+      "android": {
+        "expect": {
+          "source": "label"
+        },
+        "needs_also": [
+          "name-provenance"
+        ]
+      }
+    }
+  }
+}

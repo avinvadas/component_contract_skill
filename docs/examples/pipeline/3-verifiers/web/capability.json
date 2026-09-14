@@ -1,0 +1,16 @@
+{
+  "verifier": "web-stdlib-static",
+  "format_version": "1.0",
+  "strategy": ["witness"],
+  "can_observe": ["a11y-tree", "identity", "focus"],
+  "cannot_observe": {
+    "geometry":        "no layout engine — this verifier parses HTML, it does not render it",
+    "interaction":     "cannot drive input without a browser",
+    "announcement":    "no assistive technology attached",
+    "name-provenance": "computing which node supplied the accessible name needs the browser's own name computation",
+    "source":          "does not read stylesheets or component source"
+  },
+  "caveats": [
+    "reads AUTHORED attributes, not computed values — a `role` attribute is checked, the browser's computed role is not"
+  ]
+}
