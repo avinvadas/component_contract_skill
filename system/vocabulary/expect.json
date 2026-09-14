@@ -1,0 +1,16 @@
+{
+  "comment": "The comparison grammar. DEFEND THE SIZE OF THIS FILE. If it ever needs expressions, a second verifier stops being cheap and the platform-neutral half of the conformance suite becomes unspecifiable. Pressure to add an expression is evidence a requirement is written at the wrong level.",
+  "format_version": "1.0",
+  "expect": {
+    "present":     { "arg": "boolean", "holds_when": "the observed value exists and is non-empty" },
+    "equals":      { "arg": "scalar",  "holds_when": "the observed value equals the argument" },
+    "one_of":      { "arg": "array",   "holds_when": "the observed value is a member of the argument" },
+    "contains":    { "arg": "scalar",  "holds_when": "the observed collection includes the argument" },
+    "min":         { "arg": "number",  "holds_when": "the observed number is >= the argument" },
+    "max":         { "arg": "number",  "holds_when": "the observed number is <= the argument" },
+    "max_ratio":   { "arg": "number",  "holds_when": "observed / reference is <= the argument" },
+    "order":       { "arg": "array",   "holds_when": "the observed sequence equals the argument" },
+    "absent_from": { "arg": "string",  "holds_when": "the element contributes nothing to the named observation" },
+    "source":      { "arg": "string",  "holds_when": "the named zone is what supplied the observed value" }
+  }
+}

@@ -10,6 +10,10 @@ import json, pathlib, re, sys
 
 HERE = pathlib.Path(__file__).parent
 SRC, OUT = HERE / "1-contract", HERE / "2-canonical"
+# The shipped library, not a fixture. This is the checkpoint the source-layer plan names:
+# the pipeline proves the mechanism on a hand-made archetype; it proves the library only
+# once it resolves against the real one.
+LIB = HERE.parent.parent.parent / "system"
 
 # ---- `needs` is DERIVED from `observe`, not authored -------------------------
 # Most bindings were boilerplate until this table existed. A bindings file now holds
@@ -113,13 +117,16 @@ def check_cardinality(rows):
 # ---- load --------------------------------------------------------------------
 contract_text = (SRC / "Button.md").read_text()
 fm, body = parse_frontmatter(contract_text)
-arch_text = (SRC / "system/archetypes/button.md").read_text()
+arch_text = (LIB / "archetypes/button.md").read_text()
 _, arch_body = parse_frontmatter(arch_text)
 policy_text = (SRC / "system/policy.md").read_text()
-bindings = json.loads((SRC / "system/archetypes/button.bindings.json").read_text())["bindings"]
-# component-local ids bind in the contract's own file; it overrides the archetype's
-for rid, entry in json.loads((SRC / "Button.bindings.json").read_text())["bindings"].items():
-    bindings.setdefault(rid, {}).update(entry)
+# Three binding sources, one per ownership layer. Later layers override earlier ones.
+bindings: dict = {}
+for src in (LIB / "archetypes/button.bindings.json",      # shipped with the skill
+            SRC / "system/policy.bindings.json",          # the design system's
+            SRC / "Button.bindings.json"):                # this contract's own
+    for rid, entry in json.loads(src.read_text())["bindings"].items():
+        bindings.setdefault(rid, {}).update(entry)
 
 inherited = requirement_rows(arch_body) + requirement_rows(policy_text)
 local = requirement_rows(body)

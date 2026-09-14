@@ -1,0 +1,11 @@
+{
+  "comment": "Policy bindings belong to the design system, exactly as policy.md does. An archetype file binds only the ids it owns.",
+  "policy": "system/policy.md", "version": "1.0",
+  "bindings": {
+    "POL-02": {
+      "web":     { "expect": { "equals": true }, "needs_also": ["geometry"] },
+      "ios":     { "expect": { "equals": true }, "needs_also": ["geometry"] },
+      "android": { "expect": { "equals": true }, "needs_also": ["geometry"] }
+    }
+  }
+}

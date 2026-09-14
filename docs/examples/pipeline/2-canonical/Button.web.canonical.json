@@ -41,7 +41,7 @@
     },
     {
       "id": "BTN-03",
-      "statement": "The control is reachable by sequential focus navigation.",
+      "statement": "The control is reachable by the platform's sequential focus navigation.",
       "observe": "focus",
       "kind": "state",
       "scenario": {},
@@ -53,8 +53,22 @@
       ]
     },
     {
+      "id": "BTN-04",
+      "statement": "Activating by the platform's primary non-pointer input performs the action.",
+      "observe": "event",
+      "kind": "behavior",
+      "scenario": {},
+      "expect": {
+        "equals": "activated"
+      },
+      "needs": [
+        "interaction"
+      ],
+      "trigger": "key:Enter"
+    },
+    {
       "id": "BTN-05",
-      "statement": "Where a hardware keyboard exists, both standard activation keys perform the action.",
+      "statement": "Where a hardware keyboard exists, both of its standard activation keys perform the action.",
       "observe": "event",
       "kind": "behavior",
       "scenario": {
@@ -74,6 +88,24 @@
       ]
     },
     {
+      "id": "BTN-06",
+      "statement": "Keyboard activation does not also scroll the surrounding surface.",
+      "observe": "event",
+      "kind": "behavior",
+      "scenario": {
+        "environment": {
+          "hardware_keyboard": true
+        }
+      },
+      "expect": {
+        "equals": "unchanged"
+      },
+      "needs": [
+        "interaction"
+      ],
+      "trigger": "key:Space"
+    },
+    {
       "id": "BTN-08",
       "statement": "When disabled, the control is removed from sequential focus navigation.",
       "observe": "focus",
@@ -89,6 +121,24 @@
       "needs": [
         "focus"
       ]
+    },
+    {
+      "id": "BTN-09",
+      "statement": "When disabled, activation performs no action.",
+      "observe": "event",
+      "kind": "behavior",
+      "scenario": {
+        "props": {
+          "disabled": true
+        }
+      },
+      "expect": {
+        "equals": "no-action"
+      },
+      "needs": [
+        "interaction"
+      ],
+      "trigger": "activate"
     },
     {
       "id": "BTN-10",
@@ -124,6 +174,20 @@
         "geometry"
       ],
       "unit": "css-px"
+    },
+    {
+      "id": "BTN-12",
+      "statement": "The accessible label scales with the platform's user text-size setting.",
+      "observe": "state",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "equals": "scaled"
+      },
+      "needs": [
+        "a11y-tree",
+        "geometry"
+      ]
     },
     {
       "id": "BTN-13",

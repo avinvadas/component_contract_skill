@@ -1,0 +1,21 @@
+# Design-system facts. Not standards, not opinions about design — facts about THIS system
+# that no external standard can supply. Copy to .claude/design-system-context.yml.
+
+tokens:
+  prefix:              # e.g. "ds" — the canonical prefix, syntax-neutral
+  naming_pattern:      # e.g. "category.concept.variant.state"
+  source:              # path to the canonical token tree
+  format:              # dtcg | style-dictionary | tailwind | css-custom-properties
+  naming_convention:   # per-platform RENDERING of a token name, not its identity
+    web:               # e.g. "--ds-color-action-primary-bg"
+    ios:               # e.g. "DesignTokens.color.action.primary.bg"
+    android:           # e.g. "Theme.color.action.primary.bg"
+
+platforms:             # which platforms this system actually targets
+  # - web
+  # - ios
+  # - android
+
+contracts:
+  path:                # where component contracts live
+  archetypes:          # local archetype extensions, if any, layered over the shipped library

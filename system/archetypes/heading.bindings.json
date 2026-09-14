@@ -1,0 +1,9 @@
+{
+  "comment": "Nothing platform-specific. Every entry falls out of the observe vocabulary — which is what a clean archetype looks like, and a useful contrast with button.",
+  "archetype": "heading", "version": "1.0",
+  "bindings": {
+    "HDG-01": { "web": { "expect": { "equals": "heading" }, "also": { "identity": { "one_of": ["h1","h2","h3","h4","h5","h6"] } } }, "ios": { "expect": { "equals": "heading" } }, "android": { "expect": { "equals": "heading" } }, "macos": { "expect": { "equals": "heading" } } },
+    "HDG-02": { "web": { "expect": { "equals": true } }, "ios": { "expect": { "equals": true } }, "android": { "expect": { "equals": true } }, "macos": { "expect": { "equals": true } } },
+    "HDG-03": { "web": { "expect": { "present": true } }, "ios": { "expect": { "present": true } }, "android": { "expect": { "present": true } }, "macos": { "expect": { "present": true } } }
+  }
+}
