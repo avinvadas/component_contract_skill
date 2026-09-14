@@ -1,0 +1,502 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "Button.ios.schema.json",
+  "title": "Button - ios conformance manifest",
+  "description": "GENERATED from Button.md v1.0 + button archetype v1.0 + system policy. Do not edit.",
+  "x-contract": {
+    "component": "Button",
+    "version": "1.0",
+    "platform": "ios",
+    "source_hash": "sha256:8eb0c610250ecd7a"
+  },
+  "type": "object",
+  "required": [
+    "contract",
+    "platform",
+    "sections"
+  ],
+  "properties": {
+    "contract": {
+      "const": "Button"
+    },
+    "platform": {
+      "const": "ios"
+    },
+    "sections": {
+      "type": "object",
+      "required": [
+        "api",
+        "tokens",
+        "structure",
+        "behavior"
+      ],
+      "properties": {
+        "api": {
+          "type": "object",
+          "required": [
+            "status",
+            "props"
+          ],
+          "properties": {
+            "props": {
+              "type": "object",
+              "required": [
+                "label",
+                "variant",
+                "disabled",
+                "iconName",
+                "onPress"
+              ],
+              "properties": {
+                "label": {
+                  "$comment": "API-01",
+                  "title": "label: string, required",
+                  "properties": {
+                    "type": {
+                      "const": "string"
+                    },
+                    "required": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "required"
+                  ]
+                },
+                "variant": {
+                  "$comment": "API-02",
+                  "title": "variant: primary|secondary|ghost, optional, default primary",
+                  "properties": {
+                    "type": {
+                      "const": "enum"
+                    },
+                    "values": {
+                      "const": [
+                        "primary",
+                        "secondary",
+                        "ghost"
+                      ]
+                    },
+                    "default": {
+                      "const": "primary"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "values",
+                    "default"
+                  ]
+                },
+                "disabled": {
+                  "$comment": "API-03",
+                  "title": "disabled: boolean, optional, default false",
+                  "properties": {
+                    "type": {
+                      "const": "boolean"
+                    },
+                    "default": {
+                      "const": false
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "default"
+                  ]
+                },
+                "iconName": {
+                  "$comment": "API-04",
+                  "title": "iconName: string, optional",
+                  "properties": {
+                    "type": {
+                      "const": "string"
+                    },
+                    "required": {
+                      "const": false
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                },
+                "onPress": {
+                  "$comment": "API-05",
+                  "title": "onPress: handler, required",
+                  "properties": {
+                    "required": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "required"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tokens": {
+          "type": "object",
+          "required": [
+            "status",
+            "resolved"
+          ],
+          "properties": {
+            "resolved": {
+              "type": "object",
+              "required": [
+                "APP-01",
+                "APP-02",
+                "APP-03",
+                "APP-04"
+              ],
+              "properties": {
+                "APP-01": {
+                  "$comment": "APP-01",
+                  "title": "background resolves through color.action.primary.bg",
+                  "type": "object",
+                  "required": [
+                    "slot",
+                    "literal"
+                  ],
+                  "properties": {
+                    "slot": {
+                      "const": "color.action.primary.bg"
+                    },
+                    "literal": {
+                      "const": false
+                    }
+                  }
+                },
+                "APP-02": {
+                  "$comment": "APP-02",
+                  "title": "label colour resolves through color.action.primary.fg",
+                  "type": "object",
+                  "required": [
+                    "slot",
+                    "literal"
+                  ],
+                  "properties": {
+                    "slot": {
+                      "const": "color.action.primary.fg"
+                    },
+                    "literal": {
+                      "const": false
+                    }
+                  }
+                },
+                "APP-03": {
+                  "$comment": "APP-03",
+                  "title": "corner radius resolves through radius.control",
+                  "type": "object",
+                  "required": [
+                    "slot",
+                    "literal"
+                  ],
+                  "properties": {
+                    "slot": {
+                      "const": "radius.control"
+                    },
+                    "literal": {
+                      "const": false
+                    }
+                  }
+                },
+                "APP-04": {
+                  "$comment": "APP-04",
+                  "title": "icon-label gap resolves through space.inline.sm",
+                  "type": "object",
+                  "required": [
+                    "slot",
+                    "literal"
+                  ],
+                  "properties": {
+                    "slot": {
+                      "const": "space.inline.sm"
+                    },
+                    "literal": {
+                      "const": false
+                    }
+                  }
+                },
+                "APP-05": {
+                  "$comment": "APP-05",
+                  "title": "pressed background resolves through color.action.primary.pressed",
+                  "x-not-applicable": "L2 divergence: iOS defers to the platform's automatic pressed dimming"
+                }
+              }
+            }
+          }
+        },
+        "structure": {
+          "type": "object",
+          "required": [
+            "status",
+            "captures"
+          ],
+          "properties": {
+            "captures": {
+              "type": "object",
+              "required": [
+                "default",
+                "disabled",
+                "focused"
+              ],
+              "properties": {
+                "default": {
+                  "type": "object",
+                  "required": [
+                    "tree"
+                  ],
+                  "properties": {
+                    "tree": {
+                      "type": "object",
+                      "required": [
+                        "zone",
+                        "identity",
+                        "role",
+                        "name",
+                        "focusable",
+                        "box",
+                        "children"
+                      ],
+                      "properties": {
+                        "zone": {
+                          "const": "root"
+                        },
+                        "identity": {
+                          "$comment": "BTN-01b",
+                          "title": "the rendered control is a real button, not a generic element given a role",
+                          "enum": [
+                            "Button"
+                          ]
+                        },
+                        "role": {
+                          "$comment": "BTN-01",
+                          "title": "the control is exposed to assistive technology as a button",
+                          "anyOf": [
+                            {
+                              "const": "button"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "name": {
+                          "$comment": "BTN-02",
+                          "title": "the control has a non-empty accessible name",
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "focusable": {
+                          "$comment": "BTN-03",
+                          "title": "the control is reachable by sequential focus navigation",
+                          "const": true
+                        },
+                        "box": {
+                          "$comment": "BTN-11",
+                          "title": "the control meets the platform minimum touch-target size (44)",
+                          "type": "object",
+                          "required": [
+                            "w",
+                            "h"
+                          ],
+                          "properties": {
+                            "w": {
+                              "type": "number",
+                              "minimum": 44
+                            },
+                            "h": {
+                              "type": "number",
+                              "minimum": 44
+                            }
+                          }
+                        },
+                        "children": {
+                          "$comment": "CMP-03",
+                          "title": "zones are arranged along the inline axis, icon before label",
+                          "type": "array",
+                          "minItems": 1,
+                          "items": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "zone": {
+                                  "const": "icon"
+                                },
+                                "role": {
+                                  "$comment": "ACC-01",
+                                  "title": "the icon is decorative and contributes nothing to the accessible name",
+                                  "const": "none"
+                                }
+                              },
+                              "required": [
+                                "zone",
+                                "role"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "zone": {
+                                  "const": "label"
+                                }
+                              },
+                              "required": [
+                                "zone"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                },
+                "disabled": {
+                  "type": "object",
+                  "required": [
+                    "tree"
+                  ],
+                  "properties": {
+                    "tree": {
+                      "type": "object",
+                      "required": [
+                        "states",
+                        "focusable"
+                      ],
+                      "properties": {
+                        "states": {
+                          "$comment": "BTN-10",
+                          "title": "when disabled, that state is conveyed to assistive technology",
+                          "type": "array",
+                          "contains": {
+                            "const": "disabled"
+                          }
+                        },
+                        "focusable": {
+                          "$comment": "BTN-08",
+                          "title": "when disabled, the control is removed from sequential focus navigation",
+                          "const": false
+                        }
+                      }
+                    }
+                  }
+                },
+                "focused": {
+                  "type": "object",
+                  "required": [
+                    "tree"
+                  ],
+                  "properties": {
+                    "tree": {
+                      "type": "object",
+                      "required": [
+                        "focus_indicator"
+                      ],
+                      "properties": {
+                        "focus_indicator": {
+                          "$comment": "BTN-07",
+                          "title": "while focused, a focus indicator is distinguishable from the unfocused appearance",
+                          "const": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "behavior": {
+          "type": "object",
+          "required": [
+            "status"
+          ],
+          "if": {
+            "properties": {
+              "status": {
+                "const": "extracted"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "checks"
+            ],
+            "properties": {
+              "checks": {
+                "type": "object",
+                "required": [
+                  "BTN-04",
+                  "BTN-05",
+                  "BTN-06",
+                  "BTN-09"
+                ],
+                "properties": {
+                  "BTN-04": {
+                    "$comment": "BTN-04",
+                    "title": "activating by the primary non-pointer input performs the action",
+                    "type": "object",
+                    "required": [
+                      "result"
+                    ],
+                    "properties": {
+                      "result": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "BTN-05": {
+                    "$comment": "BTN-05",
+                    "title": "where a hardware keyboard exists, both standard activation keys perform the action",
+                    "type": "object",
+                    "required": [
+                      "result"
+                    ],
+                    "properties": {
+                      "result": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "BTN-06": {
+                    "$comment": "BTN-06",
+                    "title": "keyboard activation does not also scroll the surrounding surface",
+                    "type": "object",
+                    "required": [
+                      "result"
+                    ],
+                    "properties": {
+                      "result": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "BTN-09": {
+                    "$comment": "BTN-09",
+                    "title": "when disabled, activation performs no action",
+                    "type": "object",
+                    "required": [
+                      "result"
+                    ],
+                    "properties": {
+                      "result": {
+                        "const": "pass"
+                      }
+                    }
+                  },
+                  "BTN-13": {
+                    "$comment": "BTN-13",
+                    "title": "the control submits its containing form without scripting",
+                    "x-not-applicable": "archetype scope: no platform-level form model exists off the web"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "contract": "Button",
+  "contract_version": "1.0",
+  "platform": "android",
+  "conformance_level": 2,
+  "implementation": { "framework": "Jetpack Compose", "commit": "a1b2c3d" },
+  "sections": {
+    "api": { "status": "extracted", "method": "ksp", "props": {
+      "label":    { "type": "string",  "required": true },
+      "variant":  { "type": "enum", "values": ["primary","secondary","ghost"], "required": false, "default": "primary" },
+      "disabled": { "type": "boolean", "required": false, "default": false },
+      "iconName": { "type": "string",  "required": false },
+      "onPress":  { "type": "function","required": true } } },
+    "tokens": { "status": "extracted", "method": "ksp", "resolved": {
+      "APP-01": { "slot": "color.action.primary.bg",      "reference": "Theme.color.action.primary.bg",      "literal": false },
+      "APP-02": { "slot": "color.action.primary.fg",      "reference": "Theme.color.action.primary.fg",      "literal": false },
+      "APP-03": { "slot": "radius.control",               "reference": "Theme.radius.control",               "literal": false },
+      "APP-04": { "slot": "space.inline.sm",              "reference": "Theme.space.inline.sm",              "literal": false },
+      "APP-05": { "slot": "color.action.primary.pressed", "reference": "Theme.color.action.primary.pressed", "literal": false } } },
+    "structure": {
+      "status": "extracted", "method": "uiautomator",
+      "unsupported": ["BTN-01"],
+      "unsupported_reason": "uiautomator dump cannot see Compose semantics Role; confirming it needs an instrumented test",
+      "captures": {
+      "default": { "tree": {
+        "zone": "root", "identity": "androidx.compose.ui.Node", "role": null, "name": "Save changes",
+        "states": [], "focusable": true, "box": { "w": 156, "h": 48 },
+        "children": [
+          { "zone": "icon",  "identity": "androidx.compose.ui.Node", "role": "none", "name": "", "box": { "w": 18, "h": 18 } },
+          { "zone": "label", "identity": "androidx.compose.ui.Node", "role": "text", "name": "Save changes", "box": { "w": 104, "h": 21 } } ] } },
+      "disabled": { "tree": {
+        "zone": "root", "identity": "androidx.compose.ui.Node", "role": null, "name": "Save changes",
+        "states": ["disabled"], "focusable": false, "box": { "w": 156, "h": 48 } } },
+      "focused": { "tree": {
+        "zone": "root", "identity": "androidx.compose.ui.Node", "role": null, "name": "Save changes",
+        "states": ["focused"], "focusable": true, "focus_indicator": true, "box": { "w": 156, "h": 48 } } } } },
+    "behavior": {
+      "status": "unavailable",
+      "reason": "no instrumented test target configured; adapter ran at conformance level 2"
+    }
+  }
+}

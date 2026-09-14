@@ -1,0 +1,40 @@
+{
+  "contract": "Button",
+  "contract_version": "1.0",
+  "platform": "web",
+  "conformance_level": 3,
+  "implementation": { "framework": "React 18", "commit": "a1b2c3d" },
+  "sections": {
+    "api": { "status": "extracted", "method": "ts-compiler", "props": {
+      "label":    { "type": "string",  "required": true },
+      "variant":  { "type": "enum", "values": ["primary","secondary","ghost"], "required": false, "default": "primary" },
+      "disabled": { "type": "boolean", "required": false, "default": false },
+      "iconName": { "type": "string",  "required": false },
+      "onPress":  { "type": "function","required": true } } },
+    "tokens": { "status": "extracted", "method": "cdp-matched-styles", "resolved": {
+      "APP-01": { "slot": "color.action.primary.bg",      "reference": "var(--color-action-primary-bg)",      "literal": false },
+      "APP-02": { "slot": "color.action.primary.fg",      "reference": "var(--color-action-primary-fg)",      "literal": false },
+      "APP-03": { "slot": "radius.control",               "reference": "var(--radius-control)",               "literal": false },
+      "APP-04": { "slot": "space.inline.sm",              "reference": "var(--space-inline-sm)",              "literal": false },
+      "APP-05": { "slot": "color.action.primary.pressed", "reference": "var(--color-action-primary-pressed)", "literal": false } } },
+    "structure": { "status": "extracted", "method": "cdp-axtree", "captures": {
+      "default": { "tree": {
+        "zone": "root", "identity": "button", "role": "button", "name": "Save changes",
+        "states": [], "focusable": true, "box": { "w": 132, "h": 40 },
+        "children": [
+          { "zone": "icon",  "identity": "svg",  "role": "none", "name": "", "box": { "w": 16, "h": 16 } },
+          { "zone": "label", "identity": "span", "role": "text", "name": "Save changes", "box": { "w": 92, "h": 20 } } ] } },
+      "disabled": { "tree": {
+        "zone": "root", "identity": "button", "role": "button", "name": "Save changes",
+        "states": ["disabled"], "focusable": false, "box": { "w": 132, "h": 40 } } },
+      "focused": { "tree": {
+        "zone": "root", "identity": "button", "role": "button", "name": "Save changes",
+        "states": ["focused"], "focusable": true, "focus_indicator": true, "box": { "w": 132, "h": 40 } } } } },
+    "behavior": { "status": "extracted", "method": "playwright", "checks": {
+      "BTN-04": { "result": "pass", "trigger": "key:Enter",  "observed": "onPress fired" },
+      "BTN-05": { "result": "pass", "trigger": ["key:Enter","key:Space"], "observed": "onPress fired for both" },
+      "BTN-06": { "result": "pass", "trigger": "key:Space",  "observed": "scrollY unchanged" },
+      "BTN-09": { "result": "pass", "trigger": "click while disabled", "observed": "no onPress" },
+      "BTN-13": { "result": "pass", "trigger": "activate with scripting disabled", "observed": "form submitted" } } }
+  }
+}
