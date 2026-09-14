@@ -38,6 +38,82 @@ is the documentation-driven claim cashing out rather than being a slogan.
 
 ---
 
+## Does every platform validate the same property at the same moment?
+
+**No.** The requirement binds identically on every platform — same statement, same strength.
+What differs is *when it becomes observable*, and the differences are not where you would
+expect.
+
+| Section | Web | iOS | Android | macOS |
+|---|---|---|---|---|
+| `api` | compile | compile | compile | compile |
+| `tokens` — reference | compile | compile | compile | compile |
+| `tokens` — cascade override | **mounted** | n/a | n/a | n/a |
+| `structure` — role / name / state | mounted *(real browser)* | mounted *(in-process host)* | mounted *(Robolectric)* | mounted |
+| `structure` — geometry | mounted *(real browser)* | mounted | mounted | mounted |
+| `structure` — name provenance | mounted | **weak** | **weak** | **weak** |
+| `behavior` | driven | driven | mounted **or** driven | driven |
+
+`api` is the only section that behaves identically everywhere. Everything else diverges, in
+four ways worth knowing before writing an adapter.
+
+### 1. On every platform, the expected tool is not the best tool for `structure`
+
+This is the finding, and it holds three for three:
+
+| Platform | The obvious tool | What it cannot see | The better tool |
+|---|---|---|---|
+| Web | jsdom (already in most test suites) | no layout — `getBoundingClientRect` returns zeros; no computed accessible name or ARIA role | headless Chrome + CDP |
+| iOS | XCUITest | `accessibilityTraits` — no `.isHeader`, no `.adjustable` | `UIHostingController` in a unit test, walked with `UIAccessibility` |
+| Android | `adb shell uiautomator dump` | Compose semantics — no `Role`, no `heading()` | Compose test rule under Robolectric |
+
+Two of these invert the usual cost assumption. On iOS the **heavier** tool sees less: XCUITest
+boots a Simulator, takes minutes, and cannot read traits, while the in-process host runs in
+seconds and can. On Android, `uiautomator` is cheap to *set up* — one adb command, no test
+code — but it needs a running app on a device **and** sees less than Robolectric, which needs
+neither. Robolectric is both cheaper and more capable.
+
+This corrects the "cheap tiers" note recorded earlier, which offered `uiautomator` as
+Android's low-cost path. It is the low-*setup* path, not the low-cost or high-capability one.
+
+### 2. Web's zero-tooling tier is weaker than native's
+
+The usual assumption is that web is always easiest. At full fidelity it is — headless Chrome
+is trivial to run. But the tier that costs *nothing new* is jsdom, which does no layout and
+does not compute accessible names, so geometry and name requirements report `unverified`.
+The native equivalent — a `UIHostingController` or a Compose test rule — does real layout and
+real semantics. So at the zero-new-tooling tier, **native sees more than web**.
+
+### 3. `behavior` is reachable in-process on Android, and possibly on iOS
+
+Compose's test rule supports `performClick()` and `performKeyPress()` under Robolectric, so a
+meaningful share of Android's `behavior` section is reachable at JVM speed with no device.
+
+The iOS equivalent — calling `accessibilityActivate()` on an element hosted in-process — is
+plausible and **unverified**; it is recorded here as a thing to test, not a thing to rely on.
+Some behaviour genuinely needs the full runtime everywhere: real gesture recognition, system
+Back, VoiceOver actually running.
+
+### 4. Two capabilities are web-only, for opposite reasons
+
+**Cascade override** (`tokens`, mounted) exists because CSS has a cascade that can silently
+defeat a correct token reference. No other platform has that failure mode, so its absence
+elsewhere is not a gap.
+
+**Name provenance** — *which* zone supplied the accessible name — is exposed by the web
+accessibility tree through labelling relationships. On native the label is a bare string on
+the node. You can confirm the name *matches* the title's text, which is weaker and fails when
+two zones hold the same string. That one **is** a gap, recorded as G2.
+
+### What this means for an adapter
+
+Do not write one extractor per platform and assume a tier order. Write one per
+**(platform × moment)**, and expect at least iOS to need two for `structure` alone —
+in-process for semantics, XCUITest for anything requiring a real app. The moment matrix
+above is the spec for which combinations must exist.
+
+---
+
 ## 0 · Frontmatter
 
 | Property | Section | Moment | Level | Notes |
