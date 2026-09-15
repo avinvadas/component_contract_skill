@@ -57,7 +57,7 @@ by a decorative icon. Unlike Link, it does not navigate.
 
 | prop | type | required | default | description |
 |---|---|---|---|---|
-| `variant` | primary\|secondary\|ghost | no | `primary` | emphasis level |
+| `variant` | enum:primary,secondary,ghost | no | `primary` | emphasis level |
 
 ## 5. Behavior
 

@@ -8,6 +8,41 @@ This is the only artifact in the system a human writes or reads by choice. Every
 downstream — the canonical document, the verifiers, the reports — is plumbing that exists to
 serve it.
 
+## Source, and the resolved view
+
+The contract `.md` is **source**: thin, deltas only, the component-specific rows and nothing
+else. The archetype is **shared**: abstract by construction, because it is inherited by every
+component of that kind.
+
+Neither reads as *"what this component is"*, and that is not a flaw in either — it is the
+signature property of any delta-based inheritance. CSS rules versus computed styles. A class
+versus its full method list. Docker layers versus the flattened image. In every one, the
+source is thin, the parent is abstract, and the thing a person wants to read is neither.
+
+The resolution in all of those is the same, and it is **never merging the sources**:
+
+> **`Button.md` is source. `Button.resolved.md` is the reading artifact** — generated,
+> platform-neutral, complete, showing every requirement from all three layers with its
+> origin.
+
+Merging the files instead would cost both things the split is carrying. Transcribing an
+archetype's rows into every contract that inherits it means nothing enforces they stay
+identical, and two contracts disagreeing about what "being a button" means is the exact
+failure this project exists to prevent. And the split carries information: **inherited rows
+are facts about platforms; local rows are decisions your team made.** A reader asking "why
+does our Button require Space activation?" needs the answer "the platform gives it free" and
+not "we chose it" — because only one of those is open to revision.
+
+So the resolved view groups by origin rather than hiding it:
+
+| Group | Meaning |
+|---|---|
+| Inherited from archetype | facts about what platforms provide free — not yours to negotiate |
+| From system policy | your design system's cross-cutting commitments |
+| Specific to this component | decided in this contract's interview |
+
+`docs/examples/pipeline/resolve_view.py` generates it.
+
 ## Two readers, one document
 
 | Reader | Needs |
@@ -284,6 +319,24 @@ absent := invalid:<reason> | omitted | fallback:<zone>
 
 The verdict is the token; the reason rides along as prose and is reported when the lint fires.
 
+### 6 · Any cell containing `|`
+
+Found by generating the resolved view, not by writing the spec — which is the point of
+building things.
+
+An enum prop type reads `primary|secondary|ghost`, and `|` is the table delimiter. Markdown's
+escape (`\|`) is correct authoring and a naive splitter mangles it into three broken cells.
+
+```
+type := <scalar> | enum:<value>,<value>,... | component:<Name> | handler
+```
+
+Two defences, because one is not enough. The grammar prefers `enum:a,b,c` so the hazard does
+not arise; and **every parser must split on unescaped pipes only**, because a human will
+write `a\|b` anyway and be right to.
+
+Same class as the en-dash: a value whose own punctuation collides with the format's.
+
 ## Lint rules
 
 | Rule | Why |
@@ -297,6 +350,7 @@ The verdict is the token; the reason rides along as prose and is reported when t
 | no `component:<Name>` names a contract that does not exist | dangling delegation |
 | every zone referenced by `after:` / `before:` exists | dangling reference |
 | en-dash, em-dash or hyphen in a `cardinality` cell | the parse hazard above, caught explicitly |
+| an unescaped `\|` inside a cell value | collides with the table delimiter; use `enum:a,b,c` or escape it |
 
 ---
 
