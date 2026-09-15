@@ -41,17 +41,17 @@ which answers the other open question in `source-layer-plan.md` before anyone bu
 
 ## Bundle
 
-| statement | observe | kind | required | chapter | source | id |
+| when | statement | observe | kind | chapter | source | id |
 |---|---|---|---|---|---|---|
-| The control is exposed to assistive technology as a combo box. | role | state | always | Accessibility | catalogue:macOS/NSComboBox · apg:combobox | id-CBX-01 |
-| The control has a non-empty accessible name. | name | state | always | Accessibility | apg:combobox | id-CBX-02 |
-| Whether the candidate list is open is conveyed to assistive technology. | state | state | always | Accessibility | catalogue:macOS/NSComboBox · apg:combobox | id-CBX-03 |
-| The candidate list is programmatically associated with the entry. | containment | state | when:expanded | Composition | apg:combobox | id-CBX-04 |
-| The active candidate is conveyed without focus leaving the entry. | state | state | when:expanded | Accessibility | apg:combobox | id-CBX-05 |
-| The platform's list-navigation input moves between candidates. | event | behavior | when:expanded | Behavior | catalogue:macOS/NSComboBox · catalogue:Android/ExposedDropdownMenuBox | id-CBX-06 |
-| The platform's dismissal input closes the list without committing a value. | event | behavior | when:expanded | Behavior | catalogue:macOS/NSComboBox · catalogue:Android/DropdownMenu | id-CBX-07 |
-| Committing a candidate places its value in the entry and closes the list. | event | behavior | when:expanded | Behavior | catalogue:macOS/NSComboBox | id-CBX-08 |
-| The entry remains editable after a candidate is committed. | state | state | always | Structure | catalogue:macOS/NSComboBox | id-CBX-09 |
+| always | The control is exposed to assistive technology as a combo box. | role | state | Accessibility | catalogue:macOS/NSComboBox · apg:combobox | id-CBX-01 |
+| always | The control has a non-empty accessible name. | name | state | Accessibility | apg:combobox | id-CBX-02 |
+| always | Whether the candidate list is open is conveyed to assistive technology. | state | state | Accessibility | catalogue:macOS/NSComboBox · apg:combobox | id-CBX-03 |
+| when:expanded | The candidate list is programmatically associated with the entry. | containment | state | Composition | apg:combobox | id-CBX-04 |
+| when:expanded | The active candidate is conveyed without focus leaving the entry. | state | state | Accessibility | apg:combobox | id-CBX-05 |
+| when:expanded | The platform's list-navigation input moves between candidates. | event | behavior | Behavior | catalogue:macOS/NSComboBox · catalogue:Android/ExposedDropdownMenuBox | id-CBX-06 |
+| when:expanded | The platform's dismissal input closes the list without committing a value. | event | behavior | Behavior | catalogue:macOS/NSComboBox · catalogue:Android/DropdownMenu | id-CBX-07 |
+| when:expanded | Committing a candidate places its value in the entry and closes the list. | event | behavior | Behavior | catalogue:macOS/NSComboBox | id-CBX-08 |
+| always | The entry remains editable after a candidate is committed. | state | state | Structure | catalogue:macOS/NSComboBox | id-CBX-09 |
 
 ## CBX-09 and the single-platform question
 

@@ -247,6 +247,40 @@ is a different archetype.
 The resolver must extract the canonical document deterministically. That requires knowing
 exactly which cells are prose and which are tokens.
 
+## `when` leads; a statement never restates its condition
+
+Column order in every requirement table is **`when`, `statement`, … , `id`** — condition
+first, predicate second, metadata last.
+
+That ordering exists to enforce a rule, not merely to read nicely:
+
+> **A statement must not restate its condition.** The `when` column supplies the context; the
+> statement supplies only what must be true.
+
+Before the `when` column existed, statements carried their own context and said it twice:
+
+| | |
+|---|---|
+| was | `When disabled, activation performs no action.` · `when:disabled` |
+| now | `when:disabled` · `Activation performs no action.` |
+
+Statements become shorter, directly comparable, and — the real gain — **a predicate rather
+than a sentence**. Two requirements differing only in condition now differ only in one cell.
+
+**Lint heuristic:** a statement beginning *When*, *While*, *Where* or *If* is almost always
+restating its condition. Not always wrong, but always worth a look.
+
+Two consequences to carry through:
+
+**A report must compose them.** Since the statement no longer stands alone, a failing check
+prints the scenario with it — `[disabled=True] The control is removed from sequential focus
+navigation.` — which is better than the old form anyway, because it names which scenario
+failed rather than implying it.
+
+**`always` stays explicit in the source and renders as `—` in the view.** Explicit is
+lintable and unambiguous; in a chapter where most rows are unconditional, a column of the
+word "always" is ink with no signal.
+
 ## The id column is metadata, and is presented as such
 
 Requirement ids join every artifact downstream, but a reader scanning a chapter does not

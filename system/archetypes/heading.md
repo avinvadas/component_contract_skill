@@ -20,11 +20,11 @@ What each platform provides. `none` means every implementation builds the semant
 | macos | `AXHeading` role |
 
 
-| statement | observe | kind | required | chapter | source | id |
+| when | statement | observe | kind | chapter | source | id |
 |---|---|---|---|---|---|---|
-| The text is exposed to assistive technology as a heading. | role | state | always | Accessibility | catalogue:Web/headings · catalogue:iOS/header-trait · catalogue:Android/heading | id-HDG-01 |
-| The text is reachable by the platform's heading navigation. | focus | state | always | Accessibility | catalogue:Web/headings | id-HDG-02 |
-| The text has a non-empty accessible name. | name | state | always | Accessibility | catalogue:Web/headings | id-HDG-03 |
+| always | The text is exposed to assistive technology as a heading. | role | state | Accessibility | catalogue:Web/headings · catalogue:iOS/header-trait · catalogue:Android/heading | id-HDG-01 |
+| always | The text is reachable by the platform's heading navigation. | focus | state | Accessibility | catalogue:Web/headings | id-HDG-02 |
+| always | The text has a non-empty accessible name. | name | state | Accessibility | catalogue:Web/headings | id-HDG-03 |
 
 ## Level is deliberately not a requirement
 

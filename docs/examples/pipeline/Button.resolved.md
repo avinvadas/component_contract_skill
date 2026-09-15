@@ -26,11 +26,11 @@ Where a platform gives you this free, and where you build it by hand.
 
 ### Requirements
 
-| statement | when | origin | id |
+| when | statement | origin | id |
 |---|---|---|---|
-| Zones are arranged along the inline axis, icon before label. | when:icon_present | this component | id-CMP-03 |
-| The control does not exceed the inline size of its container. | always | this component | id-STR-01 |
-| The control meets the platform's minimum touch-target size. | when:touch_input | archetype `button` | id-BTN-11 |
+| when:icon_present | Zones are arranged along the inline axis, icon before label. | this component | id-CMP-03 |
+| — | The control does not exceed the inline size of its container. | this component | id-STR-01 |
+| when:touch_input | The control meets the platform's minimum touch-target size. | archetype `button` | id-BTN-11 |
 
 ### Required children
 
@@ -55,10 +55,10 @@ Where a platform gives you this free, and where you build it by hand.
 
 ### Requirements
 
-| statement | when | origin | id |
+| when | statement | origin | id |
 |---|---|---|---|
-| The accessible label scales with the platform's user text-size setting. | always | archetype `button` | id-BTN-12 |
-| A focused control renders a focus indicator distinguishable from its unfocused appearance. | always | policy | id-POL-02 |
+| — | The accessible label scales with the platform's user text-size setting. | archetype `button` | id-BTN-12 |
+| — | A focused control renders a focus indicator distinguishable from its unfocused appearance. | policy | id-POL-02 |
 
 ### Platform distinctions
 
@@ -68,13 +68,13 @@ Where a platform gives you this free, and where you build it by hand.
 
 ### Requirements
 
-| statement | when | origin | id |
+| when | statement | origin | id |
 |---|---|---|---|
-| Activating by the platform's primary non-pointer input performs the action. | always | archetype `button` | id-BTN-04 |
-| Where a hardware keyboard exists, both of its standard activation keys perform the action. | when:hardware_keyboard | archetype `button` | id-BTN-05 |
-| Keyboard activation does not also scroll the surrounding surface. | when:hardware_keyboard | archetype `button` | id-BTN-06 |
-| When disabled, activation performs no action. | when:disabled | archetype `button` | id-BTN-09 |
-| The control submits its containing form without scripting. | when:inside_form | archetype `button` | id-BTN-13 |
+| — | Activating by the platform's primary non-pointer input performs the action. | archetype `button` | id-BTN-04 |
+| when:hardware_keyboard | Both of the platform's standard activation keys perform the action. | archetype `button` | id-BTN-05 |
+| when:hardware_keyboard | Keyboard activation does not also scroll the surrounding surface. | archetype `button` | id-BTN-06 |
+| when:disabled | Activation performs no action. | archetype `button` | id-BTN-09 |
+| when:inside_form | The control submits its containing form without scripting. | archetype `button` | id-BTN-13 |
 
 ### Events
 
@@ -86,15 +86,15 @@ Where a platform gives you this free, and where you build it by hand.
 
 Reviewable as an aspect: everything governing how the component is exposed, named, traversed and announced.
 
-| statement | when | origin | id |
+| when | statement | origin | id |
 |---|---|---|---|
-| The icon contributes nothing to the accessible name. | when:icon_present | this component | id-ACC-01 |
-| The label is the sole source of the accessible name. | always | this component | id-ACC-02 |
-| The control is exposed to assistive technology as a button. | always | archetype `button` | id-BTN-01 |
-| The control has a non-empty accessible name. | always | archetype `button` | id-BTN-02 |
-| The control is reachable by the platform's sequential focus navigation. | always | archetype `button` | id-BTN-03 |
-| When disabled, the control is removed from sequential focus navigation. | when:disabled | archetype `button` | id-BTN-08 |
-| When disabled, that state is conveyed to assistive technology. | when:disabled | archetype `button` | id-BTN-10 |
+| when:icon_present | The icon contributes nothing to the accessible name. | this component | id-ACC-01 |
+| — | The label is the sole source of the accessible name. | this component | id-ACC-02 |
+| — | The control is exposed to assistive technology as a button. | archetype `button` | id-BTN-01 |
+| — | The control has a non-empty accessible name. | archetype `button` | id-BTN-02 |
+| — | The control is reachable by the platform's sequential focus navigation. | archetype `button` | id-BTN-03 |
+| when:disabled | The control is removed from sequential focus navigation. | archetype `button` | id-BTN-08 |
+| when:disabled | The disabled state is conveyed to assistive technology. | archetype `button` | id-BTN-10 |
 
 ### Platform distinctions
 

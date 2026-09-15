@@ -1,20 +1,85 @@
 {
-  "comment": "What a `required:` clause may name, and what each resolves to as a scenario PREDICATE — a class of instances, never a reference to one. `<zone>_present` is generated per zone the contract declares.",
+  "comment": "What a `required:` clause may name, and what each resolves to as a scenario PREDICATE \u2014 a class of instances, never a reference to one. `<zone>_present` is generated per zone the contract declares.",
   "format_version": "1.0",
   "conditions": {
-    "disabled":          { "scenario": { "props": { "disabled": true } },              "requires_prop": "disabled" },
-    "hardware_keyboard": { "scenario": { "environment": { "hardware_keyboard": true } }, "verifier_must": "attach or emulate a keyboard" },
-    "touch_input":       { "scenario": { "environment": { "touch_input": true } },      "verifier_must": "run on a touch-capable target" },
-    "pointer_input":     { "scenario": { "environment": { "pointer_input": true } },    "verifier_must": "run on a pointer-capable target" },
-    "reduced_motion":    { "scenario": { "environment": { "reduced_motion": true } },   "verifier_must": "set the reduced-motion preference" },
-    "inside_form":       { "scenario": { "environment": { "inside_form": true } },      "verifier_must": "mount the component inside a form" },
-    "rtl":               { "scenario": { "environment": { "direction": "rtl" } },       "verifier_must": "set the layout direction" }
+    "disabled": {
+      "scenario": {
+        "props": {
+          "disabled": true
+        }
+      },
+      "requires_prop": "disabled"
+    },
+    "hardware_keyboard": {
+      "scenario": {
+        "environment": {
+          "hardware_keyboard": true
+        }
+      },
+      "verifier_must": "attach or emulate a keyboard"
+    },
+    "touch_input": {
+      "scenario": {
+        "environment": {
+          "touch_input": true
+        }
+      },
+      "verifier_must": "run on a touch-capable target"
+    },
+    "pointer_input": {
+      "scenario": {
+        "environment": {
+          "pointer_input": true
+        }
+      },
+      "verifier_must": "run on a pointer-capable target"
+    },
+    "reduced_motion": {
+      "scenario": {
+        "environment": {
+          "reduced_motion": true
+        }
+      },
+      "verifier_must": "set the reduced-motion preference"
+    },
+    "inside_form": {
+      "scenario": {
+        "environment": {
+          "inside_form": true
+        }
+      },
+      "verifier_must": "mount the component inside a form"
+    },
+    "rtl": {
+      "scenario": {
+        "environment": {
+          "direction": "rtl"
+        }
+      },
+      "verifier_must": "set the layout direction"
+    },
+    "expanded": {
+      "scenario": {
+        "state": {
+          "expanded": true
+        }
+      },
+      "requires_state": "expanded",
+      "note": "the component declares an expanded/collapsed state"
+    }
   },
   "generated": {
-    "<zone>_present": { "scenario": { "zones": { "<zone>": "present" } }, "requires_zone": "<zone>" }
+    "<zone>_present": {
+      "scenario": {
+        "zones": {
+          "<zone>": "present"
+        }
+      },
+      "requires_zone": "<zone>"
+    }
   },
   "lint": [
     "a condition naming `requires_prop` fails if no chapter declares that prop",
-    "a `<zone>_present` condition fails if §3.1 declares no such zone"
+    "a `<zone>_present` condition fails if \u00a73.1 declares no such zone"
   ]
 }

@@ -60,7 +60,7 @@
     },
     {
       "id": "BTN-05",
-      "statement": "Where a hardware keyboard exists, both of its standard activation keys perform the action.",
+      "statement": "Both of the platform's standard activation keys perform the action.",
       "observe": "event",
       "kind": "behavior",
       "scenario": {
@@ -99,7 +99,7 @@
     },
     {
       "id": "BTN-08",
-      "statement": "When disabled, the control is removed from sequential focus navigation.",
+      "statement": "The control is removed from sequential focus navigation.",
       "observe": "focus",
       "kind": "state",
       "scenario": {
@@ -116,7 +116,7 @@
     },
     {
       "id": "BTN-09",
-      "statement": "When disabled, activation performs no action.",
+      "statement": "Activation performs no action.",
       "observe": "event",
       "kind": "behavior",
       "scenario": {
@@ -134,7 +134,7 @@
     },
     {
       "id": "BTN-10",
-      "statement": "When disabled, that state is conveyed to assistive technology.",
+      "statement": "The disabled state is conveyed to assistive technology.",
       "observe": "state",
       "kind": "state",
       "scenario": {

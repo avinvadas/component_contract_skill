@@ -97,6 +97,8 @@ def requirement_rows(text):
     out = []
     for headers, rows in parse_tables(text):
         if {"id", "statement", "observe", "kind"} <= set(headers):
+            for r in rows:
+                r.setdefault("when", r.get("required", "always"))
             out += rows
     return out
 
@@ -177,7 +179,7 @@ def main():
                 lint.append(f"{rid}: observe {r['observe']!r} is not in the closed vocabulary")
                 needs = []
             entry = {**base, "observe": r["observe"], "kind": r["kind"],
-                     "scenario": scenario_for(r.get("required", "always"), rid),
+                     "scenario": scenario_for(r.get("when") or r.get("required") or "always", rid),
                      "expect": b["expect"], "needs": needs}
             for k in ("trigger", "unit", "also"):
                 if k in b:

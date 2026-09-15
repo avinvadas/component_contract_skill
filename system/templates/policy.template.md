@@ -7,18 +7,18 @@ pending token. Delete a row only if you have decided it does not apply, and say 
 The decision list is drawn from T1's G5 and G6 — the cross-cutting facts that kept appearing
 as "under-specified component requirements" because there was no system layer to hold them.
 
-| decision | statement | observe | kind | required | id |
+| when | decision | statement | observe | kind | id |
 |---|---|---|---|---|---|
-| token discipline | *(e.g. every value that can resolve through a token does)* | token | state | always | id-POL-01 |
-| focus indicator |  | state | state | always | id-POL-02 |
-| touch-target floor |  | layout | state | when:touch_input | id-POL-03 |
-| literal denial | *(deny-by-default across a declared property set)* | token | state | always | id-POL-04 |
-| reduced motion |  | state | state | when:reduced_motion | id-POL-05 |
-| announcement politeness |  | announcement | behavior | always | id-POL-06 |
-| validation timing |  | event | behavior | always | id-POL-07 |
-| loading convention |  | state | state | always | id-POL-08 |
-| empty-state convention |  | state | state | always | id-POL-09 |
-| error convention |  | state | state | always | id-POL-10 |
+| always | token discipline | *(e.g. every value that can resolve through a token does)* | token | state | id-POL-01 |
+| always | focus indicator |  | state | state | id-POL-02 |
+| when:touch_input | touch-target floor |  | layout | state | id-POL-03 |
+| always | literal denial | *(deny-by-default across a declared property set)* | token | state | id-POL-04 |
+| when:reduced_motion | reduced motion |  | state | state | id-POL-05 |
+| always | announcement politeness |  | announcement | behavior | id-POL-06 |
+| always | validation timing |  | event | behavior | id-POL-07 |
+| always | loading convention |  | state | state | id-POL-08 |
+| always | empty-state convention |  | state | state | id-POL-09 |
+| always | error convention |  | state | state | id-POL-10 |
 
 ## Declared property set for POL-04
 

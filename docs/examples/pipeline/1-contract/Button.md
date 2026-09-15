@@ -19,9 +19,9 @@ by a decorative icon. Unlike Link, it does not navigate.
 
 ### 2.1 Requirements
 
-| statement | observe | kind | required | id |
+| when | statement | observe | kind | id |
 |---|---|---|---|---|
-| The control does not exceed the inline size of its container. | layout | state | always | id-STR-01 |
+| always | The control does not exceed the inline size of its container. | layout | state | id-STR-01 |
 
 ### 2.3 Layout props
 
@@ -40,9 +40,9 @@ by a decorative icon. Unlike Link, it does not navigate.
 
 ### 3.2 Arrangement
 
-| statement | observe | kind | required | id |
+| when | statement | observe | kind | id |
 |---|---|---|---|---|
-| Zones are arranged along the inline axis, icon before label. | order | state | when:icon_present | id-CMP-03 |
+| when:icon_present | Zones are arranged along the inline axis, icon before label. | order | state | id-CMP-03 |
 
 ## 4. Appearance
 
@@ -77,7 +77,7 @@ by a decorative icon. Unlike Link, it does not navigate.
 
 ## 6. Accessibility
 
-| statement | observe | kind | required | id |
+| when | statement | observe | kind | id |
 |---|---|---|---|---|
-| The icon contributes nothing to the accessible name. | name | state | when:icon_present | id-ACC-01 |
-| The label is the sole source of the accessible name. | name | state | always | id-ACC-02 |
+| when:icon_present | The icon contributes nothing to the accessible name. | name | state | id-ACC-01 |
+| always | The label is the sole source of the accessible name. | name | state | id-ACC-02 |

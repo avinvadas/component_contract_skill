@@ -20,10 +20,10 @@ What each platform provides. `none` means every implementation builds the semant
 | macos | SwiftUI `Text` · `NSTextField` |
 
 
-| statement | observe | kind | required | chapter | source | id |
+| when | statement | observe | kind | chapter | source | id |
 |---|---|---|---|---|---|---|
-| The content is available to assistive technology as text. | name | state | always | Accessibility | catalogue:Web/text · catalogue:iOS/Text | id-TXT-01 |
-| The content scales with the platform's user text-size setting. | state | state | always | Appearance | catalogue:iOS/Button | id-TXT-02 |
+| always | The content is available to assistive technology as text. | name | state | Accessibility | catalogue:Web/text · catalogue:iOS/Text | id-TXT-01 |
+| always | The content scales with the platform's user text-size setting. | state | state | Appearance | catalogue:iOS/Button | id-TXT-02 |
 
 ## A near-empty bundle is a valid outcome
 

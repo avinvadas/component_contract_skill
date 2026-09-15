@@ -77,8 +77,16 @@ def observe(req, root):  # noqa: C901
     return (None, "no observation implemented")
 
 rows = []
+def described(req):
+    """The statement no longer restates its condition, so the report composes them."""
+    scen = req.get("scenario") or {}
+    if not scen:
+        return req["statement"]
+    bits = [f"{k}={v}" for group in scen.values() for k, v in group.items()]
+    return f"[{', '.join(bits)}] {req['statement']}"
+
 for req in DOC["requirements"]:
-    rid, stmt = req["id"], req["statement"]
+    rid, stmt = req["id"], described(req)
     if req.get("binds") is False:
         rows.append(("N/A", rid, stmt, req["reason"])); continue
     missing = [n for n in req["needs"] if n in CAP["cannot_observe"]]
