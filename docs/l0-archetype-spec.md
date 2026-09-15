@@ -103,59 +103,77 @@ v1 behaviour v3 is trying to end.
 
 ## Worked archetype — `button`
 
-The richest free bundle in the catalogue, and the one that forces every hard question.
+**Copied verbatim from `system/archetypes/button.md`.** The hand-written version that
+was here drifted: it predates the `chapter` column, the `when`-first ordering, the
+`source` provenance column, and the deferral of BTN-07 to policy.
 
 ```markdown
 ---
 archetype: button
-role: button
 version: 1.0
 platforms: [web, ios, android, macos]
-source: v1-implicit-guarantees-catalogue.md § Web/Interactive, iOS, Android, macOS
+kind: native-backed
 ---
 
 # Archetype: button
 
-A control that performs an action when activated. It does not navigate — that is `link`,
-and the asymmetry between them is load-bearing (see `link.md`).
+A control that performs an action in place. It does not navigate — that is `link`, and the
+asymmetry between them is load-bearing rather than incidental.
 
-## Bundle
+**Bundle kind: inherited.** Every requirement below is something at least one platform
+provides automatically when you use its native control. That is what you must reproduce if
+you substitute a generic view.
+## Native backing
 
-| id | statement | observe | kind | required | scope |
-|---|---|---|---|---|---|
-| BTN-01 | The control is exposed to assistive technology as a button. | role | state | always | all |
-| BTN-02 | The control has a non-empty accessible name. | name | state | always | all |
-| BTN-03 | The control is reachable by the platform's sequential focus navigation. | focus | state | always | all |
-| BTN-04 | Activating the control by the platform's primary non-pointer input performs its action. | event | behavior | always | all |
-| BTN-05 | Where the platform exposes a hardware keyboard, both of its standard activation keys perform the action. | event | behavior | when a hardware keyboard is present | all |
-| BTN-06 | Keyboard activation does not also scroll the surrounding surface. | event | behavior | when a hardware keyboard is present | all |
-| BTN-07 | While focused, the control renders a focus indicator distinguishable from its unfocused appearance. | state | state | always | all |
-| BTN-08 | When disabled, the control is removed from sequential focus navigation. | focus | state | when disabled | all |
-| BTN-09 | When disabled, activation performs no action. | event | behavior | when disabled | all |
-| BTN-10 | When disabled, that state is conveyed to assistive technology. | state | state | when disabled | all |
-| BTN-11 | The control meets the platform's minimum touch-target size. | layout | state | on touch-capable platforms | all |
-| BTN-12 | The accessible name scales with the platform's user text-size setting. | state | state | always | all |
-| BTN-13 | The control submits its containing form without scripting. | event | behavior | when inside a form | **web** |
+What each platform provides. `none` means every implementation builds the semantics by hand — the requirements below still bind.
 
-> **BTN-13 is scoped, with a reason:** no platform-level form-submission model exists on
-> iOS, Android, or macOS. The concept has no referent there — this is an exclusion, not a
-> weakening.
+| Platform | Native backing |
+|---|---|
+| web | `<button>` · `<input type=button|submit>` |
+| ios | SwiftUI `Button` · `UIButton` |
+| android | Compose `Button` · `android.widget.Button` |
+| macos | SwiftUI `Button` · `NSButton` |
 
-> **BTN-05 is not scoped, deliberately.** iOS has no Space key by default, but under Full
-> Keyboard Access it does, and must comply. A `scope: [web, android, macos]` here would
-> have quietly excused a platform that can in fact meet the requirement — which is exactly
-> the abuse `scope` invites.
 
-> **BTN-06 exists separately from BTN-05** because it is the half most commonly missed. A
-> patched `div` that handles `keydown` for Space almost always forgets `preventDefault`,
-> so the page scrolls. Two requirements, because they fail independently.
+| when | statement | observe | kind | chapter | source | id |
+|---|---|---|---|---|---|---|
+| always | The control is exposed to assistive technology as a button. | role | state | Accessibility | catalogue:Web/button · catalogue:iOS/Button · catalogue:Android/Button | id-BTN-01 |
+| always | The control has a non-empty accessible name. | name | state | Accessibility | catalogue:Web/button · catalogue:iOS/Button | id-BTN-02 |
+| always | The control is reachable by the platform's sequential focus navigation. | focus | state | Accessibility | catalogue:Web/button · catalogue:iOS/Button · catalogue:Android/Button | id-BTN-03 |
+| always | Activating by the platform's primary non-pointer input performs the action. | event | behavior | Behavior | catalogue:iOS/Button · catalogue:Android/Button · catalogue:Web/button | id-BTN-04 |
+| when:hardware_keyboard | Both of the platform's standard activation keys perform the action. | event | behavior | Behavior | catalogue:Web/button · catalogue:Android/Button | id-BTN-05 |
+| when:hardware_keyboard | Keyboard activation does not also scroll the surrounding surface. | event | behavior | Behavior | catalogue:Web/button | id-BTN-06 |
+| when:disabled | The control is removed from sequential focus navigation. | focus | state | Accessibility | catalogue:Web/button | id-BTN-08 |
+| when:disabled | Activation performs no action. | event | behavior | Behavior | catalogue:Web/button · catalogue:iOS/Button · catalogue:Android/Button | id-BTN-09 |
+| when:disabled | The disabled state is conveyed to assistive technology. | state | state | Accessibility | catalogue:Web/button · catalogue:iOS/Button · catalogue:Android/Button | id-BTN-10 |
+| when:touch_input | The control meets the platform's minimum touch-target size. | layout | state | Structure | catalogue:Android/Button · hig:ios/layout · wcag:2.5.8 | id-BTN-11 |
+| always | The accessible label scales with the platform's user text-size setting. | state | state | Appearance | catalogue:iOS/Button | id-BTN-12 |
+| when:inside_form | The control submits its containing form without scripting. | event | behavior | Behavior | catalogue:Web/button | id-BTN-13 |
 
-## Empty-bundle note
+## Deferred to policy
 
-Nothing here is free on any platform for a *composed* button — a generic view given a role.
-That is the point: every line above is what the native control provides automatically and
-what a substitute must therefore prove.
+| Free behaviour | Deferred because |
+|---|---|
+| a platform-drawn focus indicator (`catalogue:Web/button` · `wcag:2.4.7`) | this is true of **every** focusable control, not of buttons specifically, so it belongs to system policy (POL-02). Restating it here would report one defect twice — F6 in the validation plan. The catalogue citation is preserved so the guarantee is not lost, only relocated. |
+
+An archetype requirement that duplicates a policy requirement is a collision, and policy
+wins: policy is what makes the rule non-negotiable across archetypes that have no native
+backing at all.
+
+## Notes on three entries
+
+**BTN-05 is a condition, not a scope.** iOS has no Space key by default, but does under Full
+Keyboard Access, and must comply there. Scoping it to `[web, android]` would excuse a platform
+that can in fact meet the requirement.
+
+**BTN-06 is separate from BTN-05 because they fail independently.** A generic element handling
+`keydown` for Space almost always forgets to suppress the default, so the surface scrolls
+while the action fires.
+
+**BTN-13 is the only scoped entry.** No platform-level form-submission model exists off the
+web — the concept has no referent, which is an exclusion rather than a weakening.
 ```
+
 
 ### `button.bindings.json`
 

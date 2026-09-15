@@ -109,7 +109,7 @@ claim about an implementation. One line follows it, generated rather than author
 
 ### 2.1 Requirements
 
-| id | statement | observe | kind | required |
+| when | statement | observe | kind | id |
 |---|---|---|---|---|
 
 Facts about the component as a whole: its semantic identity, its own layout constraints,
@@ -135,12 +135,12 @@ physical distance is what enforces it.
 
 ### 3.1 Zones
 
-| id | zone | accepts | cardinality | position | absent |
+| zone | accepts | cardinality | position | absent | id |
 |---|---|---|---|---|---|
 
 ### 3.2 Arrangement
 
-| id | statement | observe | kind | required |
+| when | statement | observe | kind | id |
 |---|---|---|---|---|
 
 Relations *between* zones: axis, alignment, gap. Stated as geometry, never as a style
@@ -156,7 +156,7 @@ here and nowhere else — not again under Appearance, Behavior, or Accessibility
 
 ### 4.1 Token slots
 
-| id | property | token | required |
+| when | property | token | id |
 |---|---|---|---|
 
 ### 4.2 Interaction states
@@ -176,12 +176,12 @@ state is not something an implementation must produce, and a prop-driven one is.
 
 ### 5.1 Requirements
 
-| id | statement | observe | kind | required |
+| when | statement | observe | kind | id |
 |---|---|---|---|---|
 
 ### 5.2 Events
 
-| id | direction | name | payload | when |
+| when | direction | name | payload | id |
 |---|---|---|---|---|
 
 `direction`: `emitted` · `received`. Both in one table — v1's §5.3/§5.4 split produced two
@@ -200,7 +200,7 @@ Composition says *a title zone exists, accepts text, cardinality 1, block start*
 Accessibility says *the title is exposed as a heading and is the accessible name source*.
 Nothing is stated twice.
 
-| id | statement | observe | kind | required |
+| when | statement | observe | kind | id |
 |---|---|---|---|---|
 
 Holds: semantic exposure · name source · grouping · traversal order · focus policy ·
@@ -420,6 +420,11 @@ Same class as the en-dash: a value whose own punctuation collides with the forma
 
 ## Worked example — Button
 
+**Copied verbatim from `docs/examples/pipeline/1-contract/Button.md`,** which the
+resolver actually parses. Kept identical on purpose: a spec whose example has drifted
+from the thing it specifies is worse than no example, and this one had — it still
+showed `id` first and `required` where the rules above say `when`.
+
 ```markdown
 ---
 component: Button
@@ -434,81 +439,80 @@ last_updated: 2026-09-14
 # Component Contract: Button
 
 ## 1. Intent
-The primary means of performing an action in place. Carries a text label, optionally
-preceded by a decorative icon. Unlike Link, it does not navigate.
 
-Inherits: `button` archetype (BTN-01 … BTN-13) and system policy (POL-01 … POL-04).
+The primary means of performing an action in place. Carries a text label, optionally preceded
+by a decorative icon. Unlike Link, it does not navigate.
 
 ## 2. Structure
+
 ### 2.1 Requirements
-| id | statement | observe | kind | required |
+
+| when | statement | observe | kind | id |
 |---|---|---|---|---|
-| STR-01 | The control does not exceed the inline size of its container. | layout | state | always |
+| always | The control does not exceed the inline size of its container. | layout | state | id-STR-01 |
 
 ### 2.3 Layout props
+
 | prop | type | required | default | description |
 |---|---|---|---|---|
 | `fullWidth` | boolean | no | `false` | fills the container's inline size |
 
 ## 3. Composition
+
 ### 3.1 Zones
-| id | zone | accepts | cardinality | position | absent |
+
+| zone | accepts | cardinality | position | absent | id |
 |---|---|---|---|---|---|
-| CMP-01 | label | text | 1 | inline-end | invalid:BTN-02 has no name source |
-| CMP-02 | icon | component:Icon | 0..1 | inline-start | omitted |
+| label | text | 1 | inline-end | invalid:BTN-02 has no name source | id-CMP-01 |
+| icon | component:Icon | 0..1 | inline-start | omitted | id-CMP-02 |
 
 ### 3.2 Arrangement
-| id | statement | observe | kind | required |
+
+| when | statement | observe | kind | id |
 |---|---|---|---|---|
-| CMP-03 | Zones are arranged along the inline axis, icon before label. | order | state | always |
-| CMP-04 | The gap between icon and label is the only space between them. | layout | state | when:icon_present |
+| when:icon_present | Zones are arranged along the inline axis, icon before label. | order | state | id-CMP-03 |
 
 ## 4. Appearance
+
 ### 4.1 Token slots
-| id | property | token | required |
-|---|---|---|---|
-| APP-01 | background | `color.action.primary.bg` | always |
-| APP-06 | background | `color.action.primary.disabled.bg` | when:disabled |
-| APP-04 | gap | `space.inline.sm` | when:icon_present |
 
-### 4.2 Interaction states
-| state | what changes | driven by |
-|---|---|---|
-| pressed | background | both |
-| disabled | background, label colour | prop |
-
-### Divergences
-| platform | affects | deviation | reason |
+| property | token | required | id |
 |---|---|---|---|
-| ios | pressed | the platform's automatic dimming is used; no pressed token | overriding it fights the system's contrast and accessibility settings, and a custom pressed fill reads as foreign |
+| background | `color.action.primary.bg` | always | id-APP-01 |
+| background | `color.action.primary.disabled.bg` | when:disabled | id-APP-06 |
 
 ### 4.3 Visual variants
+
 | prop | type | required | default | description |
 |---|---|---|---|---|
-| `variant` | `primary`\|`secondary`\|`ghost` | no | `primary` | emphasis level |
+| `variant` | enum:primary,secondary,ghost | no | `primary` | emphasis level |
 
 ## 5. Behavior
+
 ### 5.2 Events
-| id | direction | name | payload | when |
+
+| direction | name | payload | when | id |
 |---|---|---|---|---|
-| BEH-01 | emitted | `press` | none | on activation, unless disabled |
+| emitted | press | none | on activation, unless disabled | id-BEH-01 |
 
 ### 5.3 Behavioral props
+
 | prop | type | required | default | description |
 |---|---|---|---|---|
 | `label` | string | yes | — | the accessible name source |
 | `disabled` | boolean | no | `false` | blocks activation |
-| `onPress` | handler | yes | — | receives `press` |
+| `onPress` | handler | yes | — | receives press |
 
 ## 6. Accessibility
-| id | statement | observe | kind | required |
+
+| when | statement | observe | kind | id |
 |---|---|---|---|---|
-| ACC-01 | The icon contributes nothing to the accessible name. | name | state | when:icon_present |
-| ACC-02 | The label is the sole source of the accessible name. | name | state | always |
+| when:icon_present | The icon contributes nothing to the accessible name. | name | state | id-ACC-01 |
+| always | The label is the sole source of the accessible name. | name | state | id-ACC-02 |
 ```
 
-Eleven rows of component-specific fact. Everything else — the whole button bundle, the whole
-policy — is inherited by one line of frontmatter.
+Eleven rows of component-specific fact. Everything else — the whole `button` bundle,
+the whole policy layer — arrives through one line of frontmatter.
 
 ## Open
 
