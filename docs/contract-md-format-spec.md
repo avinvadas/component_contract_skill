@@ -254,16 +254,19 @@ want a row to *begin* with one. So in the `.md` the id column:
 
 - sits **last**, not first — the statement is what the eye should land on
 - carries an **`id-` prefix**, which labels it as machine metadata rather than content
-- is **ghosted** with `<sub>`, the strongest de-emphasis plain Markdown offers
 
 ```
 | statement | observe | kind | required | chapter | source | id |
 |---|---|---|---|---|---|---|
-| The content is available to assistive technology as text. | name | state | always | Accessibility | catalogue:Web/text | <sub>id-TXT-01</sub> |
+| The content is available to assistive technology as text. | name | state | always | Accessibility | catalogue:Web/text | id-TXT-01 |
 ```
 
-`<sub>` over italic or backticks because it degrades gracefully: a renderer that strips HTML
-still shows the text, rather than losing the join key entirely.
+**Visual de-emphasis is deliberately not attempted.** Plain Markdown has no colour, and the
+options — `<sub>`, italics, backticks — each trade something: `<sub>` is HTML a strict
+renderer may strip, italics collide with emphasis used for meaning, backticks imply code.
+Position plus prefix already does most of the work. Revisit only if real documents prove it
+insufficient; the parser tolerates the decorated forms in the meantime, so adding one later
+breaks nothing.
 
 **None of that decoration travels.** The parser strips tags and prefix, and canonical
 documents, test names and reports carry the bare `TXT-01`, where the extra characters would

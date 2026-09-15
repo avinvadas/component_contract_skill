@@ -38,7 +38,7 @@ def reqs(chapter):
     sel = [r for r in rows if chapter_of(r) == chapter]
     sel.sort(key=lambda r: (ORIGIN[r["id"]] != "this component", r["id"]))
     return md_table(["statement", "when", "origin", "id"],
-                    ["| %s | %s | %s | <sub>id-%s</sub> |"
+                    ["| %s | %s | %s | id-%s |"
                      % (r["statement"], r.get("required", "always"), ORIGIN[r["id"]], r["id"])
                      for r in sel])
 

@@ -22,9 +22,9 @@ What each platform provides. `none` means every implementation builds the semant
 
 | statement | observe | kind | required | chapter | source | id |
 |---|---|---|---|---|---|---|
-| The text is exposed to assistive technology as a heading. | role | state | always | Accessibility | catalogue:Web/headings · catalogue:iOS/header-trait · catalogue:Android/heading | <sub>id-HDG-01</sub> |
-| The text is reachable by the platform's heading navigation. | focus | state | always | Accessibility | catalogue:Web/headings | <sub>id-HDG-02</sub> |
-| The text has a non-empty accessible name. | name | state | always | Accessibility | catalogue:Web/headings | <sub>id-HDG-03</sub> |
+| The text is exposed to assistive technology as a heading. | role | state | always | Accessibility | catalogue:Web/headings · catalogue:iOS/header-trait · catalogue:Android/heading | id-HDG-01 |
+| The text is reachable by the platform's heading navigation. | focus | state | always | Accessibility | catalogue:Web/headings | id-HDG-02 |
+| The text has a non-empty accessible name. | name | state | always | Accessibility | catalogue:Web/headings | id-HDG-03 |
 
 ## Level is deliberately not a requirement
 

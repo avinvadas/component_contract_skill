@@ -9,16 +9,16 @@ as "under-specified component requirements" because there was no system layer to
 
 | decision | statement | observe | kind | required | id |
 |---|---|---|---|---|---|
-| token discipline | *(e.g. every value that can resolve through a token does)* | token | state | always | <sub>id-POL-01</sub> |
-| focus indicator |  | state | state | always | <sub>id-POL-02</sub> |
-| touch-target floor |  | layout | state | when:touch_input | <sub>id-POL-03</sub> |
-| literal denial | *(deny-by-default across a declared property set)* | token | state | always | <sub>id-POL-04</sub> |
-| reduced motion |  | state | state | when:reduced_motion | <sub>id-POL-05</sub> |
-| announcement politeness |  | announcement | behavior | always | <sub>id-POL-06</sub> |
-| validation timing |  | event | behavior | always | <sub>id-POL-07</sub> |
-| loading convention |  | state | state | always | <sub>id-POL-08</sub> |
-| empty-state convention |  | state | state | always | <sub>id-POL-09</sub> |
-| error convention |  | state | state | always | <sub>id-POL-10</sub> |
+| token discipline | *(e.g. every value that can resolve through a token does)* | token | state | always | id-POL-01 |
+| focus indicator |  | state | state | always | id-POL-02 |
+| touch-target floor |  | layout | state | when:touch_input | id-POL-03 |
+| literal denial | *(deny-by-default across a declared property set)* | token | state | always | id-POL-04 |
+| reduced motion |  | state | state | when:reduced_motion | id-POL-05 |
+| announcement politeness |  | announcement | behavior | always | id-POL-06 |
+| validation timing |  | event | behavior | always | id-POL-07 |
+| loading convention |  | state | state | always | id-POL-08 |
+| empty-state convention |  | state | state | always | id-POL-09 |
+| error convention |  | state | state | always | id-POL-10 |
 
 ## Declared property set for POL-04
 

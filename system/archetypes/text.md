@@ -22,8 +22,8 @@ What each platform provides. `none` means every implementation builds the semant
 
 | statement | observe | kind | required | chapter | source | id |
 |---|---|---|---|---|---|---|
-| The content is available to assistive technology as text. | name | state | always | Accessibility | catalogue:Web/text · catalogue:iOS/Text | <sub>id-TXT-01</sub> |
-| The content scales with the platform's user text-size setting. | state | state | always | Appearance | catalogue:iOS/Button | <sub>id-TXT-02</sub> |
+| The content is available to assistive technology as text. | name | state | always | Accessibility | catalogue:Web/text · catalogue:iOS/Text | id-TXT-01 |
+| The content scales with the platform's user text-size setting. | state | state | always | Appearance | catalogue:iOS/Button | id-TXT-02 |
 
 ## A near-empty bundle is a valid outcome
 

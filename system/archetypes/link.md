@@ -24,15 +24,15 @@ What each platform provides. `none` means every implementation builds the semant
 
 | statement | observe | kind | required | chapter | source | id |
 |---|---|---|---|---|---|---|
-| The control is exposed to assistive technology as a link. | role | state | always | Accessibility | catalogue:Web/a-href | <sub>id-LNK-01</sub> |
-| The control has a non-empty accessible name. | name | state | always | Accessibility | catalogue:Web/a-href | <sub>id-LNK-02</sub> |
-| The control is reachable by the platform's sequential focus navigation. | focus | state | always | Accessibility | catalogue:Web/a-href | <sub>id-LNK-03</sub> |
-| Activation by the platform's primary confirm input navigates to the destination. | event | behavior | always | Behavior | catalogue:Web/a-href | <sub>id-LNK-04</sub> |
-| The secondary activation key does **not** navigate. | event | behavior | when:hardware_keyboard | Behavior | catalogue:Web/a-href | <sub>id-LNK-05</sub> |
-| The destination is available to the user before activation. | name | state | always | Accessibility | catalogue:Web/a-href | <sub>id-LNK-06</sub> |
-| The platform's convention for opening in a new context is available. | event | behavior | when:pointer_input | Behavior | catalogue:Web/a-href | <sub>id-LNK-07</sub> |
-| The destination is reachable and followable without scripting. | event | behavior | always | Behavior | catalogue:Web/a-href | <sub>id-LNK-08</sub> |
-| A previously-visited destination is distinguishable from an unvisited one. | state | state | always | Appearance | catalogue:Web/a-href | <sub>id-LNK-09</sub> |
+| The control is exposed to assistive technology as a link. | role | state | always | Accessibility | catalogue:Web/a-href | id-LNK-01 |
+| The control has a non-empty accessible name. | name | state | always | Accessibility | catalogue:Web/a-href | id-LNK-02 |
+| The control is reachable by the platform's sequential focus navigation. | focus | state | always | Accessibility | catalogue:Web/a-href | id-LNK-03 |
+| Activation by the platform's primary confirm input navigates to the destination. | event | behavior | always | Behavior | catalogue:Web/a-href | id-LNK-04 |
+| The secondary activation key does **not** navigate. | event | behavior | when:hardware_keyboard | Behavior | catalogue:Web/a-href | id-LNK-05 |
+| The destination is available to the user before activation. | name | state | always | Accessibility | catalogue:Web/a-href | id-LNK-06 |
+| The platform's convention for opening in a new context is available. | event | behavior | when:pointer_input | Behavior | catalogue:Web/a-href | id-LNK-07 |
+| The destination is reachable and followable without scripting. | event | behavior | always | Behavior | catalogue:Web/a-href | id-LNK-08 |
+| A previously-visited destination is distinguishable from an unvisited one. | state | state | always | Appearance | catalogue:Web/a-href | id-LNK-09 |
 
 ## Deliberate drops
 

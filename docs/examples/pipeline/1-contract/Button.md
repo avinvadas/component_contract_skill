@@ -21,7 +21,7 @@ by a decorative icon. Unlike Link, it does not navigate.
 
 | statement | observe | kind | required | id |
 |---|---|---|---|---|
-| The control does not exceed the inline size of its container. | layout | state | always | <sub>id-STR-01</sub> |
+| The control does not exceed the inline size of its container. | layout | state | always | id-STR-01 |
 
 ### 2.3 Layout props
 
@@ -35,14 +35,14 @@ by a decorative icon. Unlike Link, it does not navigate.
 
 | zone | accepts | cardinality | position | absent | id |
 |---|---|---|---|---|---|
-| label | text | 1 | inline-end | invalid:BTN-02 has no name source | <sub>id-CMP-01</sub> |
-| icon | component:Icon | 0..1 | inline-start | omitted | <sub>id-CMP-02</sub> |
+| label | text | 1 | inline-end | invalid:BTN-02 has no name source | id-CMP-01 |
+| icon | component:Icon | 0..1 | inline-start | omitted | id-CMP-02 |
 
 ### 3.2 Arrangement
 
 | statement | observe | kind | required | id |
 |---|---|---|---|---|
-| Zones are arranged along the inline axis, icon before label. | order | state | when:icon_present | <sub>id-CMP-03</sub> |
+| Zones are arranged along the inline axis, icon before label. | order | state | when:icon_present | id-CMP-03 |
 
 ## 4. Appearance
 
@@ -50,8 +50,8 @@ by a decorative icon. Unlike Link, it does not navigate.
 
 | property | token | required | id |
 |---|---|---|---|
-| background | `color.action.primary.bg` | always | <sub>id-APP-01</sub> |
-| background | `color.action.primary.disabled.bg` | when:disabled | <sub>id-APP-06</sub> |
+| background | `color.action.primary.bg` | always | id-APP-01 |
+| background | `color.action.primary.disabled.bg` | when:disabled | id-APP-06 |
 
 ### 4.3 Visual variants
 
@@ -65,7 +65,7 @@ by a decorative icon. Unlike Link, it does not navigate.
 
 | direction | name | payload | when | id |
 |---|---|---|---|---|
-| emitted | press | none | on activation, unless disabled | <sub>id-BEH-01</sub> |
+| emitted | press | none | on activation, unless disabled | id-BEH-01 |
 
 ### 5.3 Behavioral props
 
@@ -79,5 +79,5 @@ by a decorative icon. Unlike Link, it does not navigate.
 
 | statement | observe | kind | required | id |
 |---|---|---|---|---|
-| The icon contributes nothing to the accessible name. | name | state | when:icon_present | <sub>id-ACC-01</sub> |
-| The label is the sole source of the accessible name. | name | state | always | <sub>id-ACC-02</sub> |
+| The icon contributes nothing to the accessible name. | name | state | when:icon_present | id-ACC-01 |
+| The label is the sole source of the accessible name. | name | state | always | id-ACC-02 |
