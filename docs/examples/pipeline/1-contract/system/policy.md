@@ -1,5 +1,5 @@
 # System policy (L1)
 
-| id | statement | observe | kind | required | chapter |
+| statement | observe | kind | required | chapter | id |
 |---|---|---|---|---|---|
-| POL-02 | A focused control renders a focus indicator distinguishable from its unfocused appearance. | state | state | always | Appearance |
+| A focused control renders a focus indicator distinguishable from its unfocused appearance. | state | state | always | Appearance | <sub>id-POL-02</sub> |

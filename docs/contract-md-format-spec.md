@@ -247,6 +247,33 @@ is a different archetype.
 The resolver must extract the canonical document deterministically. That requires knowing
 exactly which cells are prose and which are tokens.
 
+## The id column is metadata, and is presented as such
+
+Requirement ids join every artifact downstream, but a reader scanning a chapter does not
+want a row to *begin* with one. So in the `.md` the id column:
+
+- sits **last**, not first — the statement is what the eye should land on
+- carries an **`id-` prefix**, which labels it as machine metadata rather than content
+- is **ghosted** with `<sub>`, the strongest de-emphasis plain Markdown offers
+
+```
+| statement | observe | kind | required | chapter | source | id |
+|---|---|---|---|---|---|---|
+| The content is available to assistive technology as text. | name | state | always | Accessibility | catalogue:Web/text | <sub>id-TXT-01</sub> |
+```
+
+`<sub>` over italic or backticks because it degrades gracefully: a renderer that strips HTML
+still shows the text, rather than losing the join key entirely.
+
+**None of that decoration travels.** The parser strips tags and prefix, and canonical
+documents, test names and reports carry the bare `TXT-01`, where the extra characters would
+be pure noise. Lenient parse, strict lint: accept `TXT-01`, `id-TXT-01`, `` `id-TXT-01` `` and
+the ghosted form; lint the authored files to one.
+
+Strip in **two passes** — tags first, then the prefix. A single pass with an anchored `^id-`
+never matches, because at that point the string still starts with `<sub>`. That bug shipped
+once already.
+
 ## Exactly three prose fields exist
 
 `statement`, `intent`, and `reason`. They are **carried verbatim and never interpreted** —

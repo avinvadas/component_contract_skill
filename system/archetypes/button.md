@@ -25,20 +25,20 @@ What each platform provides. `none` means every implementation builds the semant
 | macos | SwiftUI `Button` · `NSButton` |
 
 
-| id | statement | observe | kind | required | chapter | source |
+| statement | observe | kind | required | chapter | source | id |
 |---|---|---|---|---|---|---|
-| BTN-01 | The control is exposed to assistive technology as a button. | role | state | always | Accessibility | catalogue:Web/button · catalogue:iOS/Button · catalogue:Android/Button |
-| BTN-02 | The control has a non-empty accessible name. | name | state | always | Accessibility | catalogue:Web/button · catalogue:iOS/Button |
-| BTN-03 | The control is reachable by the platform's sequential focus navigation. | focus | state | always | Accessibility | catalogue:Web/button · catalogue:iOS/Button · catalogue:Android/Button |
-| BTN-04 | Activating by the platform's primary non-pointer input performs the action. | event | behavior | always | Behavior | catalogue:iOS/Button · catalogue:Android/Button · catalogue:Web/button |
-| BTN-05 | Where a hardware keyboard exists, both of its standard activation keys perform the action. | event | behavior | when:hardware_keyboard | Behavior | catalogue:Web/button · catalogue:Android/Button |
-| BTN-06 | Keyboard activation does not also scroll the surrounding surface. | event | behavior | when:hardware_keyboard | Behavior | catalogue:Web/button |
-| BTN-08 | When disabled, the control is removed from sequential focus navigation. | focus | state | when:disabled | Accessibility | catalogue:Web/button |
-| BTN-09 | When disabled, activation performs no action. | event | behavior | when:disabled | Behavior | catalogue:Web/button · catalogue:iOS/Button · catalogue:Android/Button |
-| BTN-10 | When disabled, that state is conveyed to assistive technology. | state | state | when:disabled | Accessibility | catalogue:Web/button · catalogue:iOS/Button · catalogue:Android/Button |
-| BTN-11 | The control meets the platform's minimum touch-target size. | layout | state | when:touch_input | Structure | catalogue:Android/Button · hig:ios/layout · wcag:2.5.8 |
-| BTN-12 | The accessible label scales with the platform's user text-size setting. | state | state | always | Appearance | catalogue:iOS/Button |
-| BTN-13 | The control submits its containing form without scripting. | event | behavior | when:inside_form | Behavior | catalogue:Web/button |
+| The control is exposed to assistive technology as a button. | role | state | always | Accessibility | catalogue:Web/button · catalogue:iOS/Button · catalogue:Android/Button | <sub>id-BTN-01</sub> |
+| The control has a non-empty accessible name. | name | state | always | Accessibility | catalogue:Web/button · catalogue:iOS/Button | <sub>id-BTN-02</sub> |
+| The control is reachable by the platform's sequential focus navigation. | focus | state | always | Accessibility | catalogue:Web/button · catalogue:iOS/Button · catalogue:Android/Button | <sub>id-BTN-03</sub> |
+| Activating by the platform's primary non-pointer input performs the action. | event | behavior | always | Behavior | catalogue:iOS/Button · catalogue:Android/Button · catalogue:Web/button | <sub>id-BTN-04</sub> |
+| Where a hardware keyboard exists, both of its standard activation keys perform the action. | event | behavior | when:hardware_keyboard | Behavior | catalogue:Web/button · catalogue:Android/Button | <sub>id-BTN-05</sub> |
+| Keyboard activation does not also scroll the surrounding surface. | event | behavior | when:hardware_keyboard | Behavior | catalogue:Web/button | <sub>id-BTN-06</sub> |
+| When disabled, the control is removed from sequential focus navigation. | focus | state | when:disabled | Accessibility | catalogue:Web/button | <sub>id-BTN-08</sub> |
+| When disabled, activation performs no action. | event | behavior | when:disabled | Behavior | catalogue:Web/button · catalogue:iOS/Button · catalogue:Android/Button | <sub>id-BTN-09</sub> |
+| When disabled, that state is conveyed to assistive technology. | state | state | when:disabled | Accessibility | catalogue:Web/button · catalogue:iOS/Button · catalogue:Android/Button | <sub>id-BTN-10</sub> |
+| The control meets the platform's minimum touch-target size. | layout | state | when:touch_input | Structure | catalogue:Android/Button · hig:ios/layout · wcag:2.5.8 | <sub>id-BTN-11</sub> |
+| The accessible label scales with the platform's user text-size setting. | state | state | always | Appearance | catalogue:iOS/Button | <sub>id-BTN-12</sub> |
+| The control submits its containing form without scripting. | event | behavior | when:inside_form | Behavior | catalogue:Web/button | <sub>id-BTN-13</sub> |
 
 ## Deferred to policy
 

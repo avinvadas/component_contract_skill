@@ -76,7 +76,16 @@ def parse_tables(text):
             elif set("".join(cells)) <= set("-: "):
                 continue                                   # separator row
             else:
-                rows.append(dict(zip(headers, cells)))
+                row = dict(zip(headers, cells))
+                # The id is machine metadata. In the .md it sits last, carries an `id-`
+                # prefix, and is ghosted with <sub> so the eye skips it. None of that
+                # decoration travels downstream: canonical documents, test names and
+                # reports use the bare id, where the extra characters are pure noise.
+                if "id" in row:
+                    # two passes: the prefix is only at the start once the tags are gone
+                    bare = re.sub(r"</?sub>|`", "", row["id"]).strip()
+                    row["id"] = re.sub(r"^id-", "", bare)
+                rows.append(row)
         elif headers is not None:
             tables.append((headers, rows)); rows, headers = [], None
     if headers is not None:

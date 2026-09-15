@@ -37,9 +37,9 @@ def md_table(headers, body_rows):
 def reqs(chapter):
     sel = [r for r in rows if chapter_of(r) == chapter]
     sel.sort(key=lambda r: (ORIGIN[r["id"]] != "this component", r["id"]))
-    return md_table(["id", "statement", "when", "origin"],
-                    ["| %s | %s | %s | %s |" % (r["id"], r["statement"],
-                                                r.get("required", "always"), ORIGIN[r["id"]])
+    return md_table(["statement", "when", "origin", "id"],
+                    ["| %s | %s | %s | <sub>id-%s</sub> |"
+                     % (r["statement"], r.get("required", "always"), ORIGIN[r["id"]], r["id"])
                      for r in sel])
 
 def native_backing():

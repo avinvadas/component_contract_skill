@@ -19,9 +19,9 @@ by a decorative icon. Unlike Link, it does not navigate.
 
 ### 2.1 Requirements
 
-| id | statement | observe | kind | required |
+| statement | observe | kind | required | id |
 |---|---|---|---|---|
-| STR-01 | The control does not exceed the inline size of its container. | layout | state | always |
+| The control does not exceed the inline size of its container. | layout | state | always | <sub>id-STR-01</sub> |
 
 ### 2.3 Layout props
 
@@ -33,25 +33,25 @@ by a decorative icon. Unlike Link, it does not navigate.
 
 ### 3.1 Zones
 
-| id | zone | accepts | cardinality | position | absent |
+| zone | accepts | cardinality | position | absent | id |
 |---|---|---|---|---|---|
-| CMP-01 | label | text | 1 | inline-end | invalid:BTN-02 has no name source |
-| CMP-02 | icon | component:Icon | 0..1 | inline-start | omitted |
+| label | text | 1 | inline-end | invalid:BTN-02 has no name source | <sub>id-CMP-01</sub> |
+| icon | component:Icon | 0..1 | inline-start | omitted | <sub>id-CMP-02</sub> |
 
 ### 3.2 Arrangement
 
-| id | statement | observe | kind | required |
+| statement | observe | kind | required | id |
 |---|---|---|---|---|
-| CMP-03 | Zones are arranged along the inline axis, icon before label. | order | state | when:icon_present |
+| Zones are arranged along the inline axis, icon before label. | order | state | when:icon_present | <sub>id-CMP-03</sub> |
 
 ## 4. Appearance
 
 ### 4.1 Token slots
 
-| id | property | token | required |
+| property | token | required | id |
 |---|---|---|---|
-| APP-01 | background | `color.action.primary.bg` | always |
-| APP-06 | background | `color.action.primary.disabled.bg` | when:disabled |
+| background | `color.action.primary.bg` | always | <sub>id-APP-01</sub> |
+| background | `color.action.primary.disabled.bg` | when:disabled | <sub>id-APP-06</sub> |
 
 ### 4.3 Visual variants
 
@@ -63,9 +63,9 @@ by a decorative icon. Unlike Link, it does not navigate.
 
 ### 5.2 Events
 
-| id | direction | name | payload | when |
+| direction | name | payload | when | id |
 |---|---|---|---|---|
-| BEH-01 | emitted | press | none | on activation, unless disabled |
+| emitted | press | none | on activation, unless disabled | <sub>id-BEH-01</sub> |
 
 ### 5.3 Behavioral props
 
@@ -77,7 +77,7 @@ by a decorative icon. Unlike Link, it does not navigate.
 
 ## 6. Accessibility
 
-| id | statement | observe | kind | required |
+| statement | observe | kind | required | id |
 |---|---|---|---|---|
-| ACC-01 | The icon contributes nothing to the accessible name. | name | state | when:icon_present |
-| ACC-02 | The label is the sole source of the accessible name. | name | state | always |
+| The icon contributes nothing to the accessible name. | name | state | when:icon_present | <sub>id-ACC-01</sub> |
+| The label is the sole source of the accessible name. | name | state | always | <sub>id-ACC-02</sub> |
