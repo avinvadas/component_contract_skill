@@ -1,72 +1,104 @@
 # Button — resolved
 
-> **Generated. Do not edit.** Source: `Button.md` v1.0 +
-> archetype `button` v1.0 + system policy.
-> Platform-neutral: this is what the component *is*, before any platform's vocabulary.
+> **Generated. Do not edit.** Source: `Button.md` v1.0 + archetype `button` v1.0 + system policy.
+> **Platform-neutral** — what the component *is*, before any platform's vocabulary.
+> How each requirement is *observed* per platform is in `2-canonical/`.
+
+**Origin** marks what is yours to change. *this component* — decided in your interview. *archetype* — a fact about what platforms provide free; changing it means a platform changed. *policy* — your design system's cross-cutting commitment.
+
+## 1. Intent
 
 The primary means of performing an action in place. Carries a text label, optionally preceded
 by a decorative icon. Unlike Link, it does not navigate.
 
-## What this component must do
+## 2. Structure
 
-Every requirement, from all three layers, in one place. **The origin column is the point** —
-inherited rows are facts about platforms and are not yours to negotiate; local rows are
-decisions your team made and can revisit.
+### Native backing
 
-### Inherited from archetype `button`
+Where a platform gives you this free, and where you build it by hand.
 
-*Facts about what platforms provide free. Changing these means changing the archetype, which means a platform guarantee changed. See `system/archetypes/button.md` for provenance and for what was deliberately left out.*
+| Platform | Native backing |
+|---|---|
+| web | `<button>` · `<input type=button|submit>` |
+| ios | SwiftUI `Button` · `UIButton` |
+| android | Compose `Button` · `android.widget.Button` |
+| macos | SwiftUI `Button` · `NSButton` |
 
-| id | statement | observe | kind | required |
-|---|---|---|---|---|
-| BTN-01 | The control is exposed to assistive technology as a button. | role | state | always |
-| BTN-02 | The control has a non-empty accessible name. | name | state | always |
-| BTN-03 | The control is reachable by the platform's sequential focus navigation. | focus | state | always |
-| BTN-04 | Activating by the platform's primary non-pointer input performs the action. | event | behavior | always |
-| BTN-05 | Where a hardware keyboard exists, both of its standard activation keys perform the action. | event | behavior | when:hardware_keyboard |
-| BTN-06 | Keyboard activation does not also scroll the surrounding surface. | event | behavior | when:hardware_keyboard |
-| BTN-08 | When disabled, the control is removed from sequential focus navigation. | focus | state | when:disabled |
-| BTN-09 | When disabled, activation performs no action. | event | behavior | when:disabled |
-| BTN-10 | When disabled, that state is conveyed to assistive technology. | state | state | when:disabled |
-| BTN-11 | The control meets the platform's minimum touch-target size. | layout | state | when:touch_input |
-| BTN-12 | The accessible label scales with the platform's user text-size setting. | state | state | always |
-| BTN-13 | The control submits its containing form without scripting. | event | behavior | when:inside_form |
+### Requirements
 
+| id | statement | when | origin |
+|---|---|---|---|
+| CMP-03 | Zones are arranged along the inline axis, icon before label. | when:icon_present | this component |
+| STR-01 | The control does not exceed the inline size of its container. | always | this component |
+| BTN-11 | The control meets the platform's minimum touch-target size. | when:touch_input | archetype `button` |
 
-### From system policy
-
-*Your design system's cross-cutting commitments. Apply to every archetype, including those with no native backing. See `system/policy.md`.*
-
-| id | statement | observe | kind | required |
-|---|---|---|---|---|
-| POL-02 | A focused control renders a focus indicator distinguishable from its unfocused appearance. | state | state | always |
-
-
-### Specific to this component
-
-*Decided in this contract's interview. The only rows here that are yours to change without changing something shared.*
-
-| id | statement | observe | kind | required |
-|---|---|---|---|---|
-| STR-01 | The control does not exceed the inline size of its container. | layout | state | always |
-| CMP-03 | Zones are arranged along the inline axis, icon before label. | order | state | when:icon_present |
-| ACC-01 | The icon contributes nothing to the accessible name. | name | state | when:icon_present |
-| ACC-02 | The label is the sole source of the accessible name. | name | state | always |
-
-
-## What it contains
+### Required children
 
 | zone | accepts | cardinality | position | if absent |
 |---|---|---|---|---|
 | label | text | 1 | inline-end | invalid:BTN-02 has no name source |
+
+### Optional children
+
+| zone | accepts | cardinality | position | if absent |
+|---|---|---|---|---|
 | icon | component:Icon | 0..1 | inline-start | omitted |
 
-## What it looks like
+## 3. Appearance
+
+### Tokenised properties
 
 | property | token | when |
 |---|---|---|
 | background | `color.action.primary.bg` | always |
 | background | `color.action.primary.disabled.bg` | when:disabled |
+
+### Requirements
+
+| id | statement | when | origin |
+|---|---|---|---|
+| BTN-12 | The accessible label scales with the platform's user text-size setting. | always | archetype `button` |
+| POL-02 | A focused control renders a focus indicator distinguishable from its unfocused appearance. | always | policy |
+
+### Platform distinctions
+
+*None recorded. Every platform satisfies the above identically.*
+
+## 4. Behavior
+
+### Requirements
+
+| id | statement | when | origin |
+|---|---|---|---|
+| BTN-04 | Activating by the platform's primary non-pointer input performs the action. | always | archetype `button` |
+| BTN-05 | Where a hardware keyboard exists, both of its standard activation keys perform the action. | when:hardware_keyboard | archetype `button` |
+| BTN-06 | Keyboard activation does not also scroll the surrounding surface. | when:hardware_keyboard | archetype `button` |
+| BTN-09 | When disabled, activation performs no action. | when:disabled | archetype `button` |
+| BTN-13 | The control submits its containing form without scripting. | when:inside_form | archetype `button` |
+
+### Events
+
+| direction | name | payload | when |
+|---|---|---|---|
+| emitted | press | none | on activation, unless disabled |
+
+## 5. Accessibility
+
+Reviewable as an aspect: everything governing how the component is exposed, named, traversed and announced.
+
+| id | statement | when | origin |
+|---|---|---|---|
+| ACC-01 | The icon contributes nothing to the accessible name. | when:icon_present | this component |
+| ACC-02 | The label is the sole source of the accessible name. | always | this component |
+| BTN-01 | The control is exposed to assistive technology as a button. | always | archetype `button` |
+| BTN-02 | The control has a non-empty accessible name. | always | archetype `button` |
+| BTN-03 | The control is reachable by the platform's sequential focus navigation. | always | archetype `button` |
+| BTN-08 | When disabled, the control is removed from sequential focus navigation. | when:disabled | archetype `button` |
+| BTN-10 | When disabled, that state is conveyed to assistive technology. | when:disabled | archetype `button` |
+
+### Platform distinctions
+
+*None recorded. Every platform satisfies the above identically.*
 
 ## What a consumer may pass
 
@@ -80,9 +112,4 @@ decisions your team made and can revisit.
 
 ---
 
-**Counts.** 12 inherited · 1 policy · 4 local =
-**17 requirements**, 2 zones, 2 token
-slots, 5 props.
-
-Platform resolution — which of these bind where, and how each is observed — is in the
-canonical documents, one per platform in `2-canonical/`.
+17 requirements — 4 local, 12 inherited, 1 policy · 2 zones · 2 token slots · 5 props

@@ -8,12 +8,23 @@ kind: native-backed
 # Archetype: heading
 
 Text that labels the section following it, and that assistive technology can navigate between.
+## Native backing
 
-| id | statement | observe | kind | required | source |
-|---|---|---|---|---|---|
-| HDG-01 | The text is exposed to assistive technology as a heading. | role | state | always | catalogue:Web/headings · catalogue:iOS/header-trait · catalogue:Android/heading |
-| HDG-02 | The text is reachable by the platform's heading navigation. | focus | state | always | catalogue:Web/headings |
-| HDG-03 | The text has a non-empty accessible name. | name | state | always | catalogue:Web/headings |
+What each platform provides. `none` means every implementation builds the semantics by hand — the requirements below still bind.
+
+| Platform | Native backing |
+|---|---|
+| web | `<h1>`–`<h6>` |
+| ios | `.accessibilityAddTraits(.isHeader)` on any view |
+| android | `Modifier.semantics { heading() }` on any composable |
+| macos | `AXHeading` role |
+
+
+| id | statement | observe | kind | required | chapter | source |
+|---|---|---|---|---|---|---|
+| HDG-01 | The text is exposed to assistive technology as a heading. | role | state | always | Accessibility | catalogue:Web/headings · catalogue:iOS/header-trait · catalogue:Android/heading |
+| HDG-02 | The text is reachable by the platform's heading navigation. | focus | state | always | Accessibility | catalogue:Web/headings |
+| HDG-03 | The text has a non-empty accessible name. | name | state | always | Accessibility | catalogue:Web/headings |
 
 ## Level is deliberately not a requirement
 

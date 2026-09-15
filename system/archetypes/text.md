@@ -8,11 +8,22 @@ kind: native-backed
 # Archetype: text
 
 Content read as text. The thinnest archetype in the library, and deliberately so.
+## Native backing
 
-| id | statement | observe | kind | required | source |
-|---|---|---|---|---|---|
-| TXT-01 | The content is available to assistive technology as text. | name | state | always | catalogue:Web/text · catalogue:iOS/Text |
-| TXT-02 | The content scales with the platform's user text-size setting. | state | state | always | catalogue:iOS/Button |
+What each platform provides. `none` means every implementation builds the semantics by hand — the requirements below still bind.
+
+| Platform | Native backing |
+|---|---|
+| web | any text-bearing element |
+| ios | SwiftUI `Text` · `UILabel` |
+| android | Compose `Text` · `TextView` |
+| macos | SwiftUI `Text` · `NSTextField` |
+
+
+| id | statement | observe | kind | required | chapter | source |
+|---|---|---|---|---|---|---|
+| TXT-01 | The content is available to assistive technology as text. | name | state | always | Accessibility | catalogue:Web/text · catalogue:iOS/Text |
+| TXT-02 | The content scales with the platform's user text-size setting. | state | state | always | Appearance | catalogue:iOS/Button |
 
 ## A near-empty bundle is a valid outcome
 
