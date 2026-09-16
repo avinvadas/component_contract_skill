@@ -1,0 +1,245 @@
+{
+  "format_version": "1.0",
+  "contract": "IconButton",
+  "contract_version": "1.0",
+  "platform": "ios",
+  "archetype": "button",
+  "requirements": [
+    {
+      "id": "BTN-01",
+      "statement": "The control is exposed to assistive technology as a button.",
+      "observe": "role",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "equals": "button"
+      },
+      "needs": [
+        "a11y-tree"
+      ]
+    },
+    {
+      "id": "BTN-02",
+      "statement": "The control has a non-empty accessible name.",
+      "observe": "name",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "present": true
+      },
+      "needs": [
+        "a11y-tree"
+      ]
+    },
+    {
+      "id": "BTN-03",
+      "statement": "The control is reachable by the platform's sequential focus navigation.",
+      "observe": "focus",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "equals": true
+      },
+      "needs": [
+        "focus"
+      ]
+    },
+    {
+      "id": "BTN-04",
+      "statement": "Activating by the platform's primary non-pointer input performs the action.",
+      "observe": "event",
+      "kind": "behavior",
+      "scenario": {},
+      "expect": {
+        "equals": "activated"
+      },
+      "needs": [
+        "interaction"
+      ],
+      "trigger": "a11y:activate"
+    },
+    {
+      "id": "BTN-05",
+      "statement": "Both of the platform's standard activation keys perform the action.",
+      "observe": "event",
+      "kind": "behavior",
+      "scenario": {
+        "environment": {
+          "hardware_keyboard": true
+        }
+      },
+      "expect": {
+        "equals": "activated"
+      },
+      "needs": [
+        "interaction"
+      ],
+      "trigger": [
+        "key:Return",
+        "key:Space"
+      ]
+    },
+    {
+      "id": "BTN-06",
+      "statement": "Keyboard activation does not also scroll the surrounding surface.",
+      "observe": "event",
+      "kind": "behavior",
+      "scenario": {
+        "environment": {
+          "hardware_keyboard": true
+        }
+      },
+      "expect": {
+        "equals": "unchanged"
+      },
+      "needs": [
+        "interaction"
+      ],
+      "trigger": "key:Space"
+    },
+    {
+      "id": "BTN-08",
+      "statement": "The control is removed from sequential focus navigation.",
+      "observe": "focus",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true
+        }
+      },
+      "expect": {
+        "equals": false
+      },
+      "needs": [
+        "focus"
+      ]
+    },
+    {
+      "id": "BTN-09",
+      "statement": "Activation performs no action.",
+      "observe": "event",
+      "kind": "behavior",
+      "scenario": {
+        "props": {
+          "disabled": true
+        }
+      },
+      "expect": {
+        "equals": "no-action"
+      },
+      "needs": [
+        "interaction"
+      ],
+      "trigger": "activate"
+    },
+    {
+      "id": "BTN-10",
+      "statement": "The disabled state is conveyed to assistive technology.",
+      "observe": "state",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true
+        }
+      },
+      "expect": {
+        "contains": "disabled"
+      },
+      "needs": [
+        "a11y-tree"
+      ]
+    },
+    {
+      "id": "BTN-11",
+      "statement": "The control meets the platform's minimum touch-target size.",
+      "observe": "layout",
+      "kind": "state",
+      "scenario": {
+        "environment": {
+          "touch_input": true
+        }
+      },
+      "expect": {
+        "min": 44
+      },
+      "needs": [
+        "geometry"
+      ],
+      "unit": "pt"
+    },
+    {
+      "id": "BTN-12",
+      "statement": "The accessible label scales with the platform's user text-size setting.",
+      "observe": "state",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "equals": "scaled"
+      },
+      "needs": [
+        "a11y-tree",
+        "geometry"
+      ]
+    },
+    {
+      "id": "BTN-13",
+      "statement": "The control submits its containing form without scripting.",
+      "binds": false,
+      "reason": "no platform-level form-submission model exists off the web"
+    },
+    {
+      "id": "POL-02",
+      "statement": "A focused control renders a focus indicator distinguishable from its unfocused appearance.",
+      "observe": "state",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "equals": true
+      },
+      "needs": [
+        "a11y-tree",
+        "geometry"
+      ]
+    },
+    {
+      "id": "STR-01",
+      "statement": "The control's inline and block sizes are equal.",
+      "observe": "layout",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "max_ratio": 1.0
+      },
+      "needs": [
+        "geometry"
+      ]
+    },
+    {
+      "id": "ACC-02",
+      "statement": "The accessible name is supplied by the `label` prop, since no rendered content can provide one.",
+      "observe": "name",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "source": "label"
+      },
+      "needs": [
+        "a11y-tree",
+        "name-provenance"
+      ]
+    },
+    {
+      "id": "ACC-01",
+      "statement": "The icon contributes nothing to the accessible name.",
+      "observe": "name",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "absent_from": "name"
+      },
+      "needs": [
+        "a11y-tree"
+      ]
+    }
+  ]
+}

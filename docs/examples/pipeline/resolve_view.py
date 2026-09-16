@@ -8,9 +8,10 @@ is this", origin answers "is this mine to change".
 import pathlib, re, sys
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from resolve import SRC, LIB, parse_frontmatter, requirement_rows, parse_tables  # noqa: E402
+COMPONENT = sys.argv[1] if len(sys.argv) > 1 else "Button"
 
 NL = "\n"
-fm, body = parse_frontmatter((SRC / "Button.md").read_text())
+fm, body = parse_frontmatter((SRC / (COMPONENT + ".md")).read_text())
 arch_text = (LIB / ("archetypes/%s.md" % fm["archetype"])).read_text()
 arch_fm, arch_body = parse_frontmatter(arch_text)
 policy_body = (SRC / "system/policy.md").read_text()
@@ -115,8 +116,9 @@ P.append("## 3. Appearance")
 P.append("")
 P.append("### Tokenised properties")
 P.append("")
-P.append(md_table(["property", "token", "when"],
-                  ["| %s | %s | %s |" % (t["property"], t["token"], t["required"]) for t in tokens]))
+P.append(md_table(["when", "property", "token"],
+                  ["| %s | %s | %s |" % (t.get("when", t.get("required", "always")), t["property"], t["token"])
+                   for t in tokens]))
 P.append("### Requirements")
 P.append("")
 P.append(reqs("Appearance"))
@@ -130,8 +132,8 @@ P.append("")
 P.append(reqs("Behavior"))
 P.append("### Events")
 P.append("")
-P.append(md_table(["direction", "name", "payload", "when"],
-                  ["| %s | %s | %s | %s |" % (e["direction"], e["name"], e["payload"], e["when"])
+P.append(md_table(["when", "direction", "name", "payload"],
+                  ["| %s | %s | %s | %s |" % (e.get("when", ""), e["direction"], e["name"], e["payload"])
                    for e in events]))
 P.append("## 5. Accessibility")
 P.append("")
@@ -152,6 +154,6 @@ P.append("")
 P.append("%d requirements — %d local, %d inherited, %d policy · %d zones · %d token slots · %d props"
          % (len(rows), n_local, n_arch, n_pol, len(zones), len(tokens), len(props)))
 
-out = pathlib.Path(__file__).parent / "Button.resolved.md"
+out = pathlib.Path(__file__).parent / (COMPONENT + ".resolved.md")
 out.write_text(NL.join(P) + NL)
 print("wrote %s: %d lines, %d requirements" % (out.name, len(P), len(rows)))

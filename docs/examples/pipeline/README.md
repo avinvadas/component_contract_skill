@@ -99,6 +99,48 @@ xcresult and JUnit XML with no custom reporting.
 
 ---
 
+## Two contracts, one archetype
+
+`IconButton` was added to make the fan-out visible, because with a single component the
+archetype looks like per-component indirection. It is not — there is **one archetype file per
+archetype**, not per contract.
+
+```bash
+python3 resolve.py IconButton && python3 resolve_view.py IconButton
+```
+
+| | Button | IconButton |
+|---|---|---|
+| inherited from `button` | 12 | 12 |
+| local requirements | 4 | 3 |
+| zones | 2 | 1 |
+| archetype files read | **the same one** | **the same one** |
+
+Neither contract restates a single `BTN-*` requirement, and neither can weaken one. Add
+ToggleButton, SplitButton and a FAB and the count of archetype files stays at one.
+
+### Three tiers of rule, and only one is conditional
+
+| Rule | Applies to | Lives in | Count in a ~40-component system |
+|---|---|---|---|
+| format — six chapters, `when` first, closed vocabularies | every contract | the spec | 1 |
+| policy — focus indicator, token discipline, touch targets | every contract | `policy.md` | 1 |
+| **archetype bundle** | **contracts of that kind** | `archetypes/<name>.md` | ~12 |
+
+A Modal does not inherit button requirements; a Link does not inherit dialog requirements.
+That conditionality is exactly why a bundle cannot be folded into the spec or into policy,
+both of which apply unconditionally.
+
+### What the second contract exposed
+
+IconButton has **no visible text**, so `BTN-02` — *the control has a non-empty accessible
+name* — has no rendered content to draw from. Button satisfies it from its label zone;
+IconButton has to satisfy it from a required `label` prop that is never rendered.
+
+Same inherited requirement, two different name sources, and the difference lives entirely in
+each contract's own Accessibility chapter. Nothing about the archetype changed. That is the
+layering doing the job it exists for, and it only became visible at the second component.
+
 ## What building this found
 
 Four things, in ascending order of how much they changed the design.

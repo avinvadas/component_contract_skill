@@ -1,0 +1,9 @@
+{
+  "comment": "Component-local bindings only. Every BTN-* requirement binds through the shared archetype file — this contract adds nothing to it and overrides nothing in it.",
+  "contract": "IconButton", "version": "1.0",
+  "bindings": {
+    "STR-01": { "web": { "expect": { "equals": "square" } }, "ios": { "expect": { "equals": "square" } }, "android": { "expect": { "equals": "square" } } },
+    "ACC-01": { "web": { "expect": { "absent_from": "name" } }, "ios": { "expect": { "absent_from": "name" } }, "android": { "expect": { "absent_from": "name" } } },
+    "ACC-02": { "web": { "expect": { "source": "prop:label" }, "needs_also": ["name-provenance"] }, "ios": { "expect": { "source": "prop:label" }, "needs_also": ["name-provenance"] }, "android": { "expect": { "source": "prop:label" }, "needs_also": ["name-provenance"] } }
+  }
+}

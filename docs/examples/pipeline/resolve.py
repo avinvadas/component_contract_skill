@@ -10,6 +10,7 @@ import json, pathlib, re, sys
 
 HERE = pathlib.Path(__file__).parent
 SRC, OUT = HERE / "1-contract", HERE / "2-canonical"
+COMPONENT = sys.argv[1] if len(sys.argv) > 1 else "Button"
 # The shipped library, not a fixture. This is the checkpoint the source-layer plan names:
 # the pipeline proves the mechanism on a hand-made archetype; it proves the library only
 # once it resolves against the real one.
@@ -131,7 +132,7 @@ def check_cardinality(rows):
 
 def main():
     # ---- load --------------------------------------------------------------------
-    contract_text = (SRC / "Button.md").read_text()
+    contract_text = (SRC / (COMPONENT + ".md")).read_text()
     fm, body = parse_frontmatter(contract_text)
     arch_text = (LIB / "archetypes/button.md").read_text()
     _, arch_body = parse_frontmatter(arch_text)
@@ -189,7 +190,7 @@ def main():
         doc = {"format_version": "1.0", "contract": fm["component"],
                "contract_version": fm["version"], "platform": platform,
                "archetype": fm["archetype"], "requirements": reqs}
-        (OUT / f"Button.{platform}.canonical.json").write_text(json.dumps(doc, indent=2) + "\n")
+        (OUT / (COMPONENT + f".{platform}.canonical.json")).write_text(json.dumps(doc, indent=2) + "\n")
         binds = sum(1 for r in reqs if r.get("binds") is not False)
         print(f"  {platform:<8} {len(reqs)} requirements, {binds} binding, {len(reqs)-binds} n/a")
 

@@ -1,6 +1,6 @@
-# Button — resolved
+# IconButton — resolved
 
-> **Generated. Do not edit.** Source: `Button.md` v1.0 + archetype `button` v1.0 + system policy.
+> **Generated. Do not edit.** Source: `IconButton.md` v1.0 + archetype `button` v1.0 + system policy.
 > **Platform-neutral** — what the component *is*, before any platform's vocabulary.
 > How each requirement is *observed* per platform is in `2-canonical/`.
 
@@ -8,8 +8,8 @@
 
 ## 1. Intent
 
-The primary means of performing an action in place. Carries a text label, optionally preceded
-by a decorative icon. Unlike Link, it does not navigate.
+A button whose only visible content is an icon. Used where space is constrained and the
+action is conventional enough to be recognised without a label — close, back, overflow.
 
 ## 2. Structure
 
@@ -28,21 +28,18 @@ Where a platform gives you this free, and where you build it by hand.
 
 | when | statement | origin | id |
 |---|---|---|---|
-| when:icon_present | Zones are arranged along the inline axis, icon before label. | this component | id-CMP-03 |
-| — | The control does not exceed the inline size of its container. | this component | id-STR-01 |
+| — | The control's inline and block sizes are equal. | this component | id-STR-01 |
 | when:touch_input | The control meets the platform's minimum touch-target size. | archetype `button` | id-BTN-11 |
 
 ### Required children
 
 | zone | accepts | cardinality | position | if absent |
 |---|---|---|---|---|
-| label | text | 1 | inline-end | invalid:BTN-02 has no name source |
+| icon | component:Icon | 1 | block-start | invalid:the control has no visible content |
 
 ### Optional children
 
-| zone | accepts | cardinality | position | if absent |
-|---|---|---|---|---|
-| icon | component:Icon | 0..1 | inline-start | omitted |
+*None.*
 
 ## 3. Appearance
 
@@ -88,8 +85,8 @@ Reviewable as an aspect: everything governing how the component is exposed, name
 
 | when | statement | origin | id |
 |---|---|---|---|
-| when:icon_present | The icon contributes nothing to the accessible name. | this component | id-ACC-01 |
-| — | The label is the sole source of the accessible name. | this component | id-ACC-02 |
+| — | The icon contributes nothing to the accessible name. | this component | id-ACC-01 |
+| — | The accessible name is supplied by the `label` prop, since no rendered content can provide one. | this component | id-ACC-02 |
 | — | The control is exposed to assistive technology as a button. | archetype `button` | id-BTN-01 |
 | — | The control has a non-empty accessible name. | archetype `button` | id-BTN-02 |
 | — | The control is reachable by the platform's sequential focus navigation. | archetype `button` | id-BTN-03 |
@@ -104,12 +101,11 @@ Reviewable as an aspect: everything governing how the component is exposed, name
 
 | prop | type | required | default |
 |---|---|---|---|
-| `fullWidth` | boolean | no | `false` |
-| `variant` | enum:primary,secondary,ghost | no | `primary` |
 | `label` | string | yes | — |
+| `iconName` | string | yes | — |
 | `disabled` | boolean | no | `false` |
 | `onPress` | handler | yes | — |
 
 ---
 
-17 requirements — 4 local, 12 inherited, 1 policy · 2 zones · 2 token slots · 5 props
+16 requirements — 3 local, 12 inherited, 1 policy · 1 zones · 2 token slots · 4 props
