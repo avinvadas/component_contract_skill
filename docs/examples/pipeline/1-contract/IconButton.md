@@ -4,6 +4,7 @@ version: 1.0
 status: Draft
 role-archetype: button
 policy: system/policy.md
+tokens: ../../../../evals/fixtures/tokens/design-tokens.json
 platforms: [web, ios, android]
 last_updated: 2026-09-16
 ---
@@ -37,8 +38,8 @@ action is conventional enough to be recognised without a label — close, back, 
 
 | when | property | token | id |
 |---|---|---|---|
-| always | background | `color.action.primary.bg` | id-APP-01 |
-| when:disabled | background | `color.action.primary.disabled.bg` | id-APP-06 |
+| always | background | — | id-APP-01 |
+| when:disabled | background | — | id-APP-06 |
 
 ## 5. Behavior
 

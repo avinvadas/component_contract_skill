@@ -4,6 +4,7 @@ version: 1.0
 status: Draft
 role-archetype: button
 policy: system/policy.md
+tokens: ../../../../evals/fixtures/tokens/design-tokens.json
 platforms: [web, ios, android]
 last_updated: 2026-09-14
 ---
@@ -48,10 +49,21 @@ by a decorative icon. Unlike Link, it does not navigate.
 
 ### 4.1 Token slots
 
-| property | token | required | id |
+The contract declares which properties are tokenised. `—` means resolve it from the tree; an
+explicit path pins a token, which is then validated rather than re-resolved. A property that
+does not apply says so, with a reason — it is never simply left out.
+
+| when | property | token | id |
 |---|---|---|---|
-| background | `color.action.primary.bg` | always | id-APP-01 |
-| background | `color.action.primary.disabled.bg` | when:disabled | id-APP-06 |
+| always | background | — | id-APP-01 |
+| always | foreground | — | id-APP-02 |
+| always | border-color | — | id-APP-03 |
+| always | border-width | — | id-APP-04 |
+| always | radius | `component.button.radius` | id-APP-05 |
+| always | padding-inline | — | id-APP-06 |
+| when:hover | background | — | id-APP-07 |
+| when:disabled | background | — | id-APP-08 |
+| always | elevation | n/a — a Button sits in the content plane | id-APP-09 |
 
 ### 4.3 Visual variants
 

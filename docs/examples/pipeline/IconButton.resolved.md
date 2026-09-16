@@ -45,10 +45,19 @@ Where a platform gives you this free, and where you build it by hand.
 
 ### Tokenised properties
 
-| when | property | token |
+| when | property | token | status |
+|---|---|---|---|
+| always | background | — | **ambiguous** |
+| when:disabled | background | — | **state unexpressed** |
+
+### Token gaps
+
+2 properties could not resolve. These are fixed in the token tree, not in this contract — leave the cells above unbound until the tree can express them.
+
+| property | what is wrong | what to do |
 |---|---|---|
-| always | background | `color.action.primary.bg` |
-| when:disabled | background | `color.action.primary.disabled.bg` |
+| background | 2 candidates; scope and dimension did not narrow it | pin one: `semantic.color.surface.neutral`, `semantic.color.action.primary` |
+| background@disabled | `semantic.color.surface.neutral` exists but carries no `disabled` state | add a `disabled` variant of that token |
 
 ### Requirements
 
@@ -108,4 +117,4 @@ Reviewable as an aspect: everything governing how the component is exposed, name
 
 ---
 
-16 requirements — 3 local, 12 inherited, 1 policy · 1 zones · 2 token slots · 4 props
+16 requirements — 3 local, 12 inherited, 1 policy · 1 zones · 2 token slots — 0 bound, 2 gaps, 0 n/a · 4 props

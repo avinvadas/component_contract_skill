@@ -7,7 +7,8 @@ is this", origin answers "is this mine to change".
 """
 import pathlib, re, sys
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-from resolve import SRC, LIB, parse_frontmatter, requirement_rows, parse_tables  # noqa: E402
+from resolve import (SRC, LIB, parse_frontmatter, requirement_rows,  # noqa: E402
+                     parse_tables, resolve_slots)
 COMPONENT = sys.argv[1] if len(sys.argv) > 1 else "Button"
 
 NL = "\n"
@@ -22,6 +23,60 @@ for src, label in ((arch_body, "archetype `%s`" % fm["role-archetype"]),
     for r in requirement_rows(src):
         ORIGIN[r["id"]] = label
         rows.append(r)
+
+# ---- token slots -------------------------------------------------------------------
+# The canonical document carries the five-way state, because a machine routes on it.
+# A reader does not need a five-way taxonomy — they need to know whether a property is
+# bound, and if not, who fixes it. So the view renders two things: a status per row, and
+# a gap table addressed to whoever owns the token tree.
+SLOTS = resolve_slots(body, fm)
+
+STATUS_LABEL = {
+    "bound":            "bound",
+    "not-applicable":   "n/a",
+    "absent-from-tree": "**absent from tree**",
+    "ambiguous":        "**ambiguous**",
+    "dimension-unmet":  "**state unexpressed**",
+    "unmapped-leaf":    "**unreadable token name**",
+}
+
+def slot_label(s_):
+    return s_["property"] + ("@" + s_["state"] if s_["state"] else "")
+
+def token_table():
+    body_rows = []
+    for s_ in SLOTS:
+        tok = ("`%s`" % s_["token"]) if s_["token"] else "—"
+        status = STATUS_LABEL.get(s_["status"], s_["status"])
+        if s_["status"] == "not-applicable":
+            status = "n/a — " + s_["detail"]
+        body_rows.append("| %s | %s | %s | %s |" % (s_.get("when", "always"),
+                                                    s_["property"], tok, status))
+    return md_table(["when", "property", "token", "status"], body_rows)
+
+def gap_table():
+    gaps = [s_ for s_ in SLOTS if s_["status"] not in ("bound", "not-applicable")]
+    if not gaps:
+        return "*None. Every declared property resolves.*" + NL
+    intro = ("%d propert%s could not resolve. These are fixed in the token tree, not in "
+             "this contract — leave the cells above unbound until the tree can express them."
+             % (len(gaps), "y" if len(gaps) == 1 else "ies")) + NL + NL
+    rows_ = []
+    for s_ in gaps:
+        if s_["status"] == "absent-from-tree":
+            need = "no token anywhere expresses this property"
+            fix = "add `%s`" % s_["detail"]
+        elif s_["status"] == "dimension-unmet":
+            need = "`%s` exists but carries no `%s` state" % (s_["detail"], s_["state"])
+            fix = "add a `%s` variant of that token" % s_["state"]
+        elif s_["status"] == "ambiguous":
+            cands = s_["detail"] if isinstance(s_["detail"], list) else [str(s_["detail"])]
+            need = "%d candidates; scope and dimension did not narrow it" % len(cands)
+            fix = "pin one: " + ", ".join("`%s`" % c for c in cands[:3])
+        else:
+            need, fix = str(s_["detail"]), "extend the leaf map in design-system-context"
+        rows_.append("| %s | %s | %s |" % (slot_label(s_), need, fix))
+    return intro + md_table(["property", "what is wrong", "what to do"], rows_)
 
 FALLBACK = {"layout": "Structure", "order": "Structure", "containment": "Structure",
             "token": "Appearance", "event": "Behavior"}
@@ -116,9 +171,10 @@ P.append("## 3. Appearance")
 P.append("")
 P.append("### Tokenised properties")
 P.append("")
-P.append(md_table(["when", "property", "token"],
-                  ["| %s | %s | %s |" % (t.get("when", t.get("required", "always")), t["property"], t["token"])
-                   for t in tokens]))
+P.append(token_table())
+P.append("### Token gaps")
+P.append("")
+P.append(gap_table())
 P.append("### Requirements")
 P.append("")
 P.append(reqs("Appearance"))
@@ -151,8 +207,15 @@ P.append(md_table(["prop", "type", "required", "default"],
                    for p in props]))
 P.append("---")
 P.append("")
-P.append("%d requirements — %d local, %d inherited, %d policy · %d zones · %d token slots · %d props"
-         % (len(rows), n_local, n_arch, n_pol, len(zones), len(tokens), len(props)))
+# `9 token slots` hid the state. The gap count is the number someone needs at a glance,
+# so it goes in the summary line rather than only in the table above.
+n_bound = sum(1 for s_ in SLOTS if s_["status"] == "bound")
+n_na    = sum(1 for s_ in SLOTS if s_["status"] == "not-applicable")
+n_gap   = len(SLOTS) - n_bound - n_na
+slot_summary = "%d token slots — %d bound, %d gap%s, %d n/a" % (
+    len(SLOTS), n_bound, n_gap, "" if n_gap == 1 else "s", n_na)
+P.append("%d requirements — %d local, %d inherited, %d policy · %d zones · %s · %d props"
+         % (len(rows), n_local, n_arch, n_pol, len(zones), slot_summary, len(props)))
 
 out = pathlib.Path(__file__).parent / (COMPONENT + ".resolved.md")
 out.write_text(NL.join(P) + NL)

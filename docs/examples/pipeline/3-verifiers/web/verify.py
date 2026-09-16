@@ -89,6 +89,13 @@ for req in DOC["requirements"]:
     rid, stmt = req["id"], described(req)
     if req.get("binds") is False:
         rows.append(("N/A", rid, stmt, req["reason"])); continue
+    if "pending" in req:
+        # The contract declares this property tokenised, but the token tree cannot express
+        # it yet, so there is no expectation to compare against. `unverified`, never pass:
+        # an unresolved token that reported green would defeat the point of declaring it.
+        pend = req["pending"]
+        rows.append(("UNVER", rid, stmt,
+                     "token unresolved (%s) — fix in the token tree" % pend["reason"])); continue
     missing = [n for n in req["needs"] if n in CAP["cannot_observe"]]
     if missing:
         rows.append(("UNVER", rid, stmt, CAP["cannot_observe"][missing[0]])); continue

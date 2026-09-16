@@ -3,7 +3,8 @@
 One contract, three canonical documents, three verifiers. Reproduce with:
 
 ```bash
-python3 docs/examples/pipeline/resolve.py            # level 1 -> 2
+python3 docs/examples/pipeline/resolve.py                  # level 1 -> 2
+python3 docs/examples/pipeline/resolve_view.py             # the reading artifact
 python3 docs/examples/pipeline/3-verifiers/web/verify.py   # level 3, runnable
 ```
 
@@ -24,8 +25,9 @@ scenario.
 ## Level 1 — the contract
 
 [`1-contract/Button.md`](1-contract/Button.md) — six chapters, eleven rows of
-component-specific fact. One frontmatter line, `archetype: button`, inherits eight
-requirements that appear nowhere in the document.
+component-specific fact. One frontmatter line, `role-archetype: button`, inherits twelve
+requirements that appear nowhere in the document. A second, `tokens:`, points at the design
+system's token tree.
 
 Supporting it: the archetype bundle and bindings, the policy file, and
 `Button.bindings.json` for ids this contract introduces.
@@ -33,12 +35,17 @@ Supporting it: the archetype bundle and bindings, the policy file, and
 ## Level 2 — canonical documents
 
 [`resolve.py`](resolve.py) parses the contract and emits one document per platform. Same
-thirteen requirements everywhere; what differs is how each is observed, and whether it binds.
+requirements everywhere; what differs is how each is observed, and whether it binds.
 
 ```
-web      13 requirements, 13 binding, 0 n/a
-ios      13 requirements, 12 binding, 1 n/a
-android  13 requirements, 12 binding, 1 n/a
+web      26 requirements, 25 binding, 1 n/a
+ios      26 requirements, 24 binding, 2 n/a
+android  26 requirements, 24 binding, 2 n/a
+
+token slots: 9 declared, 5 bound, 1 n/a, 3 gap(s)
+  - APP-04   absent-from-tree  border-width
+  - APP-06   ambiguous         padding-inline
+  - APP-08   dimension-unmet   background@disabled
 ```
 
 Three things to read off the emitted JSON:
@@ -60,6 +67,51 @@ cannot shrink its own bar by omission because omission is not expressible.
 `"scenario": {"props": {"disabled": true}}` — a predicate over a class of instances, never a
 reference to one.
 
+## Token slots — five outcomes, only one of them fine
+
+[`tokens.py`](tokens.py) reads the token tree and resolves each declared property. It is
+kept honest by a split that is easy to get wrong: **structure** (tiers, component scopes,
+dimension axes) is read from paths and always reliable; **leaf meaning** is not readable
+from paths at all and comes from the alias graph, where a component leaf annotates the
+semantic token it consumes. Keying that on the leaf rather than the full path teaches the
+resolver that `primary` means *background*, which is wrong everywhere else in the tree.
+
+A slot lands in exactly one state, and four of them are not "missing":
+
+| state | meaning | who fixes it |
+|---|---|---|
+| `bound` | one token satisfies property, `$type` and dimensions | — |
+| `not-applicable` | declared inapplicable, with a reason | — |
+| `absent-from-tree` | applies; nothing in the tree expresses it | token tree owner |
+| `ambiguous` | several candidates; scope and dimension did not narrow it | contract author, pins one |
+| `dimension-unmet` | a token matches the property but carries no such state | token tree owner |
+| `unmapped-leaf` | a token probably exists; we could not read which leaf means this | the leaf map |
+
+`unmapped-leaf` stays separate from `absent-from-tree` deliberately. Merging them tells
+someone to add a token that already exists under a name the resolver failed to parse —
+the tool would pollute the tree it exists to protect.
+
+**A gap is not a lint finding.** Lint means the *document* is malformed and exits non-zero.
+A gap means the document is fine and the *token tree* cannot express something yet. Both are
+printed; only lint fails the parse.
+
+**A gap can never pass.** A bound slot emits `expect`; a gap emits `pending` with its reason
+and no `expect` at all, so a verifier has nothing to compare and reports `unverified`:
+
+```
+UNVER  APP-04   border-width resolves through a design token.
+                -> token unresolved (absent-from-tree) — fix in the token tree
+UNVER  APP-05   radius resolves through `component.button.radius`.
+                -> does not read stylesheets or component source
+```
+
+Two unverified rows, two unrelated reasons — one verifier that cannot look, one contract
+with nothing yet to look for. Collapsing them would hide which is which.
+
+**A pinned name absent from the tree is a lint failure**, not a gap. It is the one path by
+which an invented token name enters a design system, so it fails the parse.
+
+
 ## Level 3 — verifiers
 
 Each declares what it can and cannot observe. Anything a requirement needs that the verifier
@@ -77,7 +129,7 @@ declare them.
 
 ```
 web-stdlib-static  —  strategy: witness
-4 pass / 3 fail / 6 unverified / 0 n-a
+4 pass / 3 fail / 18 unverified / 1 n-a
 
 FAIL   BTN-01   The control is exposed to assistive technology as a button.
                 -> role='button' but rendered tag is <div>, not ['button', 'input']

@@ -264,6 +264,131 @@
         "a11y-tree",
         "name-provenance"
       ]
+    },
+    {
+      "id": "APP-01",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {},
+      "needs": [
+        "source"
+      ],
+      "statement": "background resolves through `component.button.variant.primary.background`.",
+      "expect": {
+        "equals": "component.button.variant.primary.background"
+      }
+    },
+    {
+      "id": "APP-02",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {},
+      "needs": [
+        "source"
+      ],
+      "statement": "foreground resolves through `component.button.variant.primary.text`.",
+      "expect": {
+        "equals": "component.button.variant.primary.text"
+      }
+    },
+    {
+      "id": "APP-03",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {},
+      "needs": [
+        "source"
+      ],
+      "statement": "border-color resolves through `component.button.variant.primary.border`.",
+      "expect": {
+        "equals": "component.button.variant.primary.border"
+      }
+    },
+    {
+      "id": "APP-04",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {},
+      "needs": [
+        "source"
+      ],
+      "statement": "border-width resolves through a design token.",
+      "pending": {
+        "reason": "absent-from-tree",
+        "detail": "semantic.border-width.default"
+      }
+    },
+    {
+      "id": "APP-05",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {},
+      "needs": [
+        "source"
+      ],
+      "statement": "radius resolves through `component.button.radius`.",
+      "expect": {
+        "equals": "component.button.radius"
+      }
+    },
+    {
+      "id": "APP-06",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {},
+      "needs": [
+        "source"
+      ],
+      "statement": "padding-inline resolves through a design token.",
+      "pending": {
+        "reason": "ambiguous",
+        "detail": [
+          "component.button.size.sm.padding-inline",
+          "component.button.size.md.padding-inline",
+          "component.button.size.lg.padding-inline"
+        ]
+      }
+    },
+    {
+      "id": "APP-07",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "hover": true
+        }
+      },
+      "needs": [
+        "source"
+      ],
+      "statement": "background@hover resolves through `component.button.variant.primary.background-hover`.",
+      "expect": {
+        "equals": "component.button.variant.primary.background-hover"
+      }
+    },
+    {
+      "id": "APP-08",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true
+        }
+      },
+      "needs": [
+        "source"
+      ],
+      "statement": "background@disabled resolves through a design token.",
+      "pending": {
+        "reason": "dimension-unmet",
+        "detail": "component.button.variant.primary.background"
+      }
+    },
+    {
+      "id": "APP-09",
+      "statement": "elevation is not tokenised.",
+      "binds": false,
+      "reason": "a Button sits in the content plane"
     }
   ]
 }

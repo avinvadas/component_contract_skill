@@ -8,6 +8,8 @@ deterministically, this is where it shows up.
 """
 import json, pathlib, re, sys
 
+from tokens import Tree, PROPERTIES  # noqa: E402
+
 HERE = pathlib.Path(__file__).parent
 SRC, OUT = HERE / "1-contract", HERE / "2-canonical"
 COMPONENT = sys.argv[1] if len(sys.argv) > 1 else "Button"
@@ -41,6 +43,10 @@ CONDITIONS = {
     "reduced_motion":    ("environment", "reduced_motion", True),
     "inside_form":       ("environment", "inside_form", True),
     "disabled":          ("props", "disabled", True),
+    # Appearance requirements need interaction states the original list did not carry.
+    # Added deliberately, not silently: the vocabulary is closed by cost, not by accident.
+    "hover":             ("state", "hover", True),
+    "focused":           ("state", "focused", True),
 }
 ZONE_PRESENT = re.compile(r"^(\w+)_present$")
 
@@ -130,6 +136,93 @@ def check_cardinality(rows):
         elif c and not re.fullmatch(r"\d+(\.\.\d+|\+)?", c):
             lint.append(f"{r.get('id')}: cardinality {c!r} does not parse")
 
+# ---- token slots -------------------------------------------------------------
+# A slot table declares which properties are tokenised. It is NOT a requirement table —
+# it carries no statement and no observe — so it has to be recognised on its own terms.
+# Before this existed the table matched nothing and was dropped in silence, which is the
+# one outcome the design exists to prevent: a contract that states a fact, and a resolver
+# that reports clean without checking it.
+SLOT_HEADERS = {"property", "token", "id"}
+gaps: list[dict] = []
+
+def slot_rows(text):
+    for headers, rows in parse_tables(text):
+        if SLOT_HEADERS <= set(headers) and "statement" not in headers:
+            return rows
+    return []
+
+def default_dims(text):
+    """A variant prop's DEFAULT supplies the dimension a slot resolves against."""
+    dims = {}
+    for headers, rows in parse_tables(text):
+        if {"prop", "type", "default"} <= set(headers):
+            for r in rows:
+                name = r["prop"].strip("`")
+                if r["type"].startswith("enum:") and name in ("variant", "size", "tone", "emphasis"):
+                    dims[name] = r["default"].strip("`")
+    return dims
+
+def state_of(when):
+    if when.startswith("when:"):
+        first = when[len("when:"):].split(",")[0].strip()
+        if first in ("hover", "disabled", "focused", "pressed", "selected"):
+            return "focus" if first == "focused" else first
+    return None
+
+def resolve_slots(body, fm):
+    """Each declared property -> a bound token, or a NAMED reason it is not bound."""
+    rows = slot_rows(body)
+    if not rows:
+        return []
+    tree_ref = fm.get("tokens")
+    if not tree_ref:
+        lint.append("%d token slot(s) declared but no `tokens:` tree in frontmatter — "
+                    "nothing can be resolved or checked" % len(rows))
+        return []
+    tree = Tree(str((SRC / tree_ref).resolve()))
+    scope, dims = fm["component"].lower(), default_dims(body)
+    out = []
+    for r in rows:
+        when = r.get("when", "always")
+        cell = r["token"].strip().strip("`")
+        slot = {"id": r["id"], "when": when, "property": r["property"],
+                "state": state_of(when), "dims": dims}
+        if cell.lower().startswith("n/a"):
+            reason = cell[3:].lstrip(" —-:").strip() or "declared not applicable"
+            slot.update(token=None, status="not-applicable", detail=reason)
+        elif cell in ("—", "-", ""):
+            tok, status, detail = tree.resolve(slot["property"], scope,
+                                               dims=dims, state=slot["state"])
+            slot.update(token=tok, status=status, detail=detail)
+        elif cell in tree.tokens:
+            slot.update(token=cell, status="bound", detail="pinned")
+        else:
+            # A pinned name absent from the tree is the one failure that must never be
+            # quietly accepted: it is how an invented token name enters a design system.
+            slot.update(token=None, status="absent-from-tree", detail=cell)
+            lint.append("%s: pinned token %r is not in the token tree" % (r["id"], cell))
+        if slot["status"] not in ("bound", "not-applicable"):
+            gaps.append(slot)
+        out.append(slot)
+    return out
+
+def slot_requirement(slot):
+    """A slot becomes a real requirement, bound or explicitly pending — never absent."""
+    label = slot["property"] + ("@" + slot["state"] if slot["state"] else "")
+    base = {"id": slot["id"], "observe": "token", "kind": "state",
+            "scenario": scenario_for(slot["when"], slot["id"]), "needs": ["source"]}
+    if slot["status"] == "not-applicable":
+        return {"id": slot["id"],
+                "statement": "%s is not tokenised." % label,
+                "binds": False, "reason": slot["detail"]}
+    if slot["status"] == "bound":
+        return dict(base, statement="%s resolves through `%s`." % (label, slot["token"]),
+                    expect={"equals": slot["token"]})
+    # No `expect`. A verifier with nothing to compare against reports `unverified`, which
+    # is the whole point — an unresolved token must never be able to produce a pass.
+    return dict(base, statement="%s resolves through a design token." % label,
+                pending={"reason": slot["status"], "detail": slot["detail"]})
+
 def main():
     # ---- load --------------------------------------------------------------------
     contract_text = (SRC / (COMPONENT + ".md")).read_text()
@@ -147,6 +240,7 @@ def main():
 
     inherited = requirement_rows(arch_body) + requirement_rows(policy_text)
     local = requirement_rows(body)
+    slots = resolve_slots(body, fm)
 
     for headers, rows in parse_tables(body):
         if "cardinality" in headers:
@@ -187,12 +281,26 @@ def main():
                     entry[k] = b[k]
             reqs.append(entry)
 
+        for slot in slots:
+            reqs.append(slot_requirement(slot))
+
         doc = {"format_version": "1.0", "contract": fm["component"],
                "contract_version": fm["version"], "platform": platform,
                "archetype": fm["role-archetype"], "requirements": reqs}
         (OUT / (COMPONENT + f".{platform}.canonical.json")).write_text(json.dumps(doc, indent=2) + "\n")
         binds = sum(1 for r in reqs if r.get("binds") is not False)
         print(f"  {platform:<8} {len(reqs)} requirements, {binds} binding, {len(reqs)-binds} n/a")
+
+    # Gaps and lint are different animals. A lint finding means the DOCUMENT is malformed.
+    # A gap means the document is fine and the TOKEN TREE cannot express something yet —
+    # a task for whoever owns the tree, not a reason to fail the parse.
+    print(f"\ntoken slots: {len(slots)} declared, "
+          f"{sum(1 for s_ in slots if s_['status'] == 'bound')} bound, "
+          f"{sum(1 for s_ in slots if s_['status'] == 'not-applicable')} n/a, "
+          f"{len(gaps)} gap(s)")
+    for g in gaps:
+        label = g["property"] + ("@" + g["state"] if g["state"] else "")
+        print("  - %-8s %-17s %s" % (g["id"], g["status"], label))
 
     print(f"\nlint: {len(lint)} finding(s)")
     for l in lint:

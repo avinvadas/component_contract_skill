@@ -260,6 +260,41 @@
       "needs": [
         "a11y-tree"
       ]
+    },
+    {
+      "id": "APP-01",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {},
+      "needs": [
+        "source"
+      ],
+      "statement": "background resolves through a design token.",
+      "pending": {
+        "reason": "ambiguous",
+        "detail": [
+          "semantic.color.surface.neutral",
+          "semantic.color.action.primary"
+        ]
+      }
+    },
+    {
+      "id": "APP-06",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true
+        }
+      },
+      "needs": [
+        "source"
+      ],
+      "statement": "background@disabled resolves through a design token.",
+      "pending": {
+        "reason": "dimension-unmet",
+        "detail": "semantic.color.surface.neutral"
+      }
     }
   ]
 }

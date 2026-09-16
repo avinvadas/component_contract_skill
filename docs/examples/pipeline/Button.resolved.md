@@ -48,10 +48,27 @@ Where a platform gives you this free, and where you build it by hand.
 
 ### Tokenised properties
 
-| when | property | token |
+| when | property | token | status |
+|---|---|---|---|
+| always | background | `component.button.variant.primary.background` | bound |
+| always | foreground | `component.button.variant.primary.text` | bound |
+| always | border-color | `component.button.variant.primary.border` | bound |
+| always | border-width | — | **absent from tree** |
+| always | radius | `component.button.radius` | bound |
+| always | padding-inline | — | **ambiguous** |
+| when:hover | background | `component.button.variant.primary.background-hover` | bound |
+| when:disabled | background | — | **state unexpressed** |
+| always | elevation | — | n/a — a Button sits in the content plane |
+
+### Token gaps
+
+3 properties could not resolve. These are fixed in the token tree, not in this contract — leave the cells above unbound until the tree can express them.
+
+| property | what is wrong | what to do |
 |---|---|---|
-| always | background | `color.action.primary.bg` |
-| when:disabled | background | `color.action.primary.disabled.bg` |
+| border-width | no token anywhere expresses this property | add `semantic.border-width.default` |
+| padding-inline | 3 candidates; scope and dimension did not narrow it | pin one: `component.button.size.sm.padding-inline`, `component.button.size.md.padding-inline`, `component.button.size.lg.padding-inline` |
+| background@disabled | `component.button.variant.primary.background` exists but carries no `disabled` state | add a `disabled` variant of that token |
 
 ### Requirements
 
@@ -112,4 +129,4 @@ Reviewable as an aspect: everything governing how the component is exposed, name
 
 ---
 
-17 requirements — 4 local, 12 inherited, 1 policy · 2 zones · 2 token slots · 5 props
+17 requirements — 4 local, 12 inherited, 1 policy · 2 zones · 9 token slots — 5 bound, 3 gaps, 1 n/a · 5 props
