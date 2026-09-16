@@ -37,17 +37,10 @@ NEEDS_BY_OBSERVE = {
 }
 
 # ---- condition vocabulary (closed) ------------------------------------------
-CONDITIONS = {
-    "hardware_keyboard": ("environment", "hardware_keyboard", True),
-    "touch_input":       ("environment", "touch_input", True),
-    "reduced_motion":    ("environment", "reduced_motion", True),
-    "inside_form":       ("environment", "inside_form", True),
-    "disabled":          ("props", "disabled", True),
-    # Appearance requirements need interaction states the original list did not carry.
-    # Added deliberately, not silently: the vocabulary is closed by cost, not by accident.
-    "hover":             ("state", "hover", True),
-    "focused":           ("state", "focused", True),
-}
+# LOADED, not restated. Two copies drifted in both directions: `expanded`, `rtl` and
+# `pointer_input` were in the vocabulary and unknown to this resolver, which would have
+# lint-failed a contract that used them correctly; `hover` and `focused` were the reverse.
+CONDITIONS = json.loads((LIB / "vocabulary/conditions.json").read_text())["conditions"]
 ZONE_PRESENT = re.compile(r"^(\w+)_present$")
 
 lint: list[str] = []
@@ -120,8 +113,8 @@ def scenario_for(required, rid):
     for cond in required[len("when:"):].split(","):
         cond = cond.strip()
         if cond in CONDITIONS:
-            bucket, key, val = CONDITIONS[cond]
-            scen.setdefault(bucket, {})[key] = val
+            for bucket, kv in CONDITIONS[cond]["scenario"].items():
+                scen.setdefault(bucket, {}).update(kv)
         elif (m := ZONE_PRESENT.match(cond)):
             scen.setdefault("zones", {})[m.group(1)] = "present"
         else:

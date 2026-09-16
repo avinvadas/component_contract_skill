@@ -1,5 +1,5 @@
 {
-  "comment": "What a `required:` clause may name, and what each resolves to as a scenario PREDICATE \u2014 a class of instances, never a reference to one. `<zone>_present` is generated per zone the contract declares.",
+  "comment": "What a `required:` clause may name, and what each resolves to as a scenario PREDICATE \u2014 a class of instances, never a reference to one. This file is the single source: resolvers load it rather than restating it. `<zone>_present` is generated per zone the contract declares.",
   "format_version": "1.0",
   "conditions": {
     "disabled": {
@@ -66,6 +66,24 @@
       },
       "requires_state": "expanded",
       "note": "the component declares an expanded/collapsed state"
+    },
+    "hover": {
+      "scenario": {
+        "state": {
+          "hover": true
+        }
+      },
+      "verifier_must": "drive a pointer over the element and hold it there",
+      "note": "an appearance-bearing interaction state; no prop declares it"
+    },
+    "focused": {
+      "scenario": {
+        "state": {
+          "focused": true
+        }
+      },
+      "verifier_must": "move focus to the element",
+      "note": "an appearance-bearing interaction state; distinct from `focus` as an observe type"
     }
   },
   "generated": {
