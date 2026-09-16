@@ -1,5 +1,5 @@
 ---
-archetype: link
+role-archetype: link
 version: 1.0
 platforms: [web, ios, android, macos]
 kind: native-backed

@@ -26,7 +26,7 @@ A component then says `archetype: button` and inherits it.
 ## Two files per archetype
 
 ```
-system/archetypes/
+system/role-archetypes/
   button.md              the bundle — human-readable, the implementer's reference
   button.bindings.json   per-platform observables for every id in the bundle
 ```
@@ -103,7 +103,7 @@ v1 behaviour v3 is trying to end.
 
 ## Worked archetype — `button`
 
-**Copied verbatim from `system/archetypes/button.md`.** The hand-written version that
+**Copied verbatim from `system/role-archetypes/button.md`.** The hand-written version that
 was here drifted: it predates the `chapter` column, the `when`-first ordering, the
 `source` provenance column, and the deferral of BTN-07 to policy.
 

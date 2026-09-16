@@ -2,7 +2,7 @@
 component: IconButton
 version: 1.0
 status: Draft
-archetype: button
+role-archetype: button
 policy: system/policy.md
 platforms: [web, ios, android]
 last_updated: 2026-09-16

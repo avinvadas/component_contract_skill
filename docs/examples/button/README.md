@@ -18,7 +18,7 @@ python3 docs/examples/button/validate.py    # manifest x schema -> per-requireme
 | File | Layer | Author |
 |---|---|---|
 | `system/policy.md` | L1 | the design system, once |
-| `system/archetypes/button.md` | L0 | shipped with the skill, once |
+| `system/role-archetypes/button.md` | L0 | shipped with the skill, once |
 | `Button.md` | L2 | **the skill, from the interview** |
 | `Button.{platform}.schema.json` | L3 | generated — never hand-edited |
 | `manifests/Button.{platform}.manifest.json` | — | **the client's build**, via an adapter |

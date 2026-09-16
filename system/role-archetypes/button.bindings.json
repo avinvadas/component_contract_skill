@@ -1,6 +1,6 @@
 {
   "comment": "Only what differs. `needs` derives from `observe`; entries appear here for a platform-specific expect, an explicit n/a, a second observation (`also`), or extra capability (`needs_also`).",
-  "archetype": "button",
+  "role-archetype": "button",
   "version": "1.0",
   "bindings": {
     "BTN-01": {

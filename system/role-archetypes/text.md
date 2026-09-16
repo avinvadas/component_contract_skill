@@ -1,5 +1,5 @@
 ---
-archetype: text
+role-archetype: text
 version: 1.0
 platforms: [web, ios, android, macos]
 kind: native-backed

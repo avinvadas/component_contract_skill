@@ -6,7 +6,7 @@ material from which this directory is authored, once.
 | Directory | Owner | Changes when |
 |---|---|---|
 | `vocabulary/` | **shipped with the skill** | the format version bumps |
-| `archetypes/` | **shipped, locally extensible** | an archetype is added or a platform guarantee changes |
+| `role-archetypes/` | **shipped, locally extensible** | an archetype is added or a platform guarantee changes |
 | `templates/` | shipped as blanks | never — the design system fills copies |
 
 **Why JSON and not YAML.** These files are read by the resolver and by every verifier, in

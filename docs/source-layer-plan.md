@@ -31,10 +31,8 @@ that is a bug, not a stance.
 One question decides it.
 
 ```
-Does assistive technology report a distinct role for this component?
-├─ no  → archetype: none
-│        Layout wrappers, containers, most Card / Stack / Grid components.
-│        Common and correct — `none` is not a failure state.
+Does assistive technology CONVEY a distinct role for this component?
+├─ no  → role-archetype: none
 │
 └─ yes → Is that role already in the library?
          ├─ yes → inherit it. Every difference goes in the contract as a
@@ -43,11 +41,34 @@ Does assistive technology report a distinct role for this component?
                   you target. That cost is the gate, and it is the whole of it.
 ```
 
+**Conveyed, not "reported in a role field".** The wording matters because the field varies:
+Compose's `Role` enum is small and has no `Role.Dialog`, yet Android announces a dialog
+perfectly well through a pane title. Read literally, a field-based test would conclude dialog
+is not a role-archetype on Android, which is plainly wrong. The question is what assistive
+technology tells the user, not which API property carries it.
+
 **How you find the answer:** read what the native control produces on each platform — the
-trait, the `Role`, the `AXRole`, the computed ARIA role. Where no native control exists
-anywhere, read the published pattern (WAI-ARIA APG, the platform HIG). If you cannot
-determine a role after doing that, you have evidence the component is a container, and
-`archetype: none` is the answer rather than a gap.
+trait, the `Role`, the `AXRole`, the `ControlType`, the computed ARIA role. Where no native
+control exists anywhere, read the published pattern (WAI-ARIA APG, the platform HIG).
+
+### `none` does not mean "container"
+
+An earlier draft of this section said that a component with no determinable role is a
+container. **That is wrong in both directions**, and wrong in a way that misleads.
+
+| | has a role | no role |
+|---|---|---|
+| **contains children** | Dialog · Tabs · List · RadioGroup · every landmark | Card · Stack · Grid · Portal |
+| **leaf** | Button · Link · Heading · Image | Spacer · decorative divider |
+
+Containers very often have roles — `dialog` is the archetype-richest entry in the library and
+it is a container. And role-less components are not always containers: a Spacer holds nothing
+and conveys nothing.
+
+The two axes are independent. **Role decides the role-archetype; containment is a separate
+question answered by the Composition chapter.** In practice most role-less components do
+happen to be layout containers, but that is a frequency observation, not the test — and
+reading it as the test points a Dialog at `none`.
 
 ### Three confusions this question keeps producing
 
@@ -163,7 +184,7 @@ discover it in chapter four.
 | Layer | Contents | Owner | Changes when |
 |---|---|---|---|
 | `references/` | external standards, one file per standard | the skill | a standard is revised |
-| `system/vocabulary/`, `system/archetypes/` | the closed vocabularies and the archetype library | **shipped with the skill**, locally extensible | the format version bumps |
+| `system/vocabulary/`, `system/role-archetypes/` | the closed vocabularies and the archetype library | **shipped with the skill**, locally extensible | the format version bumps |
 | `system/policy.md`, `system/context.yml`, component contracts | this design system's own decisions | **the design system** | the team decides something |
 
 The middle layer is the missing one. Everything in it is *derived* from `references/` plus
@@ -175,7 +196,7 @@ references/            external standards        (authoring input, never read by
       | derived once, with per-requirement provenance
       v
 system/vocabulary/     closed sets               ──┐
-system/archetypes/     requirement bundles         ├─ read by the resolver
+system/role-archetypes/     requirement bundles         ├─ read by the resolver
 system/policy.md       cross-cutting decisions     │
 system/context.yml     design-system facts       ──┘
       |
@@ -257,7 +278,7 @@ runner can reconcile the two mechanically.
 
 ---
 
-## 2 · `system/archetypes/` — the requirement library
+## 2 · `system/role-archetypes/` — the requirement library
 
 Two files per archetype, as specified in `l0-archetype-spec.md`. What that spec does **not**
 say, and should:
@@ -333,7 +354,7 @@ over-applied.
 ## Two known gaps, before anyone starts
 
 **`combobox` — RESOLVED.** It needs an archetype, now built at
-`system/archetypes/combobox.md`. Composing it from `text` + `list` fails immediately, and the
+`system/role-archetypes/combobox.md`. Composing it from `text` + `list` fails immediately, and the
 reason generalises into a criterion worth more than the case:
 
 > **An archetype is needed exactly when the platform's accessibility layer reports a distinct

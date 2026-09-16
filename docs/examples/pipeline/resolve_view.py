@@ -12,12 +12,12 @@ COMPONENT = sys.argv[1] if len(sys.argv) > 1 else "Button"
 
 NL = "\n"
 fm, body = parse_frontmatter((SRC / (COMPONENT + ".md")).read_text())
-arch_text = (LIB / ("archetypes/%s.md" % fm["archetype"])).read_text()
+arch_text = (LIB / ("role-archetypes/%s.md" % fm["role-archetype"])).read_text()
 arch_fm, arch_body = parse_frontmatter(arch_text)
 policy_body = (SRC / "system/policy.md").read_text()
 
 ORIGIN, rows = {}, []
-for src, label in ((arch_body, "archetype `%s`" % fm["archetype"]),
+for src, label in ((arch_body, "archetype `%s`" % fm["role-archetype"]),
                    (policy_body, "policy"), (body, "this component")):
     for r in requirement_rows(src):
         ORIGIN[r["id"]] = label
@@ -84,7 +84,7 @@ P = []
 P.append("# %s — resolved" % fm["component"])
 P.append("")
 P.append("> **Generated. Do not edit.** Source: `%s.md` v%s + archetype `%s` v%s + system policy."
-         % (fm["component"], fm["version"], fm["archetype"], arch_fm["version"]))
+         % (fm["component"], fm["version"], fm["role-archetype"], arch_fm["version"]))
 P.append("> **Platform-neutral** — what the component *is*, before any platform's vocabulary.")
 P.append("> How each requirement is *observed* per platform is in `2-canonical/`.")
 P.append("")

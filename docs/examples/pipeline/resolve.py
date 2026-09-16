@@ -134,12 +134,12 @@ def main():
     # ---- load --------------------------------------------------------------------
     contract_text = (SRC / (COMPONENT + ".md")).read_text()
     fm, body = parse_frontmatter(contract_text)
-    arch_text = (LIB / "archetypes/button.md").read_text()
+    arch_text = (LIB / "role-archetypes/button.md").read_text()
     _, arch_body = parse_frontmatter(arch_text)
     policy_text = (SRC / "system/policy.md").read_text()
     # Three binding sources, one per ownership layer. Later layers override earlier ones.
     bindings: dict = {}
-    for src in (LIB / "archetypes/button.bindings.json",      # shipped with the skill
+    for src in (LIB / "role-archetypes/button.bindings.json",      # shipped with the skill
                 SRC / "system/policy.bindings.json",          # the design system's
                 SRC / "Button.bindings.json"):                # this contract's own
         for rid, entry in json.loads(src.read_text())["bindings"].items():
@@ -189,7 +189,7 @@ def main():
 
         doc = {"format_version": "1.0", "contract": fm["component"],
                "contract_version": fm["version"], "platform": platform,
-               "archetype": fm["archetype"], "requirements": reqs}
+               "archetype": fm["role-archetype"], "requirements": reqs}
         (OUT / (COMPONENT + f".{platform}.canonical.json")).write_text(json.dumps(doc, indent=2) + "\n")
         binds = sum(1 for r in reqs if r.get("binds") is not False)
         print(f"  {platform:<8} {len(reqs)} requirements, {binds} binding, {len(reqs)-binds} n/a")

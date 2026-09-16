@@ -82,12 +82,14 @@ overlooked one.
 | `component` | yes | PascalCase name |
 | `version` | yes | semver |
 | `status` | yes | `Draft` · `Review` · `Stable` · `Deprecated` |
-| `archetype` | yes | one id from the archetype library, or `none` |
+| `role-archetype` | yes | one id from the role-archetype library, or `none` |
 | `policy` | yes | path to the L1 policy file |
 | `platforms` | yes | list from `web · ios · android · macos · windows` |
 | `last_updated` | yes | ISO date |
 
-`archetype` is the highest-leverage line in the file: it inherits a whole bundle of
+**Why `role-archetype` and not `role`.** Every platform calls this a *role* — ARIA's `role`, `AXRole`, Compose's `Role`, UIA's `ControlType`; iOS is the outlier with traits. The compound name keeps that correlation visible while avoiding two collisions: `observe: role` already means *the role a platform reports*, and ARIA's own `role="none"` means *strip this element's semantics*, which is not what `role-archetype: none` means here.
+
+`role-archetype` is the highest-leverage line in the file: it inherits a whole bundle of
 requirements that never appear in this document. `none` is legal and means the component has
 no native archetype — correct for tabs, drag-to-reorder, and anything composed from scratch.
 

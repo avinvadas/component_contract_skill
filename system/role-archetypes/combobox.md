@@ -1,5 +1,5 @@
 ---
-archetype: combobox
+role-archetype: combobox
 version: 1.0
 platforms: [web, ios, android, macos]
 kind: mixed

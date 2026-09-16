@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "segmented-control-demo",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4173", "--directory", "contracts/SegmentedControl/implementations/web"],
+      "port": 4173
+    }
+  ]
+}

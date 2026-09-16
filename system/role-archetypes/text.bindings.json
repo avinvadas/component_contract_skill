@@ -1,0 +1,63 @@
+{
+  "comment": "TXT-02 needs geometry as well as the a11y tree: confirming text scaled means measuring it at two settings.",
+  "role-archetype": "text",
+  "version": "1.0",
+  "bindings": {
+    "TXT-01": {
+      "web": {
+        "expect": {
+          "present": true
+        }
+      },
+      "ios": {
+        "expect": {
+          "present": true
+        }
+      },
+      "android": {
+        "expect": {
+          "present": true
+        }
+      },
+      "macos": {
+        "expect": {
+          "present": true
+        }
+      }
+    },
+    "TXT-02": {
+      "web": {
+        "expect": {
+          "equals": "scaled"
+        },
+        "needs_also": [
+          "geometry"
+        ]
+      },
+      "ios": {
+        "expect": {
+          "equals": "scaled"
+        },
+        "needs_also": [
+          "geometry"
+        ]
+      },
+      "android": {
+        "expect": {
+          "equals": "scaled"
+        },
+        "needs_also": [
+          "geometry"
+        ]
+      },
+      "macos": {
+        "expect": {
+          "equals": "scaled"
+        },
+        "needs_also": [
+          "geometry"
+        ]
+      }
+    }
+  }
+}
