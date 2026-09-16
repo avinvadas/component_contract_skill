@@ -26,6 +26,58 @@ what a platform's accessibility layer exposes, `capabilities` derives from it, `
 minimal comparison algebra, `conditions` is a set of named predicates. If one is incomplete
 that is a bug, not a stance.
 
+### Does this component need a new archetype, or inherit one?
+
+One question decides it.
+
+```
+Does assistive technology report a distinct role for this component?
+├─ no  → archetype: none
+│        Layout wrappers, containers, most Card / Stack / Grid components.
+│        Common and correct — `none` is not a failure state.
+│
+└─ yes → Is that role already in the library?
+         ├─ yes → inherit it. Every difference goes in the contract as a
+         │        component-local requirement.
+         └─ no  → extend the library: a bundle plus bindings for every platform
+                  you target. That cost is the gate, and it is the whole of it.
+```
+
+**How you find the answer:** read what the native control produces on each platform — the
+trait, the `Role`, the `AXRole`, the computed ARIA role. Where no native control exists
+anywhere, read the published pattern (WAI-ARIA APG, the platform HIG). If you cannot
+determine a role after doing that, you have evidence the component is a container, and
+`archetype: none` is the answer rather than a gap.
+
+### Three confusions this question keeps producing
+
+**Composition is not inheritance.** A Card that *contains* a Button does not inherit
+`button`. It delegates: `accepts: component:Button`, and Button's own contract governs that
+subtree. Inheritance is about what the component **is**; composition is about what it
+**holds**.
+
+**Archetypes are roles, not products.** ToggleButton, SubmitButton, IconButton and a FAB all
+report as buttons, so all four inherit `button`. A toggle's pressed state and a submit's form
+participation are **component-local requirements**, not grounds for `toggle-button` and
+`submit-button` archetypes. If two components report the same role, they share an archetype
+however different their appearance, their API, or their name.
+
+**A composite pattern produces several contracts, each with its own archetype.** Tabs is not
+one contract with one archetype: the container declares `archetype: tablist`, each tab
+declares `archetype: tab`, each panel declares `archetype: tabpanel`, and the container's
+zones delegate to the others. Three roles, three archetypes, three contracts.
+
+### A single consumer is still worth an archetype
+
+The reuse argument is the obvious one and not the important one. Even a role used by exactly
+one component needs somewhere to state that it is a trait on iOS, a `Role` on Android and a
+computed ARIA role on the web — with provenance, and with its native-backing table.
+
+That belongs in the library rather than in one contract, because the **next** person who
+needs that role should not re-derive it from four sets of platform documentation. An
+archetype is a registry entry, and registry entries do not need multiple consumers to earn
+their place.
+
 ### When the platform does not provide it
 
 The scope rule says a bundle entry must be something the platform gives automatically. That
