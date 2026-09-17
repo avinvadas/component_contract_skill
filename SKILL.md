@@ -32,6 +32,19 @@ Linux carries a second, independent gap: it has no platform-conventions file, be
 
 Both are revisited once the four supported platforms are stable, tested, and validated — not before.
 
+## Scripts
+
+`scripts/` holds tools this skill runs. They locate the shipped `system/` layer relative to themselves, so they work wherever the skill is installed, and they need nothing beyond Python 3 — the context file is read with PyYAML when it is installed and with a strict built-in reader otherwise, which refuses what it cannot parse rather than guessing.
+
+| Script | Run it when |
+|---|---|
+| `scripts/detect_tokens.py <tree> [--json]` | Phase 0B — a token tree has been found. Proposes tiers and naming patterns with evidence, and lists questions. Writes nothing. |
+| `scripts/resolve.py <Component>.md [--out DIR]` | A contract in the format of `docs/contract-md-format-spec.md` is to be resolved against its role-archetype, policy and token tree into one canonical document per platform. |
+| `scripts/resolve_view.py <Component>.md [--out FILE]` | The same contract needs its human-readable resolved view. |
+| `scripts/test_scripts.py` | After changing any script. |
+
+**Current limit, stated plainly:** `resolve.py` consumes the six-chapter contract format specified in `docs/contract-md-format-spec.md`. **Phase 5 below does not yet produce that format** — it still writes the earlier contract, with `structure.json` and `schema.json` from Phase 6. The Phase 0B token facts above are real and used by the resolver today; the rest of the wiring is the Phase 5/6 rewrite tracked in `STATUS.md`.
+
 ## Reference files
 
 `references/` holds the external, design-system-agnostic standards this skill derives from. They are not design-system content — they're the same regardless of which design system a component belongs to. SKILL.md's own tables cover the common cases inline; consult the matching reference file when a case falls outside those tables, or when you need the full attribute/keyboard set for a pattern the table only names in passing.
@@ -114,6 +127,7 @@ Everything in `references/` is external and generic — it's the same regardless
 3. **If it doesn't exist**, don't run a Phase-1-style sequential interview for this — these fields are independent of each other (unlike Phase 1's questions, which deliberately go one-at-a-time because later options depend on earlier answers), so there's no reason to force multiple round-trips. Instead:
    - **Detect first.** Scan the working directory before asking anything: a token file (`tokens.json`, `tailwind.config.*`, `*.tokens.json`, CSS custom-property definitions) for format, prefix, and the `naming-pattern` its canonical paths follow — read several paths, not one, since a slot order is only visible across examples; platform manifests (`Package.swift`/`Podfile` vs. `build.gradle` dependencies) for framework hints; an existing directory of files carrying this skill's frontmatter shape for where contracts already live. This costs nothing and needs no confirmation round-trip when it succeeds outright. **Read the file's actual content, not just its filename** — a `tailwind.config.js` whose colors reference `var(--token-name)` means the real source format is CSS custom properties with Tailwind only as a consumption layer, not "tailwind" as the format; recording it as plain Tailwind would be wrong even though the right filename was found.
    - **Ask everything left in one batched `AskUserQuestion` call, up to four questions.** Cover token format, prefix, and `naming-pattern`, whether token values are ever hand-typed in components or are strictly generated downstream from the token tree (`generated_downstream` — a policy fact, not a technical detection; see references/token-naming-validation.md for what this gates), per-platform framework (SwiftUI vs. UIKit, Compose vs. View system, GTK vs. Qt — this materially changes which concrete controls Phase 3 names, not cosmetic detail), naming casing, and RTL support. Where step one detected a value — including a confident one — make it the first, pre-recommended option in that question rather than skipping confirmation entirely; a system-wide default deserves a quick confirm, not a silent guess, since every future component inherits it. If more than four fields need either confirmation or asking (a design system spanning several platforms easily exceeds four), use a second batched call rather than forcing everything into one or dropping confirmation for whichever fields didn't fit — order both calls so anything ambiguous or fully undetected comes first, confident detections last, so a second call is the one most likely to be skippable in practice, not the one most likely to matter.
+   - **When a token tree is found, run the detector on it** rather than reading paths by eye: `python3 scripts/detect_tokens.py <tree> --json`. It proposes `tokens.tiers` (from the direction aliases point, not from group names), `tokens.patterns` (from the observed shapes of component-tier paths) and a list of questions, each with its evidence. It never writes anything. **Confirm tiers and patterns in this step** — they are system-wide and few. **Do not ask its `leaf_map` questions here**: there can be a dozen, and most concern components nobody is documenting today. Those are asked lazily, one component at a time, when `scripts/resolve.py` reports `unmapped-leaf` for a property that component declares; put the detector's `suggested` property first, marked Recommended. A `leaf_map` entry is written only from a confirmed answer — never from a suggestion, and never from a spelling the resolver guessed, because one wrong entry (`default: background`) mis-reads every token that ends in that segment.
    - **Never ask for `naming_convention`'s specific separator/case/prefix directly** — unlike `generated_downstream`, this isn't a fact the designer can just state; it's detected empirically from a real generated name the first time Phase 6's token-name validation runs (see references/token-naming-validation.md's "lock on first success"), then written back here so later components skip re-detection.
    - Write the result to `.claude/design-system-context.yml` when done, and confirm the path to the user. This file is meant to be checked into the design system's own repo, not treated as scratch state — it's shared context for the whole team, not a personal cache.
 4. **If a later phase detects a contradiction** between this file's contents and something else (a coded reference, a direct interview answer) — that's the conflict-resolution policy's job, not this step's. See below. A confirmed correction there should update this file, not just the current contract, so the system-wide default stays accurate for the next component.
@@ -132,6 +146,17 @@ tokens:
   format: dtcg | style-dictionary | css-custom-properties | tailwind  # the token FILE's shape — not a naming fact; see "Three naming facts" below
   prefix: [string, e.g. "ds-", "color-", "--ds-"]
   naming_pattern: [ordered slot list the canonical paths in this tree follow, e.g. "prefix.tier.property.element.level" — one per design system, detected in Phase 0B from a real token file. Written `naming-pattern` in prose.]
+  source: [path to the token tree, relative to the directory holding .claude/ — read by scripts/resolve.py when a contract does not name its own tree]
+  tiers:  # which top-level group plays each role — proposed by scripts/detect_tokens.py from alias direction, then confirmed
+    primitive: [top-level group, e.g. "core"]
+    semantic: [top-level group]
+    component: [top-level group]
+  patterns:  # the resolver's form of naming-pattern: one template per path SHAPE, per tier, most specific first. Slots: {component} {property} {state} {*}, or any axis name ({variant}, {size}); anything else is literal. Proposed by the detector, confirmed. A single naming_pattern is the one-template case; reconciling the two fields is part of the Phase 5/6 rewrite.
+    component:
+      - [e.g. "component.{component}.variant.{variant}.{property}"]
+      - [e.g. "component.{component}.{property}"]
+  leaf_map:  # ONLY spellings the resolver cannot read, each from a confirmed answer, asked lazily per component — never a suggestion written unconfirmed
+    [spelling]: background | foreground | border-color | border-width | radius | padding-inline | padding-block | font-size | elevation | opacity | duration
   generated_downstream: true | false  # confirms/denies hand-typed values as accepted practice — gates Phase 6's token-name validation entirely; see references/token-naming-validation.md
   naming_convention:  # only meaningful when generated_downstream is true — one locked convention per PLATFORM, detected once from a known-correct generated name, never guessed. Three independent axes (row, prefix, scope_depth) that must all hold; see references/token-naming-validation.md Steps 4-5.
     web: { row: dot | kebab | snake | camel | pascal | flat | screaming-snake, prefix: [string, optional], scope_depth: [integer, number of leading canonical words this platform's pipeline consistently omits — 0 if none] }

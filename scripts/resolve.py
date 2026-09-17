@@ -1,23 +1,33 @@
 #!/usr/bin/env python3
-"""Level 1 -> Level 2.  Contract.md + archetype + policy  ->  one canonical document
-per platform.
+"""Contract.md + role-archetype + policy + token tree  ->  one canonical document per platform.
 
-This is the resolver the design has been assuming and never had. It exists here to test
-the parse contract in `contract-md-format-spec.md`: if a cell in the .md cannot be parsed
-deterministically, this is where it shows up.
+    python3 scripts/resolve.py path/to/Button.md [--out DIR] [--context PATH]
+
+Everything the contract draws from is named, never assumed:
+
+    role-archetype   frontmatter `role-archetype:`; looked up in the design system's own
+                     archetype directory first (context `contracts.archetypes`), then in the
+                     library shipped with this skill (`system/role-archetypes/`)
+    bindings         `<Component>.bindings.json`, beside the contract
+    policy           frontmatter `policy:`, relative to the contract; its bindings beside it
+    token tree       frontmatter `tokens:`, relative to the contract — or, if absent, context
+                     `tokens.source`, relative to the directory holding `.claude/`
+    context          `.claude/design-system-context.yml`, found by walking up from the
+                     contract, or `--context`
+
+Output defaults to the contract's own directory — the component directory the skill writes.
 """
-import json, pathlib, re, sys
+import argparse, json, pathlib, re, sys
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from tokens import Tree, PROPERTIES  # noqa: E402
 import machine as sm  # noqa: E402
+import context as ctx  # noqa: E402
 
-HERE = pathlib.Path(__file__).parent
-SRC, OUT = HERE / "1-contract", HERE / "2-canonical"
-COMPONENT = sys.argv[1] if len(sys.argv) > 1 else "Button"
-# The shipped library, not a fixture. This is the checkpoint the source-layer plan names:
-# the pipeline proves the mechanism on a hand-made archetype; it proves the library only
-# once it resolves against the real one.
-LIB = HERE.parent.parent.parent / "system"
+# The skill's own shipped layer, located relative to this file so it works wherever the
+# skill is installed. Never relative to the working directory.
+SKILL = pathlib.Path(__file__).resolve().parent.parent
+LIB = SKILL / "system"
 
 # ---- `needs` is DERIVED from `observe`, not authored -------------------------
 # Most bindings were boilerplate until this table existed. A bindings file now holds
@@ -171,18 +181,20 @@ def state_of(when):
             return "focus" if first == "focused" else first
     return None
 
-def resolve_slots(body, fm):
+def kebab(name):
+    """`IconButton` -> `icon-button`: how a component's name appears as a token scope."""
+    return re.sub(r"(?<=[a-z0-9])([A-Z])", r"-\1", name).lower()
+
+def resolve_slots(body, fm, tree):
     """Each declared property -> a bound token, or a NAMED reason it is not bound."""
     rows = slot_rows(body)
     if not rows:
         return []
-    tree_ref = fm.get("tokens")
-    if not tree_ref:
-        lint.append("%d token slot(s) declared but no `tokens:` tree in frontmatter — "
-                    "nothing can be resolved or checked" % len(rows))
+    if tree is None:
+        lint.append("%d token slot(s) declared but no token tree — set `tokens:` in the "
+                    "frontmatter or `tokens.source` in the design-system context" % len(rows))
         return []
-    tree = Tree(str((SRC / tree_ref).resolve()))
-    scope, dims = fm["component"].lower(), default_dims(body)
+    scope, dims = kebab(fm["component"]), default_dims(body)
     out = []
     for r in rows:
         when = r.get("when", "always")
@@ -225,24 +237,77 @@ def slot_requirement(slot):
     return dict(base, statement="%s resolves through a design token." % label,
                 pending={"reason": slot["status"], "detail": slot["detail"]})
 
-def main():
-    # ---- load --------------------------------------------------------------------
-    contract_text = (SRC / (COMPONENT + ".md")).read_text()
-    fm, body = parse_frontmatter(contract_text)
-    # The archetype and every bindings file are named by the contract, never assumed. All
-    # three were once hardcoded to Button: both examples were buttons, so the output looked
-    # right, and IconButton was silently resolved with Button's own component bindings.
+def load_sources(contract_path, context_path=None):
+    """Everything a contract draws from, located from the contract itself. Shared with the view."""
+    contract_path = pathlib.Path(contract_path).resolve()
+    src = contract_path.parent
+    fm, body = parse_frontmatter(contract_path.read_text())
+    component = fm.get("component") or contract_path.stem
+
+    context_path = pathlib.Path(context_path).resolve() if context_path else ctx.find(src)
+    context = ctx.load(context_path) if context_path else {}
+    root = ctx.repo_root(context_path) if context_path else None
+
+    # role-archetype: the design system's own extensions first, then the shipped library.
     archetype = fm["role-archetype"]
-    arch_text = (LIB / "role-archetypes" / (archetype + ".md")).read_text()
-    _, arch_body = parse_frontmatter(arch_text)
-    policy_text = (SRC / "system/policy.md").read_text()
-    # Three binding sources, one per ownership layer. Later layers override earlier ones.
+    search = []
+    local = (context.get("contracts") or {}).get("archetypes")
+    if local and root:
+        search.append(root / local)
+    search.append(LIB / "role-archetypes")
+    arch_dir = next((d for d in search if (d / (archetype + ".md")).is_file()), None)
+    if arch_dir is None:
+        raise SystemExit("role-archetype %r not found in: %s" % (archetype, ", ".join(map(str, search))))
+    arch_text = (arch_dir / (archetype + ".md")).read_text()
+    arch_fm, arch_body = parse_frontmatter(arch_text)
+
+    # policy: named by the contract. Once hardcoded to `system/policy.md`, like the archetype.
+    policy_text, policy_bindings = "", None
+    if fm.get("policy"):
+        policy_path = (src / fm["policy"]).resolve()
+        if policy_path.is_file():
+            policy_text = policy_path.read_text()
+            policy_bindings = policy_path.with_name(policy_path.stem + ".bindings.json")
+        else:
+            lint.append("policy %r not found at %s" % (fm["policy"], policy_path))
+
+    # Three binding layers, one per ownership layer. Later layers override earlier ones.
+    layer_files = [arch_dir / (archetype + ".bindings.json"), policy_bindings,
+                   src / (component + ".bindings.json")]
+    binding_layers = [json.loads(f.read_text()) for f in layer_files if f and f.is_file()]
     bindings: dict = {}
-    for src in (LIB / "role-archetypes" / (archetype + ".bindings.json"),  # shipped with the skill
-                SRC / "system/policy.bindings.json",                    # the design system's
-                SRC / (COMPONENT + ".bindings.json")):                  # this contract's own
-        for rid, entry in json.loads(src.read_text())["bindings"].items():
+    for layer in binding_layers:
+        for rid, entry in layer.get("bindings", {}).items():
             bindings.setdefault(rid, {}).update(entry)
+
+    # token tree: the contract's own reference wins; otherwise the design system's.
+    tree, facts = None, (context.get("tokens") or {})
+    if fm.get("tokens"):
+        tree = Tree(str((src / fm["tokens"]).resolve()), facts)
+    elif facts.get("source") and root:
+        tree = Tree(str((root / facts["source"]).resolve()), facts)
+
+    if tree is not None:
+        # A wrong FACT is worse than a missing one: it mis-resolves every component quietly.
+        lint.extend("design-system context: " + x for x in tree.problems)
+
+    return {"fm": fm, "body": body, "component": component, "src": src,
+            "archetype": archetype, "arch_fm": arch_fm, "arch_text": arch_text, "arch_body": arch_body, "policy_text": policy_text,
+            "bindings": bindings, "binding_layers": binding_layers, "tree": tree,
+            "context_path": context_path}
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("contract", help="path to <Component>.md")
+    ap.add_argument("--out", help="directory for canonical documents (default: beside the contract)")
+    ap.add_argument("--context", help="design-system context file (default: nearest .claude/)")
+    args = ap.parse_args()
+
+    S = load_sources(args.contract, args.context)
+    fm, body, arch_body = S["fm"], S["body"], S["arch_body"]
+    policy_text, bindings, COMPONENT = S["policy_text"], S["bindings"], S["component"]
+    OUT = pathlib.Path(args.out).resolve() if args.out else S["src"]
 
     # The machine is resolved BEFORE any requirement, because `when:following:<transition>`
     # conditions are checked against its transition ids. Closure is computed on the merged
@@ -252,14 +317,11 @@ def main():
                               sm.machine_rows(parse_tables(body)), zones)
     lint.extend(mlint)
     TRANSITION_IDS.update(t["id"] for t in machine["transitions"])
-    binding_layers = [json.loads(src.read_text()) for src in (
-        LIB / "role-archetypes" / (archetype + ".bindings.json"),
-        SRC / "system/policy.bindings.json", SRC / (COMPONENT + ".bindings.json"))]
-    machine_bindings = sm.merge_bindings(binding_layers)
+    machine_bindings = sm.merge_bindings(S["binding_layers"])
 
     inherited = requirement_rows(arch_body) + requirement_rows(policy_text)
     local = requirement_rows(body)
-    slots = resolve_slots(body, fm)
+    slots = resolve_slots(body, fm, S["tree"])
 
     for headers, rows in parse_tables(body):
         if "cardinality" in headers:
@@ -272,7 +334,7 @@ def main():
         seen[r["id"]] = r
 
     # ---- emit --------------------------------------------------------------------
-    OUT.mkdir(exist_ok=True)
+    OUT.mkdir(parents=True, exist_ok=True)
     for platform in fm.get("platforms", []):
         reqs = []
         for r in inherited + local:

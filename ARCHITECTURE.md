@@ -79,7 +79,7 @@ its own right. Composition owns *existence*; Accessibility owns *semantic exposu
 
 ## How resolution composes them
 
-`resolve.py` — contract + role-archetype + policy → one canonical document per platform.
+`scripts/resolve.py` — contract + role-archetype + policy → one canonical document per platform.
 
 **Bindings layer, later overriding earlier.** Three sources, one per ownership layer:
 
@@ -102,7 +102,7 @@ lint failure. A requirement that genuinely has no referent there carries `binds:
 a stated reason and still appears in that platform's document — so a platform cannot lower
 its own bar by leaving something out.
 
-`tokens.py` — the token tree, and slot resolution.
+`scripts/tokens.py` — the token tree, and slot resolution.
 
 Reads the design system's token tree and resolves each declared property. The split that
 keeps it honest: **structure** (tiers, component scopes, dimension axes) is read from paths
@@ -126,7 +126,7 @@ tell someone to add a token that already exists under a name it failed to parse,
 the tree it exists to protect. A **pinned name absent from the tree is a lint failure**, not
 a gap — it is the one path by which an invented token name enters a design system.
 
-`machine.py` — state machines.
+`scripts/machine.py` — state machines.
 
 A component that owns moving state writes its transitions as one table. Every cell of the grid
 *states × events* is authored, marked unreachable with a reason, or left empty — and every
@@ -136,7 +136,16 @@ contract, and kept small by composition: a machine covers only its own component
 parent never multiplies its children's grids. An effect of a transition is an ordinary
 requirement conditioned `when:following:<transition>`, so a trigger is bound once.
 
-`resolve_view.py` — the reading artifact.
+`scripts/detect_tokens.py` and the design-system context — naming a tree the skill has never seen.
+
+The resolver reads a design system's naming from `.claude/design-system-context.yml`: which
+top-level group is each tier, one template per path shape, and a map for property spellings it
+cannot read (`bgColor → background`). Phase 0B proposes the first two from the tree itself —
+tiers from the direction aliases point, patterns from observed shapes decided by sibling
+evidence — and confirms them once. Spellings are asked lazily, per component. With no facts
+the heuristics run unchanged; a fact never switches guessing on, and a wrong fact is lint.
+
+`scripts/resolve_view.py` — the reading artifact.
 
 The contract `.md` is *source*; this is what a person reads. Organised by the contract's own
 chapters, with **origin as a column** — chapters answer *what kind of fact is this*, origin

@@ -1,0 +1,46 @@
+{
+  "core": {
+    "color": {
+      "purple": { "500": { "$type": "color", "$value": "#4C00A8" }, "700": { "$type": "color", "$value": "#39007D" } },
+      "gray":   { "100": { "$type": "color", "$value": "#F3F4F6" }, "200": { "$type": "color", "$value": "#E5E7EB" }, "900": { "$type": "color", "$value": "#111827" } },
+      "white":  { "$type": "color", "$value": "#FFFFFF" }
+    },
+    "size": {
+      "radius": { "md": { "$type": "dimension", "$value": "8px" } },
+      "space":  { "3":  { "$type": "dimension", "$value": "12px" } }
+    }
+  },
+  "semantic": {
+    "color": {
+      "bg": {
+        "emphasized":       { "$type": "color", "$value": "{core.color.purple.500}" },
+        "emphasized-hover": { "$type": "color", "$value": "{core.color.purple.700}" },
+        "subtle":           { "$type": "color", "$value": "{core.color.gray.100}" },
+        "subtle-hover":     { "$type": "color", "$value": "{core.color.gray.200}" }
+      },
+      "fg": {
+        "onEmphasized": { "$type": "color", "$value": "{core.color.white}" },
+        "default":      { "$type": "color", "$value": "{core.color.gray.900}" }
+      }
+    },
+    "size": {
+      "corner": { "control": { "$type": "dimension", "$value": "{core.size.radius.md}" } }
+    }
+  },
+  "component": {
+    "button": {
+      "primary": {
+        "bgColor":   { "default": { "$type": "color", "$value": "{semantic.color.bg.emphasized}" },
+                       "hover":   { "$type": "color", "$value": "{semantic.color.bg.emphasized-hover}" } },
+        "textColor": { "default": { "$type": "color", "$value": "{semantic.color.fg.onEmphasized}" } }
+      },
+      "secondary": {
+        "bgColor":   { "default": { "$type": "color", "$value": "{semantic.color.bg.subtle}" },
+                       "hover":   { "$type": "color", "$value": "{semantic.color.bg.subtle-hover}" } },
+        "textColor": { "default": { "$type": "color", "$value": "{semantic.color.fg.default}" } }
+      },
+      "cornerRadius": { "$type": "dimension", "$value": "{semantic.size.corner.control}" },
+      "paddingX":     { "$type": "dimension", "$value": "{core.size.space.3}" }
+    }
+  }
+}

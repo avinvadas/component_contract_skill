@@ -48,6 +48,12 @@ STATES = ["hover", "pressed", "active", "focus", "disabled", "selected", "checke
 # Segments that introduce a dimension axis; the segment after one is that axis's value.
 AXES = ["variant", "size", "state", "mode", "tone", "emphasis", "density"]
 
+# When a naming pattern gives state its own segment, a token with no interaction state still
+# needs a leaf — `bgColor.default`. These spellings mean "no state".
+DEFAULT_STATES = ["default", "rest", "base", "enabled", "idle"]
+
+TIER_ROLES = ("primitive", "semantic", "component")
+
 REF = re.compile(r"^\{(.+?)\}$")
 
 
@@ -69,7 +75,32 @@ def split_state(leaf):
 
 
 class Tree:
-    def __init__(self, path):
+    def __init__(self, path, facts=None):
+        """`facts` is the `tokens:` block of the design-system context, confirmed once in
+        Phase 0B. Every key is optional; with none, behaviour is exactly the heuristics.
+
+            tiers:     {primitive: core, semantic: alias, component: comp}
+            patterns:  {component: ["comp.{component}.{variant}.{property}.{state}", ...],
+                        semantic:  ["alias.{*}.{property}.{*}"]}
+            leaf_map:  {bgColor: background, fg: foreground}
+            axes:      [variant, size]
+            default_states: [default, rest]
+
+        A pattern is the only way a trailing segment is read as a state. Guessing would read
+        `semantic.color.surface.error` as an error STATE, when `error` there is a tone.
+        """
+        self.facts = facts or {}
+        self.problems = []   # a fact that is itself wrong — surfaced as lint, never ignored
+        self.T = {r: r for r in TIER_ROLES}
+        self.T.update({k: v for k, v in (self.facts.get("tiers") or {}).items() if k in TIER_ROLES and v})
+        self.axes = list(self.facts.get("axes") or AXES)
+        self.default_states = list(self.facts.get("default_states") or DEFAULT_STATES)
+        self.patterns = {}
+        for role, templates in (self.facts.get("patterns") or {}).items():
+            if role not in TIER_ROLES:
+                self.problems.append("tokens.patterns: %r is not a tier (%s)" % (role, ", ".join(TIER_ROLES)))
+                continue
+            self.patterns[role] = [self._compile(t) for t in (templates or [])]
         raw = json.loads(open(path).read())
         self.path = path
         self.tokens = {}
@@ -81,8 +112,11 @@ class Tree:
             }
         # ---- 1. structure ----------------------------------------------------------
         self.tiers = sorted({p.split(".")[0] for p in self.tokens})
-        self.scopes = sorted({p.split(".")[1] for p in self.tokens
-                              if p.startswith("component.") and p.count(".") >= 2})
+        for role, seg in self.T.items():
+            if seg not in self.tiers and (self.facts.get("tiers") or {}).get(role):
+                self.problems.append("tokens.tiers.%s is %r, but no top-level %r exists in the tree"
+                                     % (role, seg, seg))
+        self.scopes = sorted({self.scope_of(p) for p in self.tokens if self.scope_of(p)})
         # ---- alias graph -----------------------------------------------------------
         self.alias, self.consumers = {}, {}
         for p, t in self.tokens.items():
@@ -105,16 +139,23 @@ class Tree:
         for prop, spec in PROPERTIES.items():
             for s in spec["syn"]:
                 self.leafmap[s] = prop
+        # The design system's own spellings, confirmed once. They override the seed.
+        for spelling, prop in (self.facts.get("leaf_map") or {}).items():
+            if prop in PROPERTIES:
+                self.leafmap[str(spelling)] = prop
+            else:
+                self.problems.append("tokens.leaf_map: %r maps to %r, which is not a property (%s)"
+                                     % (spelling, prop, ", ".join(PROPERTIES)))
         # A component leaf consuming a semantic token annotates what that token is FOR.
         # Primitives are excluded: they are meaning-free by construction, so a role
         # derived onto one is noise at best and a wrong answer at worst.
         self.path_role, self.derived = {}, {}
         for target, cs in self.consumers.items():
-            if not target.startswith("semantic."):
+            if self.role_of(target) != "semantic":
                 continue
             props = set()
             for c in cs:
-                base, _ = split_state(c.split(".")[-1])
+                base, _ = self.base_state(c)
                 if base in self.leafmap:
                     props.add(self.leafmap[base])
             if len(props) == 1:
@@ -122,18 +163,76 @@ class Tree:
                 self.path_role[target] = prop
                 self.derived[target] = (prop, sorted(cs))
 
+    # ---- naming patterns ----------------------------------------------------------
+    @staticmethod
+    def _compile(template):
+        segs = []
+        for seg in str(template).split("."):
+            m = re.fullmatch(r"\{(\*|[A-Za-z_][\w-]*)\}", seg)
+            segs.append(("slot", m.group(1)) if m else ("lit", seg))
+        return segs
+
+    def role_of(self, path):
+        head = path.split(".")[0]
+        return next((r for r, seg in self.T.items() if seg == head), None)
+
+    def parse(self, path):
+        """Slots from the first declared pattern the path matches, or None."""
+        segs = path.split(".")
+        for tpl in self.patterns.get(self.role_of(path), []):
+            if len(tpl) != len(segs):
+                continue
+            slots = {}
+            for (kind, name), seg in zip(tpl, segs):
+                if kind == "lit":
+                    if name != seg:
+                        break
+                elif name != "*":
+                    slots[name] = seg
+            else:
+                return slots
+        return None
+
+    def scope_of(self, path):
+        if self.role_of(path) != "component":
+            return None
+        slots = self.parse(path)
+        if slots is not None:
+            return slots.get("component")
+        segs = path.split(".")
+        return segs[1] if len(segs) >= 3 else None
+
+    def in_scope(self, path, scope):
+        return self.scope_of(path) == scope
+
+    def base_state(self, path):
+        """(property spelling, state) — from the pattern when one matches, else the heuristic."""
+        slots = self.parse(path)
+        if slots is not None and "property" in slots:
+            state = slots.get("state")
+            if state in self.default_states:
+                state = None
+            base = slots["property"]
+            if state is None and "state" not in slots:
+                base, state = split_state(base)
+            return base, state
+        return split_state(path.split(".")[-1])
+
     # ---- dimensions ---------------------------------------------------------------
     def dims_of(self, path):
+        slots = self.parse(path)
+        if slots is not None:
+            return {k: v for k, v in slots.items() if k not in ("component", "property", "state")}
         segs = path.split(".")
         d = {}
         for i, s in enumerate(segs[:-1]):
-            if s in AXES and i + 1 < len(segs) - 1:
+            if s in self.axes and i + 1 < len(segs) - 1:
                 d[s] = segs[i + 1]
         return d
 
     def prop_of(self, path):
         """(property, state) a token path expresses, or (None, state) if unreadable."""
-        base, state = split_state(path.split(".")[-1])
+        base, state = self.base_state(path)
         # A role derived from the alias graph is evidence about THIS path, and beats a
         # spelling match — it is what the tree's own consumers say the token is for.
         prop = self.path_role.get(path) or self.leafmap.get(base)
@@ -146,19 +245,18 @@ class Tree:
         return prop, state
 
     def axes_in(self, scope):
-        pre = "component." + scope + "."
         out = {}
         for p in self.tokens:
-            if p.startswith(pre):
+            if self.in_scope(p, scope):
                 for k, v in self.dims_of(p).items():
                     out.setdefault(k, set()).add(v)
         return {k: sorted(v) for k, v in out.items()}
 
     # ---- 3. resolution ------------------------------------------------------------
-    def candidates(self, prop, state, prefix):
+    def candidates(self, prop, state, role, scope=None):
         out = []
         for p in self.tokens:
-            if not p.startswith(prefix):
+            if self.role_of(p) != role or (scope is not None and not self.in_scope(p, scope)):
                 continue
             pr, st = self.prop_of(p)
             if pr == prop and st == state:
@@ -171,25 +269,41 @@ class Tree:
         if prop not in PROPERTIES:
             return None, "unmapped-leaf", "%r is not a declared property" % prop
 
-        for tier_prefix, tier in (("component." + scope + ".", "component"), ("semantic.", "semantic")):
-            cands = self.candidates(prop, state, tier_prefix)
-            if dims and tier == "component":
+        for role, sc in (("component", scope), ("semantic", None)):
+            cands = self.candidates(prop, state, role, sc)
+            if dims and role == "component":
                 narrowed = [c for c in cands
                             if all(self.dims_of(c).get(k) == v for k, v in dims.items()
                                    if k in self.dims_of(c))]
                 if narrowed:
                     cands = narrowed
             if len(cands) == 1:
-                return cands[0], "bound", tier
+                return cands[0], "bound", role
             if len(cands) > 1:
                 return None, "ambiguous", cands
 
         # Nothing carried the state. Does the property exist at all, stateless?
         if state:
-            for tier_prefix in ("component." + scope + ".", "semantic."):
-                base = self.candidates(prop, None, tier_prefix)
+            for role, sc in (("component", scope), ("semantic", None)):
+                base = self.candidates(prop, None, role, sc)
                 if base:
                     return None, "dimension-unmet", base[0]
+
+        # Before calling it absent: are there tokens of the right $type in this component's
+        # own scope whose property this resolver simply cannot read? Then it may well exist
+        # under a spelling nobody has mapped, and "absent" would send the tree owner to add a
+        # duplicate. That is unmapped-leaf — the fix is a leaf_map entry, not a new token.
+        #
+        # The detail is example PATHS, not a guessed spelling. Without a pattern the resolver
+        # cannot know which segment names the property — in `...bgColor.default` it would
+        # guess `default`, and someone mapping `default: background` would poison every token
+        # that ends in `.default`. A path lets a person see the shape and declare it.
+        want = PROPERTIES[prop]["type"]
+        unread = sorted(p for p in self.tokens
+                        if self.in_scope(p, scope) and self.tokens[p]["type"] == want
+                        and self.prop_of(p)[0] is None)
+        if unread:
+            return None, "unmapped-leaf", unread[:3]
         return None, "absent-from-tree", self.suggest(prop, state)
 
     def suggest(self, prop, state):
@@ -198,8 +312,9 @@ class Tree:
                  "duration": "motion.duration", "number": "opacity"}
         t = PROPERTIES[prop]["type"]
         stem = group.get(t)
+        sem = self.T["semantic"]
         if not stem or stem == prop:
-            head = "semantic." + prop
+            head = sem + "." + prop
         else:
-            head = "semantic." + stem + "." + prop
+            head = sem + "." + stem + "." + prop
         return head + "." + (state or "default")

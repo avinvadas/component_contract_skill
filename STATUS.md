@@ -19,7 +19,7 @@ Button.md              THE DESIGN SYSTEM AUTHORS THIS — one per component.
  + bindings            Plus: its policy (cross-cutting decisions) and its token tree.
  + policy.md
  + token tree
-   │                   resolve.py
+   │                   scripts/resolve.py
    ▼
 Button.web.canonical.json          ← THE SKILL'S OUTPUT ENDS HERE
 Button.ios.canonical.json            one document per platform. An interchange format,
@@ -47,10 +47,12 @@ Four ideas carry the whole thing:
 
 | | |
 |---|---|
-| `resolve.py` — contract + archetype + policy + tokens → canonical JSON | **works** |
-| `resolve_view.py` — the human reading artifact | **works** |
-| `tokens.py` — token tree analysis, slot resolution, six outcome states | **works** |
-| `machine.py` — state-machine tables; closure checks generated, never written | **works** |
+| `scripts/resolve.py` — contract + archetype + policy + tokens → canonical JSON, any path | **works** |
+| `scripts/resolve_view.py` — the human reading artifact | **works** |
+| `scripts/tokens.py` — token resolution; reads a design system's own naming from its context file | **works** |
+| `scripts/detect_tokens.py` — Phase 0B: proposes tiers, naming patterns and questions from a real tree | **works, wired into SKILL.md** |
+| `scripts/machine.py` — state-machine tables; closure checks generated, never written | **works** |
+| `scripts/test_scripts.py` — 13 regression tests, each naming a failure that once shipped | **passing** |
 | Web verifier — stdlib, deliberately weak, declares its own gaps | **runs** |
 | 4 closed vocabularies | **complete** |
 | Role-archetypes: button 12, link 9, combobox 9, heading 3, text 2 | **tier 1 only** |
@@ -78,9 +80,11 @@ Anyone evaluating this should judge the first and not mistake it for the second.
 ## See it yourself
 
 ```bash
-python3 docs/examples/pipeline/resolve.py        # contract → 3 canonical documents
-python3 docs/examples/pipeline/resolve_view.py   # → the readable version
-python3 docs/examples/pipeline/3-verifiers/web/verify.py
+P=docs/examples/pipeline
+python3 scripts/resolve.py      $P/1-contract/Button.md --out $P/2-canonical   # → 3 canonical documents
+python3 scripts/resolve_view.py $P/1-contract/Button.md --out $P/Button.resolved.md
+python3 $P/3-verifiers/web/verify.py
+python3 scripts/detect_tokens.py evals/fixtures/tokens/alt-naming.tokens.json  # Phase 0B on an unfamiliar tree
 ```
 
 The verifier reports `4 pass / 3 fail / 18 unverified / 1 n-a`. The failures are intended —

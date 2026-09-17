@@ -1,22 +1,32 @@
 #!/usr/bin/env python3
 """Generate the platform-neutral RESOLVED VIEW.
 
+    python3 scripts/resolve_view.py path/to/Button.md [--out FILE] [--context PATH]
+
 Organised by the contract's own chapters, so a reader moving between source and view is not
 relearning the layout. Origin is a COLUMN, not a grouping: chapters answer "what kind of fact
 is this", origin answers "is this mine to change".
+
+Sources are located exactly as `resolve.py` locates them — the same function — so the view
+and the canonical documents can never be built from different inputs.
 """
-import pathlib, re, sys
-sys.path.insert(0, str(pathlib.Path(__file__).parent))
-from resolve import (SRC, LIB, parse_frontmatter, requirement_rows,  # noqa: E402
-                     parse_tables, resolve_slots)
+import argparse, pathlib, re, sys
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from resolve import (parse_frontmatter, requirement_rows,  # noqa: E402
+                     parse_tables, resolve_slots, load_sources)
 import machine as sm  # noqa: E402
-COMPONENT = sys.argv[1] if len(sys.argv) > 1 else "Button"
+
+_ap = argparse.ArgumentParser(description="Generate the resolved view of a contract.")
+_ap.add_argument("contract", help="path to <Component>.md")
+_ap.add_argument("--out", help="output file (default: <Component>.resolved.md beside the contract)")
+_ap.add_argument("--context", help="design-system context file (default: nearest .claude/)")
+_args = _ap.parse_args()
 
 NL = "\n"
-fm, body = parse_frontmatter((SRC / (COMPONENT + ".md")).read_text())
-arch_text = (LIB / ("role-archetypes/%s.md" % fm["role-archetype"])).read_text()
-arch_fm, arch_body = parse_frontmatter(arch_text)
-policy_body = (SRC / "system/policy.md").read_text()
+S = load_sources(_args.contract, _args.context)
+fm, body, arch_body, policy_body = S["fm"], S["body"], S["arch_body"], S["policy_text"]
+COMPONENT = S["component"]
+arch_fm, arch_text = S["arch_fm"], S["arch_text"]
 
 ORIGIN, rows = {}, []
 for src, label in ((arch_body, "archetype `%s`" % fm["role-archetype"]),
@@ -30,7 +40,7 @@ for src, label in ((arch_body, "archetype `%s`" % fm["role-archetype"]),
 # A reader does not need a five-way taxonomy — they need to know whether a property is
 # bound, and if not, who fixes it. So the view renders two things: a status per row, and
 # a gap table addressed to whoever owns the token tree.
-SLOTS = resolve_slots(body, fm)
+SLOTS = resolve_slots(body, fm, S["tree"])
 
 STATUS_LABEL = {
     "bound":            "bound",
@@ -74,8 +84,12 @@ def gap_table():
             cands = s_["detail"] if isinstance(s_["detail"], list) else [str(s_["detail"])]
             need = "%d candidates; scope and dimension did not narrow it" % len(cands)
             fix = "pin one: " + ", ".join("`%s`" % c for c in cands[:3])
+        elif s_["status"] == "unmapped-leaf" and isinstance(s_["detail"], list):
+            need = "tokens exist that cannot be read: " + ", ".join("`%s`" % d for d in s_["detail"])
+            fix = ("declare the naming pattern or leaf map in `.claude/design-system-context.yml` "
+                   "— **do not add a token**, one may already exist")
         else:
-            need, fix = str(s_["detail"]), "extend the leaf map in design-system-context"
+            need, fix = str(s_["detail"]), "declare the leaf map in `.claude/design-system-context.yml`"
         rows_.append("| %s | %s | %s |" % (slot_label(s_), need, fix))
     return intro + md_table(["property", "what is wrong", "what to do"], rows_)
 
@@ -246,6 +260,6 @@ slot_summary = "%d token slots — %d bound, %d gap%s, %d n/a" % (
 P.append("%d requirements — %d local, %d inherited, %d policy · %d zones · %s · %d props"
          % (len(rows), n_local, n_arch, n_pol, len(zones), slot_summary, len(props)))
 
-out = pathlib.Path(__file__).parent / (COMPONENT + ".resolved.md")
+out = pathlib.Path(_args.out).resolve() if _args.out else S["src"] / (COMPONENT + ".resolved.md")
 out.write_text(NL.join(P) + NL)
 print("wrote %s: %d lines, %d requirements" % (out.name, len(P), len(rows)))

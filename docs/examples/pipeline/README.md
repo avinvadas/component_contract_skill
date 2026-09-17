@@ -1,11 +1,14 @@
 # Worked pipeline — levels 1 → 3
 
+The scripts live in the skill's own [`scripts/`](../../../scripts/), not here; this directory holds only inputs, outputs and the example verifier. Commands run from the repo root.
+
 One contract, three canonical documents, three verifiers. Reproduce with:
 
 ```bash
-python3 docs/examples/pipeline/resolve.py                  # level 1 -> 2
-python3 docs/examples/pipeline/resolve_view.py             # the reading artifact
-python3 docs/examples/pipeline/3-verifiers/web/verify.py   # level 3, runnable
+P=docs/examples/pipeline
+python3 scripts/resolve.py      $P/1-contract/Button.md --out $P/2-canonical      # level 1 -> 2
+python3 scripts/resolve_view.py $P/1-contract/Button.md --out $P/Button.resolved.md
+python3 $P/3-verifiers/web/verify.py                                               # level 3, runnable
 ```
 
 ## The four levels, and where the skill stops
@@ -34,7 +37,7 @@ Supporting it: the archetype bundle and bindings, the policy file, and
 
 ## Level 2 — canonical documents
 
-[`resolve.py`](resolve.py) parses the contract and emits one document per platform. Same
+[`resolve.py`](../../../scripts/resolve.py) parses the contract and emits one document per platform. Same
 requirements everywhere; what differs is how each is observed, and whether it binds.
 
 ```
@@ -69,7 +72,7 @@ reference to one.
 
 ## Token slots — five outcomes, only one of them fine
 
-[`tokens.py`](tokens.py) reads the token tree and resolves each declared property. It is
+[`tokens.py`](../../../scripts/tokens.py) reads the token tree and resolves each declared property. It is
 kept honest by a split that is easy to get wrong: **structure** (tiers, component scopes,
 dimension axes) is read from paths and always reliable; **leaf meaning** is not readable
 from paths at all and comes from the alias graph, where a component leaf annotates the
@@ -158,7 +161,8 @@ archetype looks like per-component indirection. It is not — there is **one arc
 archetype**, not per contract.
 
 ```bash
-python3 resolve.py IconButton && python3 resolve_view.py IconButton
+P=docs/examples/pipeline
+python3 scripts/resolve.py $P/1-contract/IconButton.md --out $P/2-canonical && python3 scripts/resolve_view.py $P/1-contract/IconButton.md --out $P/IconButton.resolved.md
 ```
 
 | | Button | IconButton |

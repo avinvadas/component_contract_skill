@@ -4,7 +4,14 @@
 tokens:
   prefix:              # e.g. "ds" — the canonical prefix, syntax-neutral
   naming_pattern:      # e.g. "category.concept.variant.state"
-  source:              # path to the canonical token tree
+  source:              # path to the canonical token tree, relative to the directory holding .claude/
+  tiers:               # which top-level group plays each role — from scripts/detect_tokens.py, confirmed
+    primitive:         # e.g. "core"
+    semantic:
+    component:
+  patterns:            # one template per path shape, per tier, most specific first — from the detector, confirmed
+    component:         # e.g. - "component.{component}.variant.{variant}.{property}"
+  leaf_map:            # only spellings the resolver cannot read; each a confirmed answer, e.g. bgColor: background
   format:              # dtcg | style-dictionary | tailwind | css-custom-properties
   naming_convention:   # per-platform RENDERING of a token name, not its identity
     web:               # e.g. "--ds-color-action-primary-bg"
