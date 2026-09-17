@@ -194,6 +194,51 @@ tables with identical columns, and T1 found `received` homeless partly because o
 | prop | type | required | default | description |
 |---|---|---|---|---|
 
+### 5.4 Machine
+
+| from | event | to | id |
+|---|---|---|---|
+
+Optional — only for a component that owns state which moves. It holds **the machine as a
+machine**: every transition someone cares about, in one table read at a glance. It states
+state changes only; anything else that happens is an effect, written as an ordinary 5.1
+requirement conditioned `when:following:<transition-id>`.
+
+Every cell of the grid *states × events* is exactly one of:
+
+| cell | written as | becomes in the canonical |
+|---|---|---|
+| authored | a row | a requirement: from `from`, the event moves to `to` |
+| unreachable | `to` is `n/a — reason` | nothing — the event cannot happen in that state |
+| closure | nothing | a **generated** requirement: the event changes no state |
+
+Closure is the claim a machine makes that no row states — *these are all the transitions* —
+and it is the reason to write a table rather than a list of requirements. The resolver
+generates it; nobody writes it. Its ids are derived from the cell (`closure~<from>~<event>`),
+never a counter, so a finding keeps its id across runs.
+
+**Closure is computed on the resolved machine**: archetype rows and contract rows together. A
+role-archetype supplies what the platform provides (a combobox opens, dismisses, commits); a
+contract adds product decisions (typing opens the list). Computed per file, each half would
+forbid the other's transitions.
+
+**A machine covers only state its own component owns.** A child's state is opaque to the
+parent and checked by the child's own contract. This is what keeps grids small: composition
+turns the parent's multiplication into addition. The one exception is state a parent
+genuinely coordinates — a combobox's open list with focus held in the entry — which is why
+that machine lives in the parent.
+
+**Bindings.** A `machine` block in any bindings file, merged across layers like everything
+else: per platform, how each state is observed and which trigger performs each event. An
+effect never restates a trigger — `following:` names the transition that performs it.
+
+```json
+"machine": {
+  "states": { "expanded": { "web": { "contains": "expanded" } } },
+  "events": { "dismiss":  { "web": "key:Escape", "android": "system:back" } }
+}
+```
+
 ## 6 · Accessibility
 
 **Composition owns a zone's existence and terms. Accessibility owns its semantic exposure.**
@@ -417,6 +462,12 @@ Same class as the en-dash: a value whose own punctuation collides with the forma
 | every zone referenced by `after:` / `before:` exists | dangling reference |
 | en-dash, em-dash or hyphen in a `cardinality` cell | the parse hazard above, caught explicitly |
 | an unescaped `\|` inside a cell value | collides with the table delimiter; use `enum:a,b,c` or escape it |
+| every `following:<id>` names a declared transition | dangling reference |
+| no machine state is a zone name or dotted into a child | a parent's grid that includes child state is their product, and closure inflates |
+| no two machine rows share `(from, event)` with different `to` | two machines, not one |
+| no self-transition (`from` equals `to`) | closure already implies it; if it has an effect, that is a requirement |
+| every unreachable cell has a reason | the rule that keeps exclusions honest |
+| every machine state and event has a binding on every platform | a transition with no trigger cannot be checked or excused |
 
 ---
 

@@ -1,5 +1,5 @@
 {
-  "comment": "iOS has no native combobox, so every entry binds against semantics an implementation must produce by hand. That is the point: not free does not mean not required.",
+  "comment": "iOS has no native combobox, so every entry binds against semantics an implementation must produce by hand. That is the point: not free does not mean not required. CBX-07 and CBX-08 used to expect `closed-uncommitted` and `committed` \u2014 strings no platform exposes, each packing a state and an effect together. The state now lives in the machine; each effect is its own requirement, with no trigger of its own, because `when:following:` names the transition that performs it.",
   "role-archetype": "combobox",
   "version": "1.0",
   "bindings": {
@@ -158,53 +158,49 @@
     "CBX-07": {
       "web": {
         "expect": {
-          "equals": "closed-uncommitted"
-        },
-        "trigger": "key:Escape"
+          "present": false
+        }
       },
       "ios": {
         "expect": {
-          "equals": "closed-uncommitted"
-        },
-        "trigger": "gesture:tap-outside"
+          "present": false
+        }
       },
       "android": {
         "expect": {
-          "equals": "closed-uncommitted"
-        },
-        "trigger": "system:back"
+          "present": false
+        }
       },
       "macos": {
         "expect": {
-          "equals": "closed-uncommitted"
-        },
-        "trigger": "key:Escape"
+          "present": false
+        }
       }
     },
     "CBX-08": {
       "web": {
-        "expect": {
-          "equals": "committed"
-        },
-        "trigger": "activate"
+        "pending": {
+          "reason": "vocabulary-gap",
+          "detail": "`observe` has no `value` type; the entry's value cannot be named as an observation"
+        }
       },
       "ios": {
-        "expect": {
-          "equals": "committed"
-        },
-        "trigger": "activate"
+        "pending": {
+          "reason": "vocabulary-gap",
+          "detail": "`observe` has no `value` type; the entry's value cannot be named as an observation"
+        }
       },
       "android": {
-        "expect": {
-          "equals": "committed"
-        },
-        "trigger": "activate"
+        "pending": {
+          "reason": "vocabulary-gap",
+          "detail": "`observe` has no `value` type; the entry's value cannot be named as an observation"
+        }
       },
       "macos": {
-        "expect": {
-          "equals": "committed"
-        },
-        "trigger": "activate"
+        "pending": {
+          "reason": "vocabulary-gap",
+          "detail": "`observe` has no `value` type; the entry's value cannot be named as an observation"
+        }
       }
     },
     "CBX-09": {
@@ -227,6 +223,58 @@
         "expect": {
           "contains": "editable"
         }
+      }
+    }
+  },
+  "machine": {
+    "states": {
+      "expanded": {
+        "web": {
+          "contains": "expanded"
+        },
+        "ios": {
+          "contains": "expanded"
+        },
+        "android": {
+          "contains": "expanded"
+        },
+        "macos": {
+          "contains": "expanded"
+        }
+      },
+      "collapsed": {
+        "web": {
+          "contains": "collapsed"
+        },
+        "ios": {
+          "contains": "collapsed"
+        },
+        "android": {
+          "contains": "collapsed"
+        },
+        "macos": {
+          "contains": "collapsed"
+        }
+      }
+    },
+    "events": {
+      "open": {
+        "web": "key:Alt+ArrowDown",
+        "ios": "a11y:activate",
+        "android": "gesture:tap",
+        "macos": "key:Alt+ArrowDown"
+      },
+      "dismiss": {
+        "web": "key:Escape",
+        "ios": "gesture:tap-outside",
+        "android": "system:back",
+        "macos": "key:Escape"
+      },
+      "commit": {
+        "web": "key:Enter",
+        "ios": "a11y:activate",
+        "android": "gesture:tap",
+        "macos": "key:Enter"
       }
     }
   }

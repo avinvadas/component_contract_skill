@@ -3,7 +3,7 @@
   "contract": "IconButton",
   "contract_version": "1.0",
   "platform": "web",
-  "archetype": "button",
+  "role-archetype": "button",
   "requirements": [
     {
       "id": "BTN-01",
@@ -228,7 +228,7 @@
       "kind": "state",
       "scenario": {},
       "expect": {
-        "max_ratio": 1.0
+        "equals": "square"
       },
       "needs": [
         "geometry"
@@ -241,7 +241,7 @@
       "kind": "state",
       "scenario": {},
       "expect": {
-        "source": "label"
+        "source": "prop:label"
       },
       "needs": [
         "a11y-tree",

@@ -41,8 +41,40 @@ def accessible_name(node):
     if node["attrs"].get("aria-hidden") == "true": return ""
     return (node["text"] + "".join(accessible_name(c) for c in node["children"])).strip()
 
+def zones_in(node, out=None):
+    out = set() if out is None else out
+    if node["attrs"].get("data-zone"):
+        out.add(node["attrs"]["data-zone"])
+    for c in node["children"]:
+        zones_in(c, out)
+    return out
+
 def matches(predicate, witness):
-    return all(witness["props"].get(k) == v for k, v in predicate.get("props", {}).items())
+    """Every bucket of the predicate must be satisfied, or the witness does not match.
+
+    This once read only `props`, so a predicate over `environment`, `zones` or `state` matched
+    every witness — `all()` of nothing is true. Requirements conditioned on a keyboard, a hover,
+    or an icon being present were checked against instances that never established any of it,
+    and two of them passed by coincidence. A bucket this verifier cannot establish is a
+    coverage gap, reported as one — never a match.
+    """
+    for bucket, want in predicate.items():
+        if bucket == "props":
+            if any(witness["props"].get(k) != v for k, v in want.items()):
+                return False
+        elif bucket == "zones":
+            # Observed from the markup, not asserted by the witness author.
+            present = zones_in(parse(witness["html"]))
+            for zone, cond in want.items():
+                if (cond == "present") != (zone in present):
+                    return False
+        else:
+            # environment, state, machine: static HTML cannot establish these. A witness may
+            # declare them explicitly; otherwise nothing here satisfies the predicate.
+            declared = witness.get(bucket, {})
+            if any(declared.get(k) != v for k, v in want.items()):
+                return False
+    return True
 
 def observe(req, root):  # noqa: C901
     o, exp = req["observe"], req["expect"]
@@ -94,8 +126,11 @@ for req in DOC["requirements"]:
         # it yet, so there is no expectation to compare against. `unverified`, never pass:
         # an unresolved token that reported green would defeat the point of declaring it.
         pend = req["pending"]
-        rows.append(("UNVER", rid, stmt,
-                     "token unresolved (%s) — fix in the token tree" % pend["reason"])); continue
+        # Where the fix belongs depends on why it is pending. Saying "token tree" for a
+        # vocabulary gap would send someone to the wrong place.
+        where = {"vocabulary-gap": "fix in the observe vocabulary"}.get(
+            pend["reason"], "fix in the token tree")
+        rows.append(("UNVER", rid, stmt, "pending (%s) — %s" % (pend["reason"], where))); continue
     missing = [n for n in req["needs"] if n in CAP["cannot_observe"]]
     if missing:
         rows.append(("UNVER", rid, stmt, CAP["cannot_observe"][missing[0]])); continue

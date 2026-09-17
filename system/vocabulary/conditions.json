@@ -94,10 +94,21 @@
         }
       },
       "requires_zone": "<zone>"
+    },
+    "following:<transition>": {
+      "scenario": {
+        "machine": {
+          "following": "<transition>"
+        }
+      },
+      "requires_transition": "<transition>",
+      "verifier_must": "establish the transition's `from` state, then perform its trigger",
+      "note": "an effect of a transition, stated once; the trigger lives in the machine binding"
     }
   },
   "lint": [
     "a condition naming `requires_prop` fails if no chapter declares that prop",
-    "a `<zone>_present` condition fails if \u00a73.1 declares no such zone"
+    "a `<zone>_present` condition fails if \u00a73.1 declares no such zone",
+    "a `following:<transition>` condition fails if no machine declares that transition id"
   ]
 }

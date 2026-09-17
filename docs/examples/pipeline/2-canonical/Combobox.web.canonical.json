@@ -1,0 +1,344 @@
+{
+  "format_version": "1.0",
+  "contract": "Combobox",
+  "contract_version": "1.0",
+  "platform": "web",
+  "role-archetype": "combobox",
+  "requirements": [
+    {
+      "id": "CBX-01",
+      "statement": "The control is exposed to assistive technology as a combo box.",
+      "observe": "role",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "equals": "combobox"
+      },
+      "needs": [
+        "a11y-tree"
+      ]
+    },
+    {
+      "id": "CBX-02",
+      "statement": "The control has a non-empty accessible name.",
+      "observe": "name",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "present": true
+      },
+      "needs": [
+        "a11y-tree"
+      ]
+    },
+    {
+      "id": "CBX-03",
+      "statement": "Whether the candidate list is open is conveyed to assistive technology.",
+      "observe": "state",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "contains": "expanded"
+      },
+      "needs": [
+        "a11y-tree"
+      ]
+    },
+    {
+      "id": "CBX-04",
+      "statement": "The candidate list is programmatically associated with the entry.",
+      "observe": "containment",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "expanded": true
+        }
+      },
+      "expect": {
+        "contains": "candidates"
+      },
+      "needs": [
+        "a11y-tree"
+      ]
+    },
+    {
+      "id": "CBX-05",
+      "statement": "The active candidate is conveyed without focus leaving the entry.",
+      "observe": "state",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "expanded": true
+        }
+      },
+      "expect": {
+        "contains": "active-candidate"
+      },
+      "needs": [
+        "a11y-tree"
+      ]
+    },
+    {
+      "id": "CBX-06",
+      "statement": "The platform's list-navigation input moves between candidates.",
+      "observe": "event",
+      "kind": "behavior",
+      "scenario": {
+        "state": {
+          "expanded": true
+        }
+      },
+      "expect": {
+        "equals": "moved"
+      },
+      "needs": [
+        "interaction"
+      ],
+      "trigger": [
+        "key:ArrowDown",
+        "key:ArrowUp"
+      ]
+    },
+    {
+      "id": "CBX-07",
+      "statement": "No value is committed.",
+      "observe": "event",
+      "kind": "behavior",
+      "scenario": {
+        "machine": {
+          "following": "CBX-T2"
+        }
+      },
+      "expect": {
+        "present": false
+      },
+      "needs": [
+        "interaction"
+      ]
+    },
+    {
+      "id": "CBX-08",
+      "statement": "The committed candidate's value is placed in the entry.",
+      "observe": "event",
+      "kind": "behavior",
+      "scenario": {
+        "machine": {
+          "following": "CBX-T3"
+        }
+      },
+      "needs": [
+        "interaction"
+      ],
+      "pending": {
+        "reason": "vocabulary-gap",
+        "detail": "`observe` has no `value` type; the entry's value cannot be named as an observation"
+      }
+    },
+    {
+      "id": "CBX-09",
+      "statement": "The entry remains editable after a candidate is committed.",
+      "observe": "state",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "contains": "editable"
+      },
+      "needs": [
+        "a11y-tree"
+      ]
+    },
+    {
+      "id": "POL-02",
+      "statement": "A focused control renders a focus indicator distinguishable from its unfocused appearance.",
+      "observe": "state",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "equals": true
+      },
+      "needs": [
+        "a11y-tree",
+        "geometry"
+      ]
+    },
+    {
+      "id": "CBX-T1",
+      "statement": "From collapsed, open moves to expanded.",
+      "observe": "state",
+      "kind": "behavior",
+      "scenario": {
+        "machine": {
+          "state": "collapsed"
+        }
+      },
+      "trigger": "key:Alt+ArrowDown",
+      "expect": {
+        "contains": "expanded"
+      },
+      "needs": [
+        "interaction",
+        "a11y-tree"
+      ]
+    },
+    {
+      "id": "CBX-T2",
+      "statement": "From expanded, dismiss moves to collapsed.",
+      "observe": "state",
+      "kind": "behavior",
+      "scenario": {
+        "machine": {
+          "state": "expanded"
+        }
+      },
+      "trigger": "key:Escape",
+      "expect": {
+        "contains": "collapsed"
+      },
+      "needs": [
+        "interaction",
+        "a11y-tree"
+      ]
+    },
+    {
+      "id": "CBX-T3",
+      "statement": "From expanded, commit moves to collapsed.",
+      "observe": "state",
+      "kind": "behavior",
+      "scenario": {
+        "machine": {
+          "state": "expanded"
+        }
+      },
+      "trigger": "key:Enter",
+      "expect": {
+        "contains": "collapsed"
+      },
+      "needs": [
+        "interaction",
+        "a11y-tree"
+      ]
+    },
+    {
+      "id": "MCH-01",
+      "statement": "From collapsed, type moves to expanded.",
+      "observe": "state",
+      "kind": "behavior",
+      "scenario": {
+        "machine": {
+          "state": "collapsed"
+        }
+      },
+      "trigger": "key:character",
+      "expect": {
+        "contains": "expanded"
+      },
+      "needs": [
+        "interaction",
+        "a11y-tree"
+      ]
+    },
+    {
+      "id": "closure~collapsed~dismiss",
+      "statement": "From collapsed, dismiss changes no state.",
+      "observe": "state",
+      "kind": "behavior",
+      "scenario": {
+        "machine": {
+          "state": "collapsed"
+        }
+      },
+      "trigger": "key:Escape",
+      "expect": {
+        "contains": "collapsed"
+      },
+      "needs": [
+        "interaction",
+        "a11y-tree"
+      ],
+      "derived": "closure"
+    },
+    {
+      "id": "closure~expanded~open",
+      "statement": "From expanded, open changes no state.",
+      "observe": "state",
+      "kind": "behavior",
+      "scenario": {
+        "machine": {
+          "state": "expanded"
+        }
+      },
+      "trigger": "key:Alt+ArrowDown",
+      "expect": {
+        "contains": "expanded"
+      },
+      "needs": [
+        "interaction",
+        "a11y-tree"
+      ],
+      "derived": "closure"
+    },
+    {
+      "id": "closure~expanded~type",
+      "statement": "From expanded, type changes no state.",
+      "observe": "state",
+      "kind": "behavior",
+      "scenario": {
+        "machine": {
+          "state": "expanded"
+        }
+      },
+      "trigger": "key:character",
+      "expect": {
+        "contains": "expanded"
+      },
+      "needs": [
+        "interaction",
+        "a11y-tree"
+      ],
+      "derived": "closure"
+    }
+  ],
+  "machine": {
+    "states": {
+      "collapsed": {
+        "contains": "collapsed"
+      },
+      "expanded": {
+        "contains": "expanded"
+      }
+    },
+    "transitions": [
+      {
+        "id": "CBX-T1",
+        "from": "collapsed",
+        "to": "expanded",
+        "trigger": "key:Alt+ArrowDown"
+      },
+      {
+        "id": "CBX-T2",
+        "from": "expanded",
+        "to": "collapsed",
+        "trigger": "key:Escape"
+      },
+      {
+        "id": "CBX-T3",
+        "from": "expanded",
+        "to": "collapsed",
+        "trigger": "key:Enter"
+      },
+      {
+        "id": "MCH-01",
+        "from": "collapsed",
+        "to": "expanded",
+        "trigger": "key:character"
+      }
+    ],
+    "unreachable": [
+      {
+        "from": "collapsed",
+        "event": "commit",
+        "reason": "no candidate is reachable while the list is closed"
+      }
+    ]
+  }
+}

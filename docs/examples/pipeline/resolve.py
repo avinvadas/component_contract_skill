@@ -9,6 +9,7 @@ deterministically, this is where it shows up.
 import json, pathlib, re, sys
 
 from tokens import Tree, PROPERTIES  # noqa: E402
+import machine as sm  # noqa: E402
 
 HERE = pathlib.Path(__file__).parent
 SRC, OUT = HERE / "1-contract", HERE / "2-canonical"
@@ -42,6 +43,10 @@ NEEDS_BY_OBSERVE = {
 # lint-failed a contract that used them correctly; `hover` and `focused` were the reverse.
 CONDITIONS = json.loads((LIB / "vocabulary/conditions.json").read_text())["conditions"]
 ZONE_PRESENT = re.compile(r"^(\w+)_present$")
+# `following:<transition>` — an effect of a transition, generated per declared transition id.
+# Not `after:`, which the spec already uses for a zone's position; one token, one meaning.
+FOLLOWING = re.compile(r"^following:([A-Za-z0-9][\w-]*)$")
+TRANSITION_IDS: set = set()
 
 lint: list[str] = []
 
@@ -117,6 +122,10 @@ def scenario_for(required, rid):
                 scen.setdefault(bucket, {}).update(kv)
         elif (m := ZONE_PRESENT.match(cond)):
             scen.setdefault("zones", {})[m.group(1)] = "present"
+        elif (m := FOLLOWING.match(cond)):
+            if m.group(1) not in TRANSITION_IDS:
+                lint.append(f"{rid}: `following:{m.group(1)}` names no declared transition")
+            scen.setdefault("machine", {})["following"] = m.group(1)
         else:
             lint.append(f"{rid}: unknown condition {cond!r} — not in the closed vocabulary")
     return scen
@@ -220,16 +229,33 @@ def main():
     # ---- load --------------------------------------------------------------------
     contract_text = (SRC / (COMPONENT + ".md")).read_text()
     fm, body = parse_frontmatter(contract_text)
-    arch_text = (LIB / "role-archetypes/button.md").read_text()
+    # The archetype and every bindings file are named by the contract, never assumed. All
+    # three were once hardcoded to Button: both examples were buttons, so the output looked
+    # right, and IconButton was silently resolved with Button's own component bindings.
+    archetype = fm["role-archetype"]
+    arch_text = (LIB / "role-archetypes" / (archetype + ".md")).read_text()
     _, arch_body = parse_frontmatter(arch_text)
     policy_text = (SRC / "system/policy.md").read_text()
     # Three binding sources, one per ownership layer. Later layers override earlier ones.
     bindings: dict = {}
-    for src in (LIB / "role-archetypes/button.bindings.json",      # shipped with the skill
-                SRC / "system/policy.bindings.json",          # the design system's
-                SRC / "Button.bindings.json"):                # this contract's own
+    for src in (LIB / "role-archetypes" / (archetype + ".bindings.json"),  # shipped with the skill
+                SRC / "system/policy.bindings.json",                    # the design system's
+                SRC / (COMPONENT + ".bindings.json")):                  # this contract's own
         for rid, entry in json.loads(src.read_text())["bindings"].items():
             bindings.setdefault(rid, {}).update(entry)
+
+    # The machine is resolved BEFORE any requirement, because `when:following:<transition>`
+    # conditions are checked against its transition ids. Closure is computed on the merged
+    # machine — archetype rows plus contract rows — never per file.
+    zones = {r["zone"] for h, rows in parse_tables(body) if "zone" in h for r in rows}
+    machine, mlint = sm.build(sm.machine_rows(parse_tables(arch_body)) +
+                              sm.machine_rows(parse_tables(body)), zones)
+    lint.extend(mlint)
+    TRANSITION_IDS.update(t["id"] for t in machine["transitions"])
+    binding_layers = [json.loads(src.read_text()) for src in (
+        LIB / "role-archetypes" / (archetype + ".bindings.json"),
+        SRC / "system/policy.bindings.json", SRC / (COMPONENT + ".bindings.json"))]
+    machine_bindings = sm.merge_bindings(binding_layers)
 
     inherited = requirement_rows(arch_body) + requirement_rows(policy_text)
     local = requirement_rows(body)
@@ -260,6 +286,15 @@ def main():
             if b.get("binds") is False:
                 reqs.append({**base, "binds": False, "reason": b["reason"]})
                 continue
+            if "pending" in b:
+                # The requirement applies, but nothing can yet be named to check it against —
+                # a vocabulary gap, say. `pending` and no `expect`: a verifier has nothing to
+                # compare, so it reports unverified. Same mechanism as an unresolved token.
+                reqs.append({**base, "observe": r["observe"], "kind": r["kind"],
+                             "scenario": scenario_for(r.get("when") or "always", rid),
+                             "needs": NEEDS_BY_OBSERVE.get(r["observe"], []),
+                             "pending": b["pending"]})
+                continue
             needs = b.get("needs") or NEEDS_BY_OBSERVE.get(r["observe"])
             if needs is not None:
                 needs = needs + [n for n in b.get("needs_also", []) if n not in needs]
@@ -279,7 +314,11 @@ def main():
 
         doc = {"format_version": "1.0", "contract": fm["component"],
                "contract_version": fm["version"], "platform": platform,
-               "archetype": fm["role-archetype"], "requirements": reqs}
+               "role-archetype": fm["role-archetype"], "requirements": reqs}
+        if machine["transitions"]:
+            mreqs, block = sm.requirements(machine, machine_bindings, platform, lint)
+            reqs.extend(mreqs)
+            doc["machine"] = block
         (OUT / (COMPONENT + f".{platform}.canonical.json")).write_text(json.dumps(doc, indent=2) + "\n")
         binds = sum(1 for r in reqs if r.get("binds") is not False)
         print(f"  {platform:<8} {len(reqs)} requirements, {binds} binding, {len(reqs)-binds} n/a")
@@ -295,6 +334,15 @@ def main():
         label = g["property"] + ("@" + g["state"] if g["state"] else "")
         print("  - %-8s %-17s %s" % (g["id"], g["status"], label))
 
+    if machine["transitions"]:
+        grid = len(machine["states"]) * len(machine["events"])
+        print(f"\nmachine: {len(machine['states'])} states x {len(machine['events'])} events = {grid} cells — "
+              f"{len(machine['transitions'])} authored, {len(machine['unreachable'])} unreachable, "
+              f"{len(machine['closure'])} closure (generated)")
+        for c in machine["closure"]:
+            print("  - %s" % c["id"])
+
+    lint[:] = list(dict.fromkeys(lint))   # one finding per fact, not one per platform pass
     print(f"\nlint: {len(lint)} finding(s)")
     for l in lint:
         print("  -", l)

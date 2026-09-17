@@ -3,7 +3,7 @@
   "contract": "Button",
   "contract_version": "1.0",
   "platform": "web",
-  "archetype": "button",
+  "role-archetype": "button",
   "requirements": [
     {
       "id": "BTN-01",

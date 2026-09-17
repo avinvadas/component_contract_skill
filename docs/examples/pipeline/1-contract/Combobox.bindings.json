@@ -1,0 +1,11 @@
+{
+  "comment": "Component-local bindings. The only thing this contract introduces is one transition, so the only binding is how each platform types into the entry.",
+  "contract": "Combobox",
+  "version": "1.0",
+  "bindings": {},
+  "machine": {
+    "events": {
+      "type": { "web": "key:character", "ios": "keyboard:character", "android": "key:character" }
+    }
+  }
+}

@@ -72,6 +72,10 @@ Where a platform gives you this free, and where you build it by hand.
 
 ## 4. Behavior
 
+### State machine
+
+*No state machine.*
+
 ### Requirements
 
 | when | statement | origin | id |

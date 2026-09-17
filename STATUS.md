@@ -50,10 +50,11 @@ Four ideas carry the whole thing:
 | `resolve.py` — contract + archetype + policy + tokens → canonical JSON | **works** |
 | `resolve_view.py` — the human reading artifact | **works** |
 | `tokens.py` — token tree analysis, slot resolution, six outcome states | **works** |
+| `machine.py` — state-machine tables; closure checks generated, never written | **works** |
 | Web verifier — stdlib, deliberately weak, declares its own gaps | **runs** |
 | 4 closed vocabularies | **complete** |
 | Role-archetypes: button 12, link 9, combobox 9, heading 3, text 2 | **tier 1 only** |
-| Worked example: Button + IconButton, three platforms | **2 components** |
+| Worked example: Button + IconButton + Combobox, three platforms | **3 components** |
 
 ## What does not exist yet
 

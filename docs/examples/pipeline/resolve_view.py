@@ -9,6 +9,7 @@ import pathlib, re, sys
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from resolve import (SRC, LIB, parse_frontmatter, requirement_rows,  # noqa: E402
                      parse_tables, resolve_slots)
+import machine as sm  # noqa: E402
 COMPONENT = sys.argv[1] if len(sys.argv) > 1 else "Button"
 
 NL = "\n"
@@ -77,6 +78,31 @@ def gap_table():
             need, fix = str(s_["detail"]), "extend the leaf map in design-system-context"
         rows_.append("| %s | %s | %s |" % (slot_label(s_), need, fix))
     return intro + md_table(["property", "what is wrong", "what to do"], rows_)
+
+# ---- state machine -----------------------------------------------------------------
+# The reader sees the machine as a machine: every authored transition in one table, origin as
+# a column like everywhere else. Closure is NOT tabulated — it is generated, nobody wrote it,
+# and listing it would bury the rows someone did write. It is named in one line, so a reader
+# knows those checks exist and what they cover.
+def machine_section():
+    arch_rows = sm.machine_rows(parse_tables(arch_body))
+    own_rows = sm.machine_rows(parse_tables(body))
+    if not arch_rows and not own_rows:
+        return "*No state machine.*" + NL
+    merged, _ = sm.build(arch_rows + own_rows)
+    rows_ = []
+    for r, origin in [(r, "archetype `%s`" % fm["role-archetype"]) for r in arch_rows] + \
+                     [(r, "this component") for r in own_rows]:
+        rows_.append("| %s | %s | %s | %s | %s |" % (r["from"], r["event"], r["to"], origin,
+                                                    ("id-" + r["id"]) if r.get("id", "—") not in ("—", "-", "") else "—"))
+    out = md_table(["from", "event", "to", "origin", "id"], rows_)
+    grid = len(merged["states"]) * len(merged["events"])
+    if merged["closure"]:
+        cells = ", ".join("`%s × %s`" % (c["from"], c["event"]) for c in merged["closure"])
+        out += (NL + "**Closure.** %d states × %d events = %d cells. The %d nobody wrote are each "
+                "checked to change no state: %s." % (len(merged["states"]), len(merged["events"]),
+                                                     grid, len(merged["closure"]), cells) + NL)
+    return out
 
 FALLBACK = {"layout": "Structure", "order": "Structure", "containment": "Structure",
             "token": "Appearance", "event": "Behavior"}
@@ -183,6 +209,9 @@ P.append("")
 P.append(divergences())
 P.append("## 4. Behavior")
 P.append("")
+P.append("### State machine")
+P.append("")
+P.append(machine_section())
 P.append("### Requirements")
 P.append("")
 P.append(reqs("Behavior"))

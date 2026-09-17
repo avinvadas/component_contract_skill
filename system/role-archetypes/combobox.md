@@ -49,9 +49,30 @@ which answers the other open question in `source-layer-plan.md` before anyone bu
 | when:expanded | The candidate list is programmatically associated with the entry. | containment | state | Composition | apg:combobox | id-CBX-04 |
 | when:expanded | The active candidate is conveyed without focus leaving the entry. | state | state | Accessibility | apg:combobox | id-CBX-05 |
 | when:expanded | The platform's list-navigation input moves between candidates. | event | behavior | Behavior | catalogue:macOS/NSComboBox · catalogue:Android/ExposedDropdownMenuBox | id-CBX-06 |
-| when:expanded | The platform's dismissal input closes the list without committing a value. | event | behavior | Behavior | catalogue:macOS/NSComboBox · catalogue:Android/DropdownMenu | id-CBX-07 |
-| when:expanded | Committing a candidate places its value in the entry and closes the list. | event | behavior | Behavior | catalogue:macOS/NSComboBox | id-CBX-08 |
+| when:following:CBX-T2 | No value is committed. | event | behavior | Behavior | catalogue:macOS/NSComboBox · catalogue:Android/DropdownMenu | id-CBX-07 |
+| when:following:CBX-T3 | The committed candidate's value is placed in the entry. | event | behavior | Behavior | catalogue:macOS/NSComboBox | id-CBX-08 |
 | always | The entry remains editable after a candidate is committed. | state | state | Structure | catalogue:macOS/NSComboBox | id-CBX-09 |
+
+## Machine
+
+The list is either open or closed, and three inputs move between the two. A transition row
+states the **state change only**. What else happens — a value committed or not — is an effect,
+stated as an ordinary requirement conditioned `when:following:<transition>`, so the trigger that
+performs the transition is bound once, here, and never restated.
+
+Moving between candidates (CBX-06) is deliberately **not** a transition: the list stays open.
+Which candidate is active is not one of this machine's states, and modelling it as one would
+make every candidate a state.
+
+| from | event | to | source | id |
+|---|---|---|---|---|
+| collapsed | open | expanded | catalogue:macOS/NSComboBox · catalogue:Android/ExposedDropdownMenuBox | id-CBX-T1 |
+| expanded | dismiss | collapsed | catalogue:macOS/NSComboBox · catalogue:Android/DropdownMenu | id-CBX-T2 |
+| expanded | commit | collapsed | catalogue:macOS/NSComboBox | id-CBX-T3 |
+| collapsed | commit | n/a — no candidate is reachable while the list is closed | — | — |
+
+Closure is generated, not written. With the contract's own rows added, every cell of the grid
+nobody filled in becomes a check that the event changes nothing.
 
 ## CBX-09 and the single-platform question
 

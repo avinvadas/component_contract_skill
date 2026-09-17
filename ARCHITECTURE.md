@@ -126,6 +126,16 @@ tell someone to add a token that already exists under a name it failed to parse,
 the tree it exists to protect. A **pinned name absent from the tree is a lint failure**, not
 a gap — it is the one path by which an invented token name enters a design system.
 
+`machine.py` — state machines.
+
+A component that owns moving state writes its transitions as one table. Every cell of the grid
+*states × events* is authored, marked unreachable with a reason, or left empty — and every
+empty cell becomes a generated check that the event changes nothing. That is **closure**, the
+claim a machine makes that no row states. It is computed on the merged machine, archetype plus
+contract, and kept small by composition: a machine covers only its own component's state, so a
+parent never multiplies its children's grids. An effect of a transition is an ordinary
+requirement conditioned `when:following:<transition>`, so a trigger is bound once.
+
 `resolve_view.py` — the reading artifact.
 
 The contract `.md` is *source*; this is what a person reads. Organised by the contract's own
