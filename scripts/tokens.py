@@ -95,7 +95,52 @@ def _themed(node, value_path):
     return node
 
 
-def load_sources(base, sources, theme=None, value_path=None, problems=None):
+
+# ---- tokens written as CSS custom properties (shadcn, and most Tailwind systems) ------------
+CSS_VAR_DECL = re.compile(r"--([\w-]+)\s*:\s*([^;]+);")
+CSS_VAR_REF = re.compile(r"^\s*var\(\s*--([\w-]+)\s*\)\s*$")
+
+def _css_block(text, selector):
+    """The declarations inside the first block whose selector is exactly `selector`."""
+    for m in re.finditer(r"([^{}]+)\{([^{}]*)\}", text):
+        sels = [x.strip() for x in m.group(1).split(",")]
+        if selector in sels:
+            return m.group(2)
+    return None
+
+def _css_type(value):
+    v = value.strip().lower()
+    if re.match(r"^(oklch|oklab|rgb|rgba|hsl|hsla|color|lab|lch)\(|^#[0-9a-f]{3,8}$", v):
+        return "color"
+    if re.match(r"^-?[\d.]+(px|rem|em|%)$|^calc\(", v):
+        return "dimension"
+    if re.match(r"^-?[\d.]+(ms|s)$", v):
+        return "duration"
+    return None
+
+def load_css(path, selector=":root"):
+    """A CSS file as a token tree: the custom properties of one theme's block.
+
+    CSS variables carry no $type, so it is inferred from the value, and an exact `var(--x)` is
+    an alias — `{x}` — so the alias graph reads it like any DTCG alias. The theme is a SELECTOR:
+    shadcn's light theme is `:root`, its dark theme `.dark`, redefining the same names."""
+    text = re.sub(r"/\*.*?\*/", "", open(path).read(), flags=re.S)
+    # A theme selector OVERRIDES `:root` — shadcn's `.dark` redefines the colours and inherits
+    # `--radius`, so reading `.dark` alone would lose every token it does not repeat.
+    blocks = [_css_block(text, ":root")] + ([_css_block(text, selector)] if selector != ":root" else [])
+    if not any(blocks):
+        return {}
+    decls = [d for b in blocks if b for d in CSS_VAR_DECL.findall(b)]
+    out = {}
+    for name, value in decls:
+        value = value.strip()
+        ref = CSS_VAR_REF.match(value)
+        typ = None if ref else _css_type(value)
+        out[name] = {"$value": "{%s}" % ref.group(1) if ref else value, "$type": typ}
+    return out
+
+
+def load_sources(base, sources, theme=None, value_path=None, problems=None, selector=None):
     """Several token files -> one tree whose top-level groups are the tiers.
 
     A real design system rarely ships one file with its tiers as top-level groups. Carbon's
@@ -128,7 +173,10 @@ def load_sources(base, sources, theme=None, value_path=None, problems=None):
         if not files:
             problems.append("tokens.sources: %r matches no file" % pat)
         for f in files:
-            data = _themed(json.loads(open(f).read()), vp)
+            if f.endswith(".css"):
+                data = load_css(f, selector or ":root")
+            else:
+                data = _themed(json.loads(open(f).read()), vp)
             for k, v in data.items():
                 if not k.startswith("$"):
                     tiers.setdefault(tier, {}).setdefault(k, v)
@@ -247,8 +295,9 @@ class Tree:
             self.patterns[role] = [self._compile(t) for t in (templates or [])]
         if self.facts.get("sources"):
             # `path` is then the directory the sources are relative to.
-            raw = load_sources(path, self.facts["sources"], (self.facts.get("theme") or {}).get("name"),
-                               (self.facts.get("theme") or {}).get("value_path"), self.problems)
+            theme = self.facts.get("theme") or {}
+            raw = load_sources(path, self.facts["sources"], theme.get("name"), theme.get("value_path"),
+                               self.problems, theme.get("selector"))
         else:
             raw = json.loads(open(path).read())
         self.path = path

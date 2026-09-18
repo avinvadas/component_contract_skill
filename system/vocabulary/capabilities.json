@@ -1,18 +1,19 @@
 {
-  "comment": "What a verifier may declare it can and cannot observe. The vocabulary `needs` is written in, so a runner reconciles document against declaration mechanically. Anything a requirement needs that the verifier lacks is reported unverified by name, in the verifier's own words — never passed.",
+  "comment": "What a verifier may declare it can and cannot observe. The vocabulary `needs` is written in, so a runner reconciles document against declaration mechanically. Anything a requirement needs that the verifier lacks is reported unverified by name, in the verifier's own words \u2014 never passed.",
   "format_version": "1.0",
   "capabilities": {
-    "a11y-tree":       "read the platform's accessibility tree: roles, names, states, child order",
-    "identity":        "read the rendered element's own type, separately from its role",
-    "focus":           "read focus participation and current focus location",
-    "geometry":        "read rendered bounding boxes",
-    "interaction":     "drive input and observe the result",
-    "announcement":    "capture what assistive technology speaks without focus moving",
+    "a11y-tree": "read the platform's accessibility tree: roles, names, states, child order",
+    "identity": "read the rendered element's own type, separately from its role",
+    "focus": "read focus participation and current focus location",
+    "geometry": "read rendered bounding boxes",
+    "interaction": "drive input and observe the result",
+    "announcement": "capture what assistive technology speaks without focus moving",
     "name-provenance": "determine which node supplied a computed accessible name",
-    "source":          "read component source or stylesheets"
+    "source": "read the component's declared API surface (its props)",
+    "applied-styles": "read which declarations the rendered environment applies to an element, with their token references intact \u2014 the style LOGIC outcome. Never the source that produced it, and never the computed value: a literal equal to the token's value is still a failure"
   },
   "strategies": {
-    "witness":   "satisfies a scenario by finding an existing instance whose props match the predicate",
+    "witness": "satisfies a scenario by finding an existing instance whose props match the predicate",
     "construct": "satisfies a scenario by building an instance from the predicate"
   }
 }

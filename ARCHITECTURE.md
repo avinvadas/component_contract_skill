@@ -174,6 +174,16 @@ six-way state because a machine routes on it.
 
 ## The invariants
 
+**0. Every check validates a LOGIC OUTCOME, as the end environment holds it.** The rendered DOM
+and accessibility tree are the structural logic's outcome — which element carries the role, what
+is in the tab order, whether the form submits. The applied cascade is the style logic's outcome —
+which token each property references, followed through `var()` chains, with any transform
+(`color-mix(in oklab, var(--primary) 80%, transparent)` is `primary` at 80%). Never the
+**production path** (React, Lit, `button.tsx`, class lists) and never the **rendered values**
+(computed colours, pixels): a literal that equals the token's value is still a failure. The
+capability that reads the cascade is `applied-styles`; `source` now means only a component's
+declared props.
+
 1. **Nothing passes by accident.** A gap emits `pending` with no `expect`, so a verifier has
    nothing to compare and reports `unverified`. An unresolved token cannot produce a pass.
 2. **Lint and gaps are different animals.** Lint means the *document* is malformed and fails

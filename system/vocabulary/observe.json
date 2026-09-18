@@ -1,31 +1,123 @@
 {
-  "comment": "The observation types a requirement may name. Describes what a platform's accessibility layer exposes — not a view about design. `needs` is derived from this table, so bindings carry it only when a requirement needs more (via needs_also).",
+  "comment": "The observation types a requirement may name. Describes what a platform's accessibility layer exposes \u2014 not a view about design. `needs` is derived from this table, so bindings carry it only when a requirement needs more (via needs_also).",
   "format_version": "1.0",
   "observe": {
-    "role":         { "means": "the semantic role the platform's accessibility layer reports",
-                      "needs": ["a11y-tree"], "expect": ["equals", "one_of"],
-                      "note": "computed, never authored — reading a role attribute checks what someone typed" },
-    "name":         { "means": "the accessible name the platform computes for the element",
-                      "needs": ["a11y-tree"], "expect": ["present", "equals", "absent_from", "source"] },
-    "state":        { "means": "a state the platform exposes to assistive technology",
-                      "needs": ["a11y-tree"], "expect": ["contains", "equals"] },
-    "order":        { "means": "the sequence of children as the platform reports them",
-                      "needs": ["a11y-tree"], "expect": ["order"] },
-    "containment":  { "means": "whether one element is within another's subtree",
-                      "needs": ["a11y-tree"], "expect": ["contains", "equals"] },
-    "focus":        { "means": "whether an element participates in sequential focus, and where focus is",
-                      "needs": ["focus"], "expect": ["equals", "contains"] },
-    "announcement": { "means": "something spoken by assistive technology without focus moving",
-                      "needs": ["announcement"], "expect": ["present", "contains"] },
-    "event":        { "means": "a callback, signal or notification the component emits or receives",
-                      "needs": ["interaction"], "expect": ["equals", "present"] },
-    "layout":       { "means": "geometric relations between rendered boxes",
-                      "needs": ["geometry"], "expect": ["min", "max", "max_ratio", "order"],
-                      "note": "a relation the contract states, never an appearance judgment" },
-    "token":        { "means": "whether a value resolved through a named design token",
-                      "needs": ["source"], "expect": ["equals", "present"],
-                      "note": "data-flow only — not that the value is correct, which is visual regression's job" },
-    "prop":         { "means": "the component's declared API surface",
-                      "needs": ["source"], "expect": ["equals", "present", "one_of"] }
+    "role": {
+      "means": "the semantic role the platform's accessibility layer reports",
+      "needs": [
+        "a11y-tree"
+      ],
+      "expect": [
+        "equals",
+        "one_of"
+      ],
+      "note": "computed, never authored \u2014 reading a role attribute checks what someone typed"
+    },
+    "name": {
+      "means": "the accessible name the platform computes for the element",
+      "needs": [
+        "a11y-tree"
+      ],
+      "expect": [
+        "present",
+        "equals",
+        "absent_from",
+        "source"
+      ]
+    },
+    "state": {
+      "means": "a state the platform exposes to assistive technology",
+      "needs": [
+        "a11y-tree"
+      ],
+      "expect": [
+        "contains",
+        "equals"
+      ]
+    },
+    "order": {
+      "means": "the sequence of children as the platform reports them",
+      "needs": [
+        "a11y-tree"
+      ],
+      "expect": [
+        "order"
+      ]
+    },
+    "containment": {
+      "means": "whether one element is within another's subtree",
+      "needs": [
+        "a11y-tree"
+      ],
+      "expect": [
+        "contains",
+        "equals"
+      ]
+    },
+    "focus": {
+      "means": "whether an element participates in sequential focus, and where focus is",
+      "needs": [
+        "focus"
+      ],
+      "expect": [
+        "equals",
+        "contains"
+      ]
+    },
+    "announcement": {
+      "means": "something spoken by assistive technology without focus moving",
+      "needs": [
+        "announcement"
+      ],
+      "expect": [
+        "present",
+        "contains"
+      ]
+    },
+    "event": {
+      "means": "a callback, signal or notification the component emits or receives",
+      "needs": [
+        "interaction"
+      ],
+      "expect": [
+        "equals",
+        "present"
+      ]
+    },
+    "layout": {
+      "means": "geometric relations between rendered boxes",
+      "needs": [
+        "geometry"
+      ],
+      "expect": [
+        "min",
+        "max",
+        "max_ratio",
+        "order"
+      ],
+      "note": "a relation the contract states, never an appearance judgment"
+    },
+    "token": {
+      "means": "whether a value resolved through a named design token",
+      "needs": [
+        "applied-styles"
+      ],
+      "expect": [
+        "equals",
+        "present"
+      ],
+      "note": "which token a property REFERENCES in the applied cascade, followed through var() chains \u2014 logic, not value; the value is visual regression's job"
+    },
+    "prop": {
+      "means": "the component's declared API surface",
+      "needs": [
+        "source"
+      ],
+      "expect": [
+        "equals",
+        "present",
+        "one_of"
+      ]
+    }
   }
 }

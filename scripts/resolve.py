@@ -43,7 +43,7 @@ NEEDS_BY_OBSERVE = {
     "layout":       ["geometry"],
     "event":        ["interaction"],
     "announcement": ["announcement"],
-    "token":        ["source"],
+    "token":        ["applied-styles"],
     "prop":         ["source"],
 }
 
@@ -208,7 +208,8 @@ def resolve_slots(body, fm, tree):
         when = r.get("when", "always")
         cell = r["token"].strip().strip("`")
         slot = {"id": r["id"], "when": when, "property": r["property"],
-                "state": state_of(when), "dims": dims}
+                "state": state_of(when), "dims": dims,
+                "transform": parse_transform(r.get("transform"), r["id"])}
         if cell.lower().startswith("n/a"):
             reason = cell[3:].lstrip(" —-:").strip() or "declared not applicable"
             slot.update(token=None, status="not-applicable", detail=reason)
@@ -228,18 +229,84 @@ def resolve_slots(body, fm, tree):
         out.append(slot)
     return out
 
-def slot_requirement(slot):
+def platform_name(canonical, conv):
+    """A canonical token path as one platform renders it — `tokens.naming_convention.<platform>`:
+    `row` (kebab, snake, dot, camel, pascal, flat, screaming-snake), an added `prefix`, and the
+    `scope_depth` leading canonical words that platform's pipeline drops. Carbon's web row turns
+    `component.button.primary` into `--cds-button-primary`; shadcn's turns `semantic.primary`
+    into `--primary`."""
+    words = canonical.split(".")[int(conv.get("scope_depth") or 0):]
+    parts = [p for w in words for p in re.split(r"[-_]", w) if p]
+    row = conv.get("row", "kebab")
+    joined = {"kebab": "-".join(parts), "snake": "_".join(parts), "dot": ".".join(parts),
+              "flat": "".join(parts), "screaming-snake": "_".join(parts).upper(),
+              "camel": parts[0] + "".join(p[:1].upper() + p[1:] for p in parts[1:]) if parts else "",
+              "pascal": "".join(p[:1].upper() + p[1:] for p in parts)}.get(row)
+    if joined is None:
+        lint.append("naming_convention: unknown row %r" % row)
+        joined = "-".join(parts)
+    return (conv.get("prefix") or "") + joined
+
+TRANSFORM = re.compile(r"^alpha\s+(\d+(?:\.\d+)?)%$")
+
+def parse_transform(cell, rid):
+    """A transform the contract STATES — `alpha 80%` — so a derived token is compared exactly,
+    never excused. An unstated transform in the implementation is a mismatch."""
+    cell = (cell or "").strip()
+    if cell in ("", "—", "-"):
+        return None
+    m = TRANSFORM.match(cell)
+    if not m:
+        lint.append("%s: transform %r is not in the grammar (`alpha N%%`)" % (rid, cell))
+        return None
+    return {"alpha": float(m.group(1))}
+
+INTERACTION = ("hover", "focused", "active")
+
+def slot_scenario(slot, slots):
+    """The cases a property's slots cover do not overlap, and the scenario says so.
+
+    A property's slots are cases: `always | background` beside `when:hover | background` and
+    `when:disabled | background`. Read literally, `always` also claims the disabled button and
+    the hovered one — two claims that cannot both hold for one instance, the same contradiction
+    the button archetype once had between BTN-03 and BTN-08. So the unconditioned slot is the
+    DEFAULT case and excludes every other slot's condition, and an interaction state applies
+    only while the component can be used. Found when a real verifier checked Carbon's disabled
+    button against `always | background` and correctly saw the disabled token.
+    """
+    scen = scenario_for(slot["when"], slot["id"])
+    siblings = [o for o in slots if o is not slot and o["property"] == slot["property"]]
+    has_disabled = any(o["when"] == "when:disabled" for o in slots)
+    if slot["when"] in ("always", ""):
+        for o in siblings:
+            cond = o["when"][len("when:"):] if o["when"].startswith("when:") else None
+            if cond == "disabled":
+                scen.setdefault("props", {})["disabled"] = False
+            elif cond in INTERACTION:
+                scen.setdefault("state", {})[cond] = False
+    elif slot["state"] in ("hover", "focus", "active") and has_disabled:
+        scen.setdefault("props", {})["disabled"] = False
+    return scen
+
+def slot_requirement(slot, platform=None, conv=None, slots=()):
     """A slot becomes a real requirement, bound or explicitly pending — never absent."""
     label = slot["property"] + ("@" + slot["state"] if slot["state"] else "")
     base = {"id": slot["id"], "observe": "token", "kind": "state",
-            "scenario": scenario_for(slot["when"], slot["id"]), "needs": ["source"]}
+            "scenario": slot_scenario(slot, list(slots) or [slot]), "needs": ["applied-styles"]}
     if slot["status"] == "not-applicable":
         return {"id": slot["id"],
                 "statement": "%s is not tokenised." % label,
                 "binds": False, "reason": slot["detail"]}
     if slot["status"] == "bound":
-        return dict(base, statement="%s resolves through `%s`." % (label, slot["token"]),
-                    expect={"equals": slot["token"]})
+        req = dict(base, statement="%s resolves through `%s`." % (label, slot["token"]),
+                   expect={"equals": slot["token"]})
+        if conv:
+            req["platform_name"] = platform_name(slot["token"], conv)
+        if slot.get("transform"):
+            req["transform"] = slot["transform"]
+            req["statement"] = "%s resolves through `%s`, at %g%% alpha." % (
+                label, slot["token"], slot["transform"]["alpha"])
+        return req
     # No `expect`. A verifier with nothing to compare against reports `unverified`, which
     # is the whole point — an unresolved token must never be able to produce a pass.
     return dict(base, statement="%s resolves through a design token." % label,
@@ -459,8 +526,9 @@ def main():
                     entry[k] = b[k]
             reqs.append(entry)
 
+        conventions = ((S["tree"].facts if S["tree"] else {}) or {}).get("naming_convention") or {}
         for slot in slots:
-            reqs.append(slot_requirement(slot))
+            reqs.append(slot_requirement(slot, platform, conventions.get(platform), slots))
 
         doc = {"format_version": "1.0", "contract": fm["component"],
                "contract_version": fm["version"], "platform": platform,

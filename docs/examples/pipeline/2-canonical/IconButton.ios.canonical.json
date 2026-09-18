@@ -256,9 +256,13 @@
       "id": "APP-01",
       "observe": "token",
       "kind": "state",
-      "scenario": {},
+      "scenario": {
+        "props": {
+          "disabled": false
+        }
+      },
       "needs": [
-        "source"
+        "applied-styles"
       ],
       "statement": "background resolves through a design token.",
       "pending": {
@@ -279,7 +283,7 @@
         }
       },
       "needs": [
-        "source"
+        "applied-styles"
       ],
       "statement": "background@disabled resolves through a design token.",
       "pending": {

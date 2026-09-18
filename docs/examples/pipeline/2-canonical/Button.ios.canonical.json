@@ -280,9 +280,16 @@
       "id": "APP-01",
       "observe": "token",
       "kind": "state",
-      "scenario": {},
+      "scenario": {
+        "state": {
+          "hover": false
+        },
+        "props": {
+          "disabled": false
+        }
+      },
       "needs": [
-        "source"
+        "applied-styles"
       ],
       "statement": "background resolves through `component.button.variant.primary.background`.",
       "expect": {
@@ -295,7 +302,7 @@
       "kind": "state",
       "scenario": {},
       "needs": [
-        "source"
+        "applied-styles"
       ],
       "statement": "foreground resolves through `component.button.variant.primary.text`.",
       "expect": {
@@ -308,7 +315,7 @@
       "kind": "state",
       "scenario": {},
       "needs": [
-        "source"
+        "applied-styles"
       ],
       "statement": "border-color resolves through `component.button.variant.primary.border`.",
       "expect": {
@@ -321,7 +328,7 @@
       "kind": "state",
       "scenario": {},
       "needs": [
-        "source"
+        "applied-styles"
       ],
       "statement": "border-width resolves through a design token.",
       "pending": {
@@ -335,7 +342,7 @@
       "kind": "state",
       "scenario": {},
       "needs": [
-        "source"
+        "applied-styles"
       ],
       "statement": "radius resolves through `component.button.radius`.",
       "expect": {
@@ -348,7 +355,7 @@
       "kind": "state",
       "scenario": {},
       "needs": [
-        "source"
+        "applied-styles"
       ],
       "statement": "padding-inline resolves through a design token.",
       "pending": {
@@ -367,10 +374,13 @@
       "scenario": {
         "state": {
           "hover": true
+        },
+        "props": {
+          "disabled": false
         }
       },
       "needs": [
-        "source"
+        "applied-styles"
       ],
       "statement": "background@hover resolves through `component.button.variant.primary.background-hover`.",
       "expect": {
@@ -387,7 +397,7 @@
         }
       },
       "needs": [
-        "source"
+        "applied-styles"
       ],
       "statement": "background@disabled resolves through a design token.",
       "pending": {

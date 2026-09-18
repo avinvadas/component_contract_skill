@@ -418,6 +418,47 @@ def primer_shaped_tree_asks_per_spelling_and_per_component():
         "read `accent` as the property; the template whose property slot READS must win"
 
 
+# ---- token logic, as the rendered page applies it ------------------------------------------
+@test
+def css_variables_are_a_token_tree_and_a_theme_overrides_root():
+    """Guards shadcn: tokens that exist only as CSS custom properties, and a `.dark` theme that
+    redefines some names and inherits the rest from `:root`."""
+    from tokens import Tree
+    d = pathlib.Path(tempfile.mkdtemp())
+    (d / "index.css").write_text(":root {\n  --primary: oklch(0.2 0 0);\n  --ring: var(--primary);\n"
+                                 "  --radius: 0.625rem;\n}\n.dark {\n  --primary: oklch(0.9 0 0);\n}\n")
+    light = Tree(str(d), {"sources": {"semantic": ["index.css"]}, "theme": {"selector": ":root"}})
+    dark = Tree(str(d), {"sources": {"semantic": ["index.css"]}, "theme": {"selector": ".dark"}})
+    assert light.tokens["semantic.primary"]["value"] == "oklch(0.2 0 0)"
+    assert light.tokens["semantic.primary"]["type"] == "color"
+    assert light.tokens["semantic.ring"]["value"] == "{semantic.primary}", "var(--x) must read as an alias"
+    assert dark.tokens["semantic.primary"]["value"] == "oklch(0.9 0 0)"
+    assert dark.tokens["semantic.radius"]["value"] == "0.625rem", ".dark must inherit what it does not redefine"
+
+
+@test
+def token_slots_are_non_overlapping_cases_with_web_names_and_stated_transforms():
+    """Guards two things a real verifier exposed on Carbon and shadcn: a default token slot
+    that also claimed the disabled and hovered instance (and so failed exactly where the page
+    was right), and a canonical document too platform-neutral to be checked in a browser — no
+    web variable name, and no way to state `primary at 80%`."""
+    import resolve
+    conv = {"row": "kebab", "prefix": "--cds-", "scope_depth": 1}
+    assert resolve.platform_name("component.button.primary-hover", conv) == "--cds-button-primary-hover"
+    assert resolve.platform_name("semantic.primary-foreground", {"prefix": "--", "scope_depth": 1}) == "--primary-foreground"
+    assert resolve.parse_transform("alpha 80%", "X") == {"alpha": 80.0}
+    resolve.lint.clear(); resolve.parse_transform("80 percent", "X")
+    assert resolve.lint, "a transform outside the grammar must be lint"
+    slots = [{"id": "A", "when": "always", "property": "background", "state": None},
+             {"id": "H", "when": "when:hover", "property": "background", "state": "hover"},
+             {"id": "D", "when": "when:disabled", "property": "background", "state": "disabled"}]
+    resolve.lint.clear()
+    default = resolve.slot_scenario(slots[0], slots)
+    assert default == {"props": {"disabled": False}, "state": {"hover": False}}, default
+    assert resolve.slot_scenario(slots[1], slots)["props"] == {"disabled": False}, "hover applies only while enabled"
+    assert resolve.slot_scenario(slots[2], slots) == {"props": {"disabled": True}}
+
+
 # ---- detection ----------------------------------------------------------------------
 @test
 def detection_reads_tiers_from_alias_direction_not_names():
