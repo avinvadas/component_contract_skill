@@ -3,7 +3,7 @@ component: Combobox
 version: 1.0
 status: Draft
 role-archetype: combobox
-policy: system/policy.md
+policy: design-system/policy.md
 platforms: [web, ios, android]
 last_updated: 2026-09-17
 ---

@@ -3,7 +3,7 @@ component: Button
 version: 1.0
 status: Draft
 role-archetype: button
-policy: system/policy.md
+policy: design-system/policy.md
 tokens: ../../../../evals/fixtures/tokens/design-tokens.json
 platforms: [web, ios, android]
 last_updated: 2026-09-14

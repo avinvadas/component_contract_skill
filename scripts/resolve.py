@@ -261,15 +261,23 @@ def load_sources(contract_path, context_path=None):
     arch_text = (arch_dir / (archetype + ".md")).read_text()
     arch_fm, arch_body = parse_frontmatter(arch_text)
 
-    # policy: named by the contract. Once hardcoded to `system/policy.md`, like the archetype.
+    # policy: ONE file per design system, so its location is a recorded fact, not something
+    # every contract restates and gets wrong when it moves. `contracts.policy` in the context
+    # is the location; a contract's `policy:` frontmatter overrides it for that contract only.
+    # It is always the design system's own file — never `system/policy.md` inside the skill,
+    # which ships blank and is replaced wholesale on the next update.
     policy_text, policy_bindings = "", None
-    if fm.get("policy"):
-        policy_path = (src / fm["policy"]).resolve()
+    policy_ref = fm.get("policy")
+    policy_base = src
+    if not policy_ref and (context.get("contracts") or {}).get("policy") and root:
+        policy_ref, policy_base = (context["contracts"] or {})["policy"], root
+    if policy_ref:
+        policy_path = (policy_base / policy_ref).resolve()
         if policy_path.is_file():
             policy_text = policy_path.read_text()
             policy_bindings = policy_path.with_name(policy_path.stem + ".bindings.json")
         else:
-            lint.append("policy %r not found at %s" % (fm["policy"], policy_path))
+            lint.append("policy %r not found at %s" % (policy_ref, policy_path))
 
     # Three binding layers, one per ownership layer. Later layers override earlier ones.
     layer_files = [arch_dir / (archetype + ".bindings.json"), policy_bindings,

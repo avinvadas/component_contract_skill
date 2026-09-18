@@ -149,6 +149,20 @@ def a_wrong_fact_is_lint_not_silence():
     assert "backgroud" in r.stdout and "kore" in r.stdout, r.stdout[-600:]
 
 
+@test
+def policy_location_is_a_recorded_fact():
+    """Guards: every contract restating a relative path to the one policy file."""
+    repo = alt_design_system(ALT_CONTEXT + "  \ncontracts:\n  policy: contracts/design-system/policy.md\n")
+    md = repo / "contracts/Button.md"
+    md.write_text("\n".join(l for l in md.read_text().splitlines() if not l.startswith("policy:")) + "\n")
+    _, reqs = slots_of(repo)          # resolves at all == the contract parsed
+    with tempfile.TemporaryDirectory() as out:
+        r = run(HERE / "resolve.py", md, "--out", out)
+        doc = json.loads((pathlib.Path(out) / "Button.web.canonical.json").read_text())
+    assert "lint: 0 finding" in r.stdout, r.stdout[-400:]
+    assert "POL-02" in {x["id"] for x in doc["requirements"]}, "policy not inherited from the context"
+
+
 # ---- detection ----------------------------------------------------------------------
 @test
 def detection_reads_tiers_from_alias_direction_not_names():

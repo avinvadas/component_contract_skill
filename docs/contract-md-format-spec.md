@@ -484,7 +484,7 @@ component: Button
 version: 1.0
 status: Draft
 archetype: button
-policy: system/policy.md
+policy: design-system/policy.md   # optional — `contracts.policy` in the design-system context is the default
 platforms: [web, ios, android]
 last_updated: 2026-09-14
 ---

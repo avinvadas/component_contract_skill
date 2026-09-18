@@ -1,6 +1,9 @@
 # System policy (L1) — TEMPLATE
 
-**Copy this, fill it, own it.** These are your design system's decisions, not the skill's.
+**Copy this into your own repository, fill it, own it.** These are your design system's
+decisions, not the skill's. The copy lives with your contracts — record its path as
+`contracts.policy` in `.claude/design-system-context.yml` — and **never inside the skill's
+own `system/` directory**, which ships blank and is replaced wholesale on the next update.
 Every row ships blank on purpose: an unfilled policy is a visible gap, the same rule as a
 pending token. Delete a row only if you have decided it does not apply, and say why.
 

@@ -25,4 +25,5 @@ platforms:             # which platforms this system actually targets
 
 contracts:
   path:                # where component contracts live
+  policy:              # this design system's own policy file — one per system, so its location is recorded here
   archetypes:          # local archetype extensions, if any, layered over the shipped library

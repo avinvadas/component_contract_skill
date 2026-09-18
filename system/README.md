@@ -7,7 +7,7 @@ material from which this directory is authored, once.
 |---|---|---|
 | `vocabulary/` | **shipped with the skill** | the format version bumps |
 | `role-archetypes/` | **shipped, locally extensible** | an archetype is added or a platform guarantee changes |
-| `templates/` | shipped as blanks | never — the design system fills copies |
+| `templates/` | shipped as blanks | never — a design system copies these **into its own repository** and fills them there |
 
 **Why JSON and not YAML.** These files are read by the resolver and by every verifier, in
 whatever language that verifier is written in. JSON parses everywhere with no dependency;

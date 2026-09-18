@@ -18,7 +18,7 @@ says what this system *is* — the component tier is called `comp`, `bgColor` me
 A policy says what it has *decided* — every focused control renders a focus indicator. The
 difference is not tone, it is what can be done with each:
 
-| | facts (`.claude/design-system-context.yml`) | policy (`system/policy.md`) |
+| | facts (`.claude/design-system-context.yml`) | policy (the design system's own file, `contracts.policy`) |
 |---|---|---|
 | detectable | **yes** — `detect_tokens.py` proposes them from the tree | **never**; no amount of reading finds a decision |
 | falsifiable | **yes** — a wrong fact is lint | no; a policy can only be unwise |
@@ -83,8 +83,8 @@ standard supplies — token prefix, naming pattern, tree location, target platfo
 |---|---|---|
 | `Button.md` | the design system | six chapters: Intent, Structure, Composition, Appearance, Behavior, Accessibility |
 | `Button.bindings.json` | the design system | only the ids *this* contract introduces, and only where `expect` is not derivable |
-| `system/policy.md` | the design system | the filled policy — its requirements join every contract |
-| `system/policy.bindings.json` | the design system | per-platform `expect` for policy ids |
+| the policy file, located by `contracts.policy` | the design system | the filled policy — its requirements join every contract. **In their repo, never in the skill's `system/`**, which ships blank and is replaced on update |
+| the policy's `.bindings.json`, beside it | the design system | per-platform `expect` for policy ids |
 
 Accessibility is its own chapter rather than a column, so it can be reviewed as an aspect in
 its own right. Composition owns *existence*; Accessibility owns *semantic exposure*.
@@ -99,7 +99,7 @@ its own right. Composition owns *existence*; Accessibility owns *semantic exposu
 
 ```
 system/role-archetypes/button.bindings.json   shipped with the skill
-system/policy.bindings.json                   the design system's
+<policy>.bindings.json                        the design system's
 Button.bindings.json                          this contract's own
 ```
 

@@ -104,7 +104,7 @@ Every reference file carries a **`Last verified:` date** directly under its "Sou
 
 ## Phase 0: Pre-interview checks
 
-Two independent checks, both run once, before Phase 1, every time the skill starts. Both are cheap by default and only occasionally do real work.
+Three independent checks, all run once, before Phase 1, every time the skill starts. All are cheap by default and only occasionally do real work.
 
 ### 0A: Reference freshness check
 
@@ -183,6 +183,7 @@ rtl_supported: true | false
 
 contracts:  # grouped, because `archetypes` belongs beside `path`. Was `contracts_directory` at the root — two shapes for one fact, and scripts/resolve.py reads this one.
   path: [where component contracts live, relative to the directory holding .claude/ — optional, set once detected so future runs don't re-scan]
+  policy: [this design system's own policy file, relative to the directory holding .claude/ — ONE per design system, so its location is recorded here rather than restated by every contract. A contract's `policy:` frontmatter overrides it for that contract only.]
   archetypes: [this design system's own role-archetype directory, optional — searched before the library shipped in system/role-archetypes/]
 ```
 
@@ -223,6 +224,49 @@ Three distinct facts are easy to collapse into one phrase like "the naming conve
 **`tokens.format` is not a naming fact at all** — it's the token *file's* shape (DTCG, Style Dictionary, CSS custom properties, Tailwind), which is what `references/design-tokens-format.md` teaches you to recognize. It says nothing about how a name is spelled; `format: css-custom-properties` does not imply the canonical path is kebab-cased with a `--` prefix. Don't reach for it when you need a naming fact.
 
 None of the three is a Phase 1 question, so never attribute any of them to a question number. When a contract needs to say where a canonical form came from, name the actual source: the context file, the token tree it was read from, or a form the designer volunteered.
+
+### 0C: Where this design system's own files live
+
+Two kinds of file are in play, and only one of them is pullable.
+
+| Ships with the skill — identical for everyone | The design system's own — in **their** repo |
+|---|---|
+| `SKILL.md`, `references/`, `scripts/` | the token tree |
+| `system/vocabulary/`, `system/role-archetypes/` | `.claude/design-system-context.yml` (facts) |
+| `system/templates/` — blanks, never filled in place | the filled policy, and its bindings |
+| | contracts and their bindings |
+| | local role-archetypes, layered over the shipped library |
+
+**Never write into the installed skill directory.** A policy written to the skill's own
+`system/policy.md` is one team's decision shared with every other design system that pulls the
+skill, and it is gone at the next update. The skill's `system/` and a design system's own
+policy directory are different places that unfortunately read alike.
+
+This step runs once. After it, every path is read from the context file instead of guessed or
+re-asked — "which directory should this go in?" is a fact about the design system, not a
+question to put to someone per component.
+
+1. **Scaffold what the skill owns the shape of; discover what the design system owns.** No
+   client's existing layout has an opinion about what a policy file looks like, so withholding
+   it does not respect their repo — it just moves the failure later, into the resolver, as a
+   path error. Their token tree, their existing contracts and their directory conventions are
+   the opposite: locate those, never relocate them.
+2. **Discover first**, as 0B does for tokens: a directory already holding files with this
+   skill's frontmatter shape (`contracts.path`), a filled policy (`contracts.policy`), a local
+   archetype directory (`contracts.archetypes`). Found and unambiguous means no question.
+3. **Two plausible candidates is a question, never a pick.**
+4. **Create only what is missing, and only with a yes.** The context file writes itself — it is
+   tool state and it announces its path. A policy is a document the team owns, so it is created
+   from `system/templates/policy.template.md` on confirmation, **with every row still blank**. A
+   filled row must come from a decision; an unfilled one is the visible gap the design depends
+   on. Never overwrite an existing file: a scaffold is create-if-absent.
+5. **Creating means a few files in a directory they name** — never `git init`, never moving or
+   restructuring anything that already exists.
+6. **Record every path in the context file**, then confirm what was created and where.
+
+Like 0A and 0B, this must never block: an unanswered layout question means proceeding without
+that path recorded, not stopping.
+
 
 ---
 

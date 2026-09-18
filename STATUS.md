@@ -18,8 +18,8 @@ system/                SHIPPED: 4 closed vocabularies · role-archetypes · blan
 facts + policy         THE DESIGN SYSTEM'S OWN, once for the whole system.
                        facts  = what it IS      (.claude/design-system-context.yml — the token
                                                  tree's shape; detectable, and a wrong one is lint)
-                       policy = what it DECIDED (system/policy.md — ships blank on purpose;
-                                                 nothing can detect a decision)
+                       policy = what it DECIDED (their own file, located by `contracts.policy`;
+                                                 ships blank; nothing detects a decision)
    │
    ▼
 Button.md              THE DESIGN SYSTEM AUTHORS THIS — one per component.
