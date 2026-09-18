@@ -49,6 +49,7 @@ Both are revisited once the four supported platforms are stable, tested, and val
 | `scripts/detect_tokens.py <tree> [--json]` | Phase 0B — a token tree has been found. Proposes tiers and naming patterns with evidence, and lists questions. Writes nothing. |
 | `scripts/resolve.py <Component>.md [--out DIR]` | A contract in the format of `docs/contract-md-format-spec.md` is to be resolved against its role-archetype, policy and token tree into one canonical document per platform. |
 | `scripts/resolve_view.py <Component>.md [--out FILE]` | The same contract needs its human-readable resolved view. |
+| `scripts/learned.py snapshot` / `diff` | At the start of a run, and at the end — reports what this run added to the design system's own layer. |
 | `scripts/test_scripts.py` | After changing any script. |
 
 Phase 5 writes the contract these consume — the six-chapter format specified in `docs/contract-md-format-spec.md` — and Phase 6 runs them.
@@ -113,6 +114,8 @@ Every reference file carries a **`Last verified:` date** directly under its "Sou
 ## Phase 0: Pre-interview checks
 
 Three independent checks, all run once, before Phase 1, every time the skill starts. All are cheap by default and only occasionally do real work.
+
+**Before any of them, snapshot what the design system already knows:** `python3 <skill>/scripts/learned.py snapshot`. It records the context file's facts, the policy's decided rows and any local role-archetypes, so Phase 6 can report exactly what this run added. Take it first, so that what 0B and 0C confirm counts too — on a design system's first run everything is new, and it was.
 
 ### 0A: Reference freshness check
 
@@ -270,7 +273,7 @@ question to put to someone per component.
 3. **Two plausible candidates is a question, never a pick.**
 4. **Create only what is missing, and only with a yes.** The context file writes itself — it is
    tool state and it announces its path. A policy is a document the team owns, so it is created
-   from `system/templates/policy.template.md` on confirmation, **with every row still blank**. A
+   from `system/templates/policy.template.md` on confirmation, **with every row still blank**. An undecided row is not a requirement — it binds nothing and fails nothing — so a freshly scaffolded policy never breaks a contract. Each row is asked the first time a component engages it (Phase 6), which is how the policy fills in component by component. A
    filled row must come from a decision; an unfilled one is the visible gap the design depends
    on. Never overwrite an existing file: a scaffold is create-if-absent.
 5. **Creating means a few files in a directory they name** — never `git init`, never moving or
@@ -960,6 +963,36 @@ Three kinds of output come back, and they are not the same kind of thing:
 
 **A gap is never a reason to edit the contract into silence.** `absent-from-tree` and `dimension-unmet` are tasks for whoever owns the token tree; `ambiguous` is one question for the author; `unmapped-leaf` means the tree has tokens this design system has not taught the skill to read, and the fix is a `leaf_map` entry in `.claude/design-system-context.yml` — **never a new token**, since one may already exist under a spelling nobody mapped.
 
+### Act on what the report says the design system does not know yet
+
+Run the resolver with `--report [ComponentName]/.resolve-report.json` and act on it before
+finishing. This is where the design system's own layer grows — one component at a time, and
+only from confirmed answers.
+
+**Policy rows this component engages (`policy_to_ask`).** A policy row is asked the first time a
+component *engages* it — its `engaged-by` column says when — so a Button raises token discipline,
+focus indicator and touch-target floor, and never the loading or empty-state conventions. Ask
+every engaged row in one batched `AskUserQuestion` call, each with **defer** as a real option.
+Then record the answer where it belongs:
+- **decided** — write the statement into the policy row **and** its per-platform bindings into
+  the policy's `.bindings.json`. A decided row without bindings fails the parse.
+- **deferred** — write `deferred — YYYY-MM-DD` as the statement. It is then not re-asked; the
+  report keeps listing it under `policy_deferred`, so it stays visible without becoming noise.
+
+Never write a decided statement the person did not give. Policy is the one layer nothing can
+detect — a filled row must come from a decision.
+
+**Property spellings the resolver cannot read (`unmapped-leaf` gaps).** These are the lazily-asked
+`leaf_map` questions from Phase 0B, asked now because this component needs them. Offer the
+detector's suggestion first, and write only a confirmed answer.
+
+Re-run the resolver after recording answers, until lint is zero and nothing is left to ask. Then
+report what this run taught the design system — `python3 <skill>/scripts/learned.py diff` — so the
+person sees exactly what every later component will inherit. On the second component of a design
+system this list should be short; on the tenth, usually empty. **A run that keeps asking what an
+earlier run already answered is a defect**, and it is tested (`scripts/test_scripts.py`,
+*the second component asks nothing the first settled*).
+
 ### What replaced `structure.json`
 
 Earlier versions emitted `[Component].[Platform].structure.json` and checked it against a rendered tree. **The canonical document replaces it, and the check moved out of this skill.** The reasoning is the one this whole format rests on: the skill's output ends at a *description*, and executing it belongs to whoever owns that platform's toolchain. A verifier reads the canonical document, declares what it can and cannot observe, and reports `pass · fail · unverified · n/a` — anything it cannot observe is named, never passed.
@@ -1016,4 +1049,6 @@ Every row comes from a platform-neutral table, so don't introduce platform-to-pl
 
 The first two are authored and belong in version control. The rest are generated: regenerating them must produce identical files, so a diff after a re-run means the contract changed, not the tooling.
 
-Confirm the full tree after writing, and report the resolver's three outputs — lint (must be zero), token gaps (by kind, with who fixes each), and any machine closure count.
+Confirm the full tree after writing, and report: lint (must be zero); token gaps, by kind, with who fixes each; any machine closure count; and **what this run taught the design system**, from `learned.py diff` — the facts, policy decisions and role-archetypes every later component now inherits.
+
+`.resolve-report.json` and `.claude/.context-snapshot.json` are tool state, regenerated each run — suggest ignoring them in the design system's repository rather than committing them.

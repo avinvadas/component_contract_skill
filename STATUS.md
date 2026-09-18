@@ -76,7 +76,8 @@ since the rewrite. The eval suite's stored generations predate it.
 
 | | |
 |---|---|
-| The interview does not know about policy | **unwired** — Phase 0C specifies the layout and scaffold; policy rows are still never asked |
+| Policy | **fills in as components need it** — a row is asked the first time a component engages it; a blank policy no longer breaks resolution |
+| The design system's layer building up across components | **mechanism tested** (`the_second_component_asks_nothing_the_first_settled`); **behaviour not yet tested** — parked eval case, needs `stream-json` and API calls |
 | iOS and Android verifiers | **sketches, not runnable** |
 | Conformance suite for verifiers (how a new one proves it is correct) | **does not exist** |
 | Role-archetypes tier 2–4 (dialog, list, checkbox, tab, …) | **unbuilt** |

@@ -47,6 +47,11 @@
       "name": "Toast \u2014 Windows status display",
       "reason": "Windows is on the roadmap but not supported. This case asserted that Windows resolves to a generic container with AutomationProperties.LiveSetting=Polite rather than being forced into an interactive control pattern. Restore it when Windows is supported.",
       "blocked_on": "no verified way to obtain a real rendered tree on Windows"
+    },
+    {
+      "name": "Sequence \u2014 the second component asks nothing the first settled",
+      "reason": "Behaviour-level companion to scripts/test_scripts.py's deterministic test of the same name. That test proves the MECHANISM: once answers are recorded, a second component's resolve reports nothing already settled. It cannot prove the MODEL records them \u2014 that Phase 6 writes a confirmed leaf_map entry and a decided policy row, and that the next run reads them instead of re-asking. This case runs two interviews in one design-system directory \u2014 Button on web+ios, then Chip on web+ios \u2014 and asserts: (1) the second run's transcript contains no AskUserQuestion for a leaf_map spelling or policy row the first run wrote; (2) the context file and policy after run 1 contain those answers; (3) `learned.py diff` for run 2 is empty or strictly smaller than run 1's.",
+      "blocked_on": "generate.py records only the final result (`--output-format json`), so the questions a run asked are unobservable; it needs `--output-format stream-json` and a parser for AskUserQuestion tool calls. It also needs a case type that runs two prompts against one shared directory, which generate.py does not have. Costs two generation runs per model."
     }
   ]
 }

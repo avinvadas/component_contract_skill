@@ -206,6 +206,142 @@ A surface that groups related content.
         assert v.returncode == 0, v.stderr[-500:]
 
 
+# ---- accumulation: the second component benefits from the first -------------------------
+ACC_TREE = {
+  "core": {"color": {"purple": {"$type": "color", "$value": "#4C00A8"},
+                     "white":  {"$type": "color", "$value": "#FFFFFF"},
+                     "gray":   {"$type": "color", "$value": "#E5E7EB"}}},
+  "semantic": {"color": {"bg": {"strong": {"$type": "color", "$value": "{core.color.purple}"},
+                                "subtle": {"$type": "color", "$value": "{core.color.gray}"}},
+                         "fg": {"inverse": {"$type": "color", "$value": "{core.color.white}"}}}},
+  "component": {
+    "button": {"primary":   {"bgColor":   {"default": {"$type": "color", "$value": "{semantic.color.bg.strong}"}},
+                             "textColor": {"default": {"$type": "color", "$value": "{semantic.color.fg.inverse}"}}},
+               "secondary": {"bgColor":   {"default": {"$type": "color", "$value": "{semantic.color.bg.subtle}"}},
+                             "textColor": {"default": {"$type": "color", "$value": "{semantic.color.fg.inverse}"}}}},
+    "chip":   {"bgColor":   {"default": {"$type": "color", "$value": "{semantic.color.bg.subtle}"}},
+               "textColor": {"default": {"$type": "color", "$value": "{semantic.color.fg.inverse}"}}}}}
+
+ACC_CONTEXT = """\
+tokens:
+  source: tokens.json
+  tiers:
+    primitive: core
+    semantic: semantic
+    component: component
+  patterns:
+    component:
+      - "component.{component}.{variant}.{property}.{state}"
+      - "component.{component}.{property}.{state}"
+contracts:
+  policy: design-system/policy.md
+"""
+
+
+def acc_contract(name, archetype, extra=""):
+    return """---
+component: %s
+version: 1.0
+role-archetype: %s
+platforms: [web, ios]
+---
+
+# Component Contract: %s
+
+## 1. Intent
+
+A test component.
+
+## 2. Structure
+
+## 3. Composition
+
+## 4. Appearance
+
+### 4.1 Token slots
+
+| when | property | token | id |
+|---|---|---|---|
+| always | background | — | id-APP-01 |
+| always | foreground | — | id-APP-02 |
+%s
+## 5. Behavior
+
+## 6. Accessibility
+""" % (name, archetype, name, extra)
+
+
+def acc_resolve(repo, name):
+    report = repo / ("%s.report.json" % name)
+    with tempfile.TemporaryDirectory() as out:
+        r = run(HERE / "resolve.py", repo / "contracts" / (name + ".md"), "--out", out,
+                "--report", report)
+    return r, json.loads(report.read_text())
+
+
+@test
+def the_second_component_asks_nothing_the_first_settled():
+    """Guards: the design system's layer not accumulating — every component re-asking
+    the same spellings and the same policy decisions, forever."""
+    repo = pathlib.Path(tempfile.mkdtemp())
+    (repo / "contracts").mkdir()
+    (repo / "design-system").mkdir()
+    (repo / ".claude").mkdir()
+    (repo / "tokens.json").write_text(json.dumps(ACC_TREE))
+    (repo / ".claude/design-system-context.yml").write_text(ACC_CONTEXT)
+    # Phase 0C: the policy is scaffolded from the shipped template, every row undecided.
+    shutil.copy(ROOT / "system/templates/policy.template.md", repo / "design-system/policy.md")
+    variant = ("\n### 4.3 Visual variants\n\n| prop | type | required | default | description |\n"
+               "|---|---|---|---|---|\n| `variant` | enum:primary,secondary | no | `primary` | emphasis |\n")
+    (repo / "contracts/Button.md").write_text(acc_contract("Button", "button", variant))
+    (repo / "contracts/Chip.md").write_text(acc_contract("Chip", "none"))
+
+    run(HERE / "learned.py", "snapshot", "--context", repo / ".claude/design-system-context.yml")
+
+    # ---- component A: the first contact with this design system -------------------
+    r, a = acc_resolve(repo, "Button")
+    assert not a["lint"], "a scaffolded, undecided policy must not break a contract: %s" % a["lint"]
+    unmapped = {g["property"] for g in a["token_gaps"] if g["status"] == "unmapped-leaf"}
+    assert unmapped == {"background", "foreground"}, a["token_gaps"]
+    asked = {e["id"] for e in a["policy_to_ask"]}
+    assert asked == {"POL-01", "POL-02", "POL-03", "POL-04"}, \
+        "a Button on web+ios engages token discipline, focus, touch target, literal denial: %s" % asked
+
+    # ---- the person answers; the skill records each answer where it belongs --------
+    ctxf = repo / ".claude/design-system-context.yml"
+    ctxf.write_text(ctxf.read_text().replace("contracts:",
+        "  leaf_map:\n    bgColor: background\n    textColor: foreground\ncontracts:"))
+    pol = repo / "design-system/policy.md"
+    text = pol.read_text()
+    for rid, decision, statement in (
+            ("POL-01", "token discipline", "Every value that can resolve through a token does."),
+            ("POL-02", "focus indicator", "A focused control renders a visible focus indicator."),
+            ("POL-03", "touch-target floor", "Every touch target meets the platform minimum."),
+            ("POL-04", "literal denial", "deferred — 2026-09-18")):
+        old_row = next(l for l in text.splitlines() if l.endswith("id-%s |" % rid))
+        cells = [c.strip() for c in old_row.strip().strip("|").split("|")]
+        cells[2] = statement
+        text = text.replace(old_row, "| " + " | ".join(cells) + " |")
+    pol.write_text(text)
+    (repo / "design-system/policy.bindings.json").write_text(json.dumps({"bindings": {
+        rid: {p: {"expect": {"equals": True}} for p in ("web", "ios")}
+        for rid in ("POL-01", "POL-02", "POL-03")}}))
+
+    # ---- component B: a different component, a different token scope ----------------
+    r, b = acc_resolve(repo, "Chip")
+    assert not b["lint"], b["lint"]
+    still_unmapped = [g for g in b["token_gaps"] if g["status"] == "unmapped-leaf"]
+    assert not still_unmapped, "spellings mapped for Button were asked again for Chip: %s" % still_unmapped
+    assert not b["policy_to_ask"], "decided policy asked again: %s" % b["policy_to_ask"]
+    assert [e["id"] for e in b["policy_deferred"]] == ["POL-04"], \
+        "a deferred row must stay visible without being re-asked: %s" % b["policy_deferred"]
+
+    # ---- and the run can say what it learned ------------------------------------------
+    d = run(HERE / "learned.py", "diff", "--context", ctxf)
+    for expected in ("tokens.leaf_map.bgColor = background", "POL-01", "POL-03", "POL-04 literal denial: deferred"):
+        assert expected in d.stdout, "learned.py did not report %r:\n%s" % (expected, d.stdout)
+
+
 # ---- detection ----------------------------------------------------------------------
 @test
 def detection_reads_tiers_from_alias_direction_not_names():

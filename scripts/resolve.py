@@ -319,11 +319,47 @@ def load_sources(contract_path, context_path=None):
             "binding_layers": binding_layers, "tree": tree, "context_path": context_path}
 
 
+# ---- policy rows: decided, undecided, deferred ---------------------------------------
+# A policy row with no statement is UNDECIDED — not a requirement. It binds nothing and fails
+# nothing. Before this existed, a freshly scaffolded policy made every contract fail with a
+# missing-binding finding per blank row per platform: Phase 0C would create the file and the
+# very next resolve would break. A row is asked the first time a component ENGAGES it.
+TOUCH = {"ios", "android"}
+
+def policy_status(row):
+    st = (row.get("statement") or "").strip()
+    if not st or (st.startswith("*(") and st.endswith(")*")):
+        return "undecided"
+    if st.lower().startswith("deferred"):
+        return "deferred"
+    return "decided"
+
+def engages(trigger, facts):
+    """Does this component engage a policy row? `facts` is what the component actually has."""
+    trigger = (trigger or "").strip()
+    if trigger in ("", "any"):
+        return True
+    kind, _, arg = trigger.partition(":")
+    if kind == "observe":
+        return arg in facts["observes"]
+    if kind == "platform":
+        return arg == "touch" and bool(facts["platforms"] & TOUCH)
+    if kind == "token":
+        return arg in facts["slot_properties"]
+    if kind == "state":
+        return arg in facts["states"]
+    lint.append("policy: unknown `engaged-by` value %r — expected any, observe:<type>, "
+                "platform:touch, token:<property> or state:<name>" % trigger)
+    return False
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("contract", help="path to <Component>.md")
     ap.add_argument("--out", help="directory for canonical documents (default: beside the contract)")
     ap.add_argument("--context", help="design-system context file (default: nearest .claude/)")
+    ap.add_argument("--report", help="also write a JSON report — lint, token gaps, the policy "
+                                     "rows this component engages, closure — for the skill to act on")
     args = ap.parse_args()
 
     S = load_sources(args.contract, args.context)
@@ -341,7 +377,9 @@ def main():
     TRANSITION_IDS.update(t["id"] for t in machine["transitions"])
     machine_bindings = sm.merge_bindings(S["binding_layers"])
 
-    inherited = requirement_rows(arch_body) + requirement_rows(policy_text)
+    policy_rows = requirement_rows(policy_text)
+    decided_policy = [r for r in policy_rows if policy_status(r) == "decided"]
+    inherited = requirement_rows(arch_body) + decided_policy
     local = requirement_rows(body)
     slots = resolve_slots(body, fm, S["tree"])
 
@@ -354,6 +392,26 @@ def main():
         if r["id"] in seen:
             lint.append(f"duplicate requirement id {r['id']}")
         seen[r["id"]] = r
+
+    # ---- which undecided policy rows this component engages ----------------------
+    engagement_facts = {
+        "platforms": set(fm.get("platforms", [])),
+        "observes": {r.get("observe") for r in inherited + local}
+                    | ({"token"} if slots else set())
+                    | ({"state"} if machine["transitions"] else set()),
+        "slot_properties": {sl["property"] for sl in slots},
+        "states": {r["prop"].strip("`") for h, rows in parse_tables(body)
+                   if {"prop", "type"} <= set(h) for r in rows}
+                  | set(machine["states"]),
+    }
+    policy_to_ask, policy_deferred = [], []
+    for r in policy_rows:
+        status = policy_status(r)
+        if status == "decided" or not engages(r.get("engaged-by"), engagement_facts):
+            continue
+        entry = {"id": r["id"], "decision": r.get("decision", ""),
+                 "engaged-by": r.get("engaged-by") or "any"}
+        (policy_to_ask if status == "undecided" else policy_deferred).append(entry)
 
     # ---- emit --------------------------------------------------------------------
     OUT.mkdir(parents=True, exist_ok=True)
@@ -426,10 +484,31 @@ def main():
         for c in machine["closure"]:
             print("  - %s" % c["id"])
 
+    # A decision nobody has made yet — not lint (the document is fine) and not a token gap
+    # (the tree is fine). It is asked now, once, and every later component inherits it.
+    if policy_to_ask:
+        print(f"\npolicy: {len(policy_to_ask)} undecided row(s) this component engages — ask them now:")
+        for e in policy_to_ask:
+            print("  - %-7s %-24s engaged by %s" % (e["id"], e["decision"], e["engaged-by"]))
+    if policy_deferred:
+        print(f"\npolicy: {len(policy_deferred)} deferred row(s) this component engages — not re-asked:")
+        for e in policy_deferred:
+            print("  - %-7s %s" % (e["id"], e["decision"]))
+
     lint[:] = list(dict.fromkeys(lint))   # one finding per fact, not one per platform pass
     print(f"\nlint: {len(lint)} finding(s)")
     for l in lint:
         print("  -", l)
+    if args.report:
+        pathlib.Path(args.report).write_text(json.dumps({
+            "component": COMPONENT,
+            "lint": lint,
+            "token_gaps": [{"id": g["id"], "property": g["property"], "state": g["state"],
+                            "status": g["status"], "detail": g["detail"]} for g in gaps],
+            "policy_to_ask": policy_to_ask,
+            "policy_deferred": policy_deferred,
+            "closure": [c["id"] for c in machine["closure"]],
+        }, indent=2, default=list) + "\n")
     sys.exit(1 if lint else 0)
 
 
