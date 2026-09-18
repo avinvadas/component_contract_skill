@@ -163,15 +163,23 @@ def slot_rows(text):
             return rows
     return []
 
-def default_dims(text):
-    """A variant prop's DEFAULT supplies the dimension a slot resolves against."""
+AXIS_PROPS = ("variant", "size", "tone", "emphasis")
+
+def default_dims(text, prop_axes=None):
+    """A variant prop's DEFAULT supplies the dimension a slot resolves against.
+
+    Which prop feeds which token axis is the design system's naming, not a rule: Carbon calls its
+    variant prop `kind`. `tokens.prop_axes` in the context says so — `{kind: variant}` — and a
+    prop literally named after an axis needs no declaration."""
+    axes = {a: a for a in AXIS_PROPS}
+    axes.update(prop_axes or {})
     dims = {}
     for headers, rows in parse_tables(text):
         if {"prop", "type", "default"} <= set(headers):
             for r in rows:
                 name = r["prop"].strip("`")
-                if r["type"].startswith("enum:") and name in ("variant", "size", "tone", "emphasis"):
-                    dims[name] = r["default"].strip("`")
+                if r["type"].startswith("enum:") and name in axes:
+                    dims[axes[name]] = r["default"].strip("`")
     return dims
 
 def state_of(when):
@@ -194,7 +202,7 @@ def resolve_slots(body, fm, tree):
         lint.append("%d token slot(s) declared but no token tree — set `tokens:` in the "
                     "frontmatter or `tokens.source` in the design-system context" % len(rows))
         return []
-    scope, dims = kebab(fm["component"]), default_dims(body)
+    scope, dims = kebab(fm["component"]), default_dims(body, (tree.facts or {}).get("prop_axes"))
     out = []
     for r in rows:
         when = r.get("when", "always")

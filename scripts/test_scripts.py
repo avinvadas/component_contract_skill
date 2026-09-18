@@ -342,6 +342,42 @@ def the_second_component_asks_nothing_the_first_settled():
         assert expected in d.stdout, "learned.py did not report %r:\n%s" % (expected, d.stdout)
 
 
+# ---- a real design system's shape: Carbon ---------------------------------------------
+@test
+def carbon_shaped_tree_reads_correctly_and_never_binds_across_variants():
+    """Guards four failures the lab found on @carbon/themes, each invisible on the fixtures:
+    tiers split across files; component values that exist only per THEME; names that carry
+    no property; and — worst — a primary button's text colour bound to the tertiary button's,
+    because narrowing by variant once fell back to the un-narrowed list when it came up empty."""
+    from tokens import Tree
+    d = pathlib.Path(tempfile.mkdtemp())
+    (d / "palette.json").write_text(json.dumps({
+        "blue": {"60": {"$type": "color", "$value": {"colorSpace": "srgb", "components": [0, 0.4, 1], "hex": "#0f62fe"}}},
+        "gray": {"30": {"$type": "color", "$value": "#c6c6c6"}}}))
+    (d / "theme.json").write_text(json.dumps({
+        "text-on-color": {"$type": "color", "$value": "{gray.30}"}}))
+    (d / "button.json").write_text(json.dumps({"button": {
+        "primary":  {"$type": "color", "$extensions": {"carbon.themes": {"white": "{blue.60}"}}},
+        "tertiary": {"$type": "color", "$extensions": {"carbon.themes": {"white": "{blue.60}"}}},
+        "disabled": {"$type": "color", "$extensions": {"carbon.themes": {"white": "{gray.30}"}}}}}))
+    facts = {"sources": {"primitive": ["palette.json"], "semantic": ["theme.json"], "component": ["button.json"]},
+             "theme": {"name": "white", "value_path": ["$extensions", "carbon.themes", "{theme}"]},
+             "readings": {"component.button.primary":  {"property": "background", "variant": "primary"},
+                          "component.button.tertiary": {"property": "foreground", "variant": "tertiary"},
+                          "component.button.disabled": {"property": "background", "state": "disabled"}}}
+    t = Tree(str(d), facts)
+    assert not t.problems, t.problems
+    # tiers from files; themed values read; aliases rewritten across files
+    assert t.tokens["component.button.primary"]["value"] == "{primitive.blue.60}", t.tokens["component.button.primary"]
+    # a DTCG 2025 colour object is a value, never an alias
+    assert "primitive.blue.60" not in t.alias, "a colour object was read as an alias"
+    assert t.resolve("background", "button", {"variant": "primary"})[:2] == ("component.button.primary", "bound")
+    assert t.resolve("background", "button", {"variant": "primary"}, "disabled")[:2] == \
+        ("component.button.disabled", "bound"), "a token for every variant must stay eligible"
+    tok, status, _ = t.resolve("foreground", "button", {"variant": "primary"})
+    assert tok != "component.button.tertiary", "bound a primary button's text to the TERTIARY button's"
+
+
 # ---- detection ----------------------------------------------------------------------
 @test
 def detection_reads_tiers_from_alias_direction_not_names():

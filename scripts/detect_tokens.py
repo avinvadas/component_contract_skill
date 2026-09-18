@@ -24,7 +24,7 @@ What is proposed, and from what:
 import argparse, collections, json, pathlib, re, sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from tokens import Tree, PROPERTIES, STATES, AXES, DEFAULT_STATES, TIER_ROLES  # noqa: E402
+from tokens import Tree, PROPERTIES, STATES, AXES, DEFAULT_STATES, TIER_ROLES, split_state  # noqa: E402
 
 
 def classify_tiers(tree):
@@ -164,9 +164,64 @@ def suggest_property(spelling, token_type):
     return hits
 
 
-def detect(tree_path):
-    base = Tree(tree_path)
-    roles, evidence, questions = classify_tiers(base)
+# A token whose name does not carry its property (Carbon's `tertiary` is text colour, its
+# `tertiary-hover` a background) can still be read — its `$description` says what it colours.
+# These are the openings a description uses; the first that matches wins, and several
+# properties are allowed, because one token can serve two.
+PROPERTY_WORDS = {"background", "bg", "fill", "surface", "border", "outline",
+                  "stroke", "color", "text", "icon", "foreground"}
+
+DESCRIPTION_ROLES = [
+    (re.compile(r"^\s*border and text colou?r", re.I), ["border-color", "foreground"]),
+    (re.compile(r"^\s*(text and icon|text|icon|foreground) colou?r", re.I), ["foreground"]),
+    (re.compile(r"^\s*(background|fill|surface) colou?r", re.I), ["background"]),
+    (re.compile(r"^\s*(border|outline|stroke)(/(border|outline|stroke))? colou?r", re.I), ["border-color"]),
+    (re.compile(r"^\s*(border|stroke) width", re.I), ["border-width"]),
+    (re.compile(r"^\s*(corner )?radius", re.I), ["radius"]),
+]
+
+
+def propose_reading(tree, path):
+    """(reading, evidence) for an unreadable component token, or (None, why)."""
+    tok = tree.tokens[path]
+    desc = tok.get("desc") or ""
+    props = next((roles for rx, roles in DESCRIPTION_ROLES if rx.search(desc)), None)
+    if not props:
+        return None, "its $description does not say what it colours: %r" % desc[:80]
+    leaf = path.split(".")[-1]
+    if leaf in STATES:
+        variant, state = None, leaf        # `disabled`: the state itself, across every variant
+    else:
+        variant, state = split_state(leaf)
+        # A name can lead with its property word — Carbon's `tag.background-blue`,
+        # `tag.color-blue`. That word is the property the description already gave; what is
+        # left is the variant, `blue`. Left in, 36 tag proposals would have named a variant
+        # `background-blue`.
+        w = variant.split("-")
+        while len(w) > 1 and w[0] in PROPERTY_WORDS:
+            w = w[1:]
+        variant = "-".join(w)
+    reading = {"property": props[0] if len(props) == 1 else props}
+    if variant:
+        reading["variant"] = variant
+    if state:
+        reading["state"] = state
+    return reading, desc
+
+
+def detect(tree_path, context=None):
+    facts = dict((context or {}).get("tokens") or {})
+    if facts.get("sources"):
+        # Tiers are DECLARED per source file, so nothing is inferred. Inferring would be wrong
+        # here anyway: Carbon's component tokens alias the palette directly, skipping semantic,
+        # which alias direction would read as a second primitive-facing tier.
+        base = Tree(tree_path, {"sources": facts["sources"], "theme": facts.get("theme")})
+        roles = {r: r for r in TIER_ROLES if any(t.startswith(r + ".") for t in base.tokens)}
+        _, evidence, _ = classify_tiers(base)
+        questions = []
+    else:
+        base = Tree(tree_path)
+        roles, evidence, questions = classify_tiers(base)
     comp = roles.get("component")
     patterns = propose_patterns(base, comp) if comp else {}
 
@@ -198,9 +253,14 @@ def detect(tree_path):
 
     # Re-read the tree through the proposed facts, with unknown slots treated as `{*}`, to
     # find the property spellings that remain unreadable.
-    facts = {"tiers": roles,
-             "patterns": {"component": [p["template"].replace("{?}", "{*}") for p in proposed_patterns]}}
-    tree = Tree(tree_path, facts)
+    reread = {"tiers": roles,
+              "patterns": {"component": [p["template"].replace("{?}", "{*}") for p in proposed_patterns]}}
+    for k in ("sources", "theme", "leaf_map", "readings"):
+        if facts.get(k):
+            reread[k] = facts[k]
+    if facts.get("patterns"):
+        reread["patterns"] = facts["patterns"]      # confirmed patterns beat proposed ones
+    tree = Tree(tree_path, reread)
     unread = collections.OrderedDict()
     for path, tok in sorted(tree.tokens.items()):
         if tree.role_of(path) != "component":
@@ -210,6 +270,20 @@ def detect(tree_path):
             entry = unread.setdefault(spelling, {"type": tok["type"], "examples": []})
             if len(entry["examples"]) < 2:
                 entry["examples"].append(path)
+
+    proposed_readings, reading_questions = {}, []
+    for path in sorted(tree.tokens):
+        if tree.role_of(path) != "component" or tree.prop_of(path)[0] is not None:
+            continue
+        reading, why = propose_reading(tree, path)
+        if reading:
+            proposed_readings[path] = {"reading": reading, "evidence": why}
+            unread.pop(tree.base_state(path)[0], None)
+        else:
+            unread.pop(tree.base_state(path)[0], None)   # one question per token, never two
+            reading_questions.append({"about": "readings.%s" % path,
+                                      "question": "What does `%s` colour or size? %s" % (path, why),
+                                      "options": list(PROPERTIES)})
 
     leaf_questions = []
     for spelling, info in unread.items():
@@ -227,7 +301,8 @@ def detect(tree_path):
         "scopes": sorted({s for s in (tree.scope_of(p) for p in tree.tokens) if s}),
         "patterns": proposed_patterns,
         "derived_roles": len(tree.derived),
-        "questions": questions + pattern_questions + leaf_questions,
+        "readings": proposed_readings,
+        "questions": questions + pattern_questions + reading_questions + leaf_questions,
     }
 
 
@@ -244,6 +319,15 @@ def report(d):
     for p in d["patterns"]:
         out.append("- `%s`%s — e.g. `%s`" % (p["template"], "  **needs an answer**" if p["needs_answer"] else "",
                                             p["examples"][0]))
+    if d.get("readings"):
+        out += ["", "## Proposed readings (%d) — from each token's own description; confirm, never assume" % len(d["readings"]), ""]
+        for path, r in sorted(d["readings"].items()):
+            rd = r["reading"]
+            out.append("- `%s` → **%s**%s%s — \"%s\"" % (
+                path, rd["property"] if isinstance(rd["property"], str) else " + ".join(rd["property"]),
+                (" · variant `%s`" % rd["variant"]) if rd.get("variant") else "",
+                (" · state `%s`" % rd["state"]) if rd.get("state") else "",
+                r["evidence"][:70]))
     out += ["", "## Questions (%d)" % len(d["questions"]), ""]
     for q in d["questions"]:
         sug = (" — suggested: **%s**" % ", ".join(q["suggested"])) if q.get("suggested") else ""
@@ -256,10 +340,16 @@ def report(d):
 
 def main():
     ap = argparse.ArgumentParser(description="Propose design-system token facts for Phase 0B.")
-    ap.add_argument("tree", help="path to the token tree (DTCG or Style Dictionary JSON)")
+    ap.add_argument("tree", help="path to the token tree — or, with --context declaring "
+                                 "`tokens.sources`, the directory those sources are relative to")
+    ap.add_argument("--context", help="design-system context file whose `tokens:` facts to apply")
     ap.add_argument("--json", action="store_true", help="machine-readable proposals and questions")
     args = ap.parse_args()
-    d = detect(args.tree)
+    context = None
+    if args.context:
+        import context as ctx
+        context = ctx.load(args.context)
+    d = detect(args.tree, context)
     print(json.dumps(d, indent=2, default=list) if args.json else report(d))
 
 

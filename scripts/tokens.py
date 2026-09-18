@@ -63,7 +63,95 @@ def _leaves(node, path=""):
             yield path, node
             return
         for k, v in node.items():
+            if k.startswith("$"):
+                continue           # $description, $extensions: metadata, never a group of tokens
             yield from _leaves(v, (path + "." + k) if path else k)
+
+
+def _dig(node, path):
+    """Follow a key path. A LIST of keys, or a `/`-separated string — never dots, because real
+    extension keys contain them: Carbon's is literally `carbon.themes`."""
+    parts = path if isinstance(path, list) else str(path).split("/")
+    for part in parts:
+        if not isinstance(node, dict) or part not in node:
+            return None
+        node = node[part]
+    return node
+
+
+def _themed(node, value_path):
+    """Give a node a `$value` from its themed extension when it has none of its own.
+
+    Carbon's component tokens carry no `$value` at all: the value exists per theme, under
+    `$extensions -> carbon.themes -> white`. A reader that only knows `$value` sees zero tokens.
+    """
+    if isinstance(node, dict):
+        out = {k: _themed(v, value_path) for k, v in node.items()}
+        if "$value" not in node and "value" not in node and "$type" in node and value_path:
+            v = _dig(node, value_path)
+            if v is not None:
+                out["$value"] = v
+        return out
+    return node
+
+
+def load_sources(base, sources, theme=None, value_path=None, problems=None):
+    """Several token files -> one tree whose top-level groups are the tiers.
+
+    A real design system rarely ships one file with its tiers as top-level groups. Carbon's
+    semantic tokens sit at the TOP of `white.json` with no tier prefix, and alias into a
+    separate `color-palette.json` as `{gray.80}`. Each file is placed under its declared tier,
+    and every alias is rewritten to the tier that actually defines its target — ambiguity (a
+    path defined in two tiers) is reported, never guessed.
+    """
+    import glob as _glob, pathlib as _pl
+    problems = problems if problems is not None else []
+    if isinstance(value_path, list):
+        vp = [str(x).replace("{theme}", theme or "") for x in value_path] if theme else None
+    else:
+        vp = value_path.replace("{theme}", theme) if (value_path and theme) else None
+    # Tier -> paths is the shape: `{primitive: [palette.json], component: [components/*.json]}`.
+    # A list of {path, tier} is accepted too, but is not written by the skill — the
+    # dependency-free context reader refuses lists of mappings, deliberately.
+    if isinstance(sources, dict):
+        pairs = [{"tier": t, "path": pth} for t, pths in sources.items()
+                 for pth in (pths if isinstance(pths, list) else [pths])]
+    else:
+        pairs = list(sources or [])
+    tiers = {}
+    for src in pairs:
+        tier, pat = src.get("tier"), src.get("path")
+        if tier not in ("primitive", "semantic", "component"):
+            problems.append("tokens.sources: %r has tier %r — expected primitive, semantic or component" % (pat, tier))
+            continue
+        files = sorted(_glob.glob(str(_pl.Path(base) / pat)))
+        if not files:
+            problems.append("tokens.sources: %r matches no file" % pat)
+        for f in files:
+            data = _themed(json.loads(open(f).read()), vp)
+            for k, v in data.items():
+                if not k.startswith("$"):
+                    tiers.setdefault(tier, {}).setdefault(k, v)
+    # where does each unprefixed path live?
+    where = {}
+    for tier, tree in tiers.items():
+        for p, _ in _leaves(tree):
+            where.setdefault(p, set()).add(tier)
+
+    def rewrite(node):
+        if isinstance(node, dict):
+            return {k: rewrite(v) for k, v in node.items()}
+        if isinstance(node, str):
+            m = REF.match(node)
+            if m:
+                target = m.group(1)
+                homes = where.get(target, set())
+                if len(homes) == 1:
+                    return "{%s.%s}" % (next(iter(homes)), target)
+                if len(homes) > 1:
+                    problems.append("alias {%s} is defined in more than one tier: %s" % (target, sorted(homes)))
+        return node
+    return {tier: rewrite(tree) for tier, tree in tiers.items()}
 
 
 def split_state(leaf):
@@ -95,13 +183,34 @@ class Tree:
         self.T.update({k: v for k, v in (self.facts.get("tiers") or {}).items() if k in TIER_ROLES and v})
         self.axes = list(self.facts.get("axes") or AXES)
         self.default_states = list(self.facts.get("default_states") or DEFAULT_STATES)
+        # Per-token READINGS, for names that do not carry the property. Carbon's `tertiary` is a
+        # text colour while `tertiary-hover` is a background; `danger-secondary` is border AND
+        # text. No pattern or spelling map can read that — only a statement per token can, and
+        # the token's own `$description` is where the detector proposes it from.
+        self.readings = {}
+        for tok, r in (self.facts.get("readings") or {}).items():
+            if isinstance(r, str):
+                r = {"property": r}
+            props = r.get("property")
+            props = props if isinstance(props, list) else [props]
+            bad = [x for x in props if x not in PROPERTIES]
+            if bad:
+                self.problems.append("tokens.readings.%s: %s is not a property" % (tok, ", ".join(map(str, bad))))
+                continue
+            self.readings[str(tok)] = {"property": tuple(props), "variant": r.get("variant"),
+                                       "state": r.get("state")}
         self.patterns = {}
         for role, templates in (self.facts.get("patterns") or {}).items():
             if role not in TIER_ROLES:
                 self.problems.append("tokens.patterns: %r is not a tier (%s)" % (role, ", ".join(TIER_ROLES)))
                 continue
             self.patterns[role] = [self._compile(t) for t in (templates or [])]
-        raw = json.loads(open(path).read())
+        if self.facts.get("sources"):
+            # `path` is then the directory the sources are relative to.
+            raw = load_sources(path, self.facts["sources"], (self.facts.get("theme") or {}).get("name"),
+                               (self.facts.get("theme") or {}).get("value_path"), self.problems)
+        else:
+            raw = json.loads(open(path).read())
         self.path = path
         self.tokens = {}
         for p, node in _leaves(raw):
@@ -120,7 +229,10 @@ class Tree:
         # ---- alias graph -----------------------------------------------------------
         self.alias, self.consumers = {}, {}
         for p, t in self.tokens.items():
-            m = REF.match(str(t["value"]))
+            # Only a STRING is ever an alias. DTCG 2025.10 writes a colour as an object —
+            # {"colorSpace": "srgb", "components": [...]} — and its text form also starts with
+            # `{`, which once made all 244 of Carbon's palette colours read as aliases.
+            m = REF.match(t["value"]) if isinstance(t["value"], str) else None
             if m:
                 self.alias[p] = m.group(1)
                 self.consumers.setdefault(m.group(1), []).append(p)
@@ -220,6 +332,9 @@ class Tree:
 
     # ---- dimensions ---------------------------------------------------------------
     def dims_of(self, path):
+        if path in self.readings:
+            v = self.readings[path]["variant"]
+            return {"variant": v} if v else {}
         slots = self.parse(path)
         if slots is not None:
             return {k: v for k, v in slots.items() if k not in ("component", "property", "state")}
@@ -231,7 +346,14 @@ class Tree:
         return d
 
     def prop_of(self, path):
-        """(property, state) a token path expresses, or (None, state) if unreadable."""
+        """(property, state) a token path expresses, or (None, state) if unreadable.
+
+        A declared reading wins over everything: it is a confirmed statement about THIS token.
+        Its property may be a tuple, when one token serves two properties."""
+        if path in self.readings:
+            r = self.readings[path]
+            prop = r["property"][0] if len(r["property"]) == 1 else r["property"]
+            return prop, r["state"]
         base, state = self.base_state(path)
         # A role derived from the alias graph is evidence about THIS path, and beats a
         # spelling match — it is what the tree's own consumers say the token is for.
@@ -259,7 +381,7 @@ class Tree:
             if self.role_of(p) != role or (scope is not None and not self.in_scope(p, scope)):
                 continue
             pr, st = self.prop_of(p)
-            if pr == prop and st == state:
+            if (pr == prop or (isinstance(pr, tuple) and prop in pr)) and st == state:
                 out.append(p)
         return out
 
@@ -272,11 +394,14 @@ class Tree:
         for role, sc in (("component", scope), ("semantic", None)):
             cands = self.candidates(prop, state, role, sc)
             if dims and role == "component":
-                narrowed = [c for c in cands
-                            if all(self.dims_of(c).get(k) == v for k, v in dims.items()
-                                   if k in self.dims_of(c))]
-                if narrowed:
-                    cands = narrowed
+                # A candidate whose variant CONTRADICTS the one asked for is never eligible —
+                # even when that leaves nothing. This once fell back to the un-narrowed list,
+                # and on Carbon bound a PRIMARY button's text colour to `button.tertiary`, the
+                # tertiary button's, because it was the only foreground token in scope. A token
+                # with no such dimension (Carbon's `disabled`, for every variant) stays eligible.
+                cands = [c for c in cands
+                         if all(self.dims_of(c).get(k) == v for k, v in dims.items()
+                                if k in self.dims_of(c))]
             if len(cands) == 1:
                 return cands[0], "bound", role
             if len(cands) > 1:
