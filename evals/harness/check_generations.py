@@ -15,7 +15,7 @@ import os, sys, json
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import genstore
-from invariants import check_contract, check_structure, check_output_shape
+from invariants import check_contract, check_resolves, check_output_shape
 
 
 def component_of(rundir):
@@ -34,10 +34,10 @@ def check_run(rundir):
         return [("no contract", f"{rundir} contains no .md contract")]
     v += [(x.invariant, x.detail) for x in check_output_shape(rundir, comp)]
     v += [(x.invariant, x.detail) for x in check_contract(md)]
-    for dirpath, _, names in os.walk(rundir):
-        for n in names:
-            if n.endswith(".structure.json"):
-                v += [(x.invariant, x.detail) for x in check_structure(os.path.join(dirpath, n))]
+    # The deepest check: the contract resolves. This replaces the old per-platform
+    # structure.json inspection — that file no longer exists, and what it asserted is now
+    # decided by the resolver against the real vocabulary, archetype, policy and token tree.
+    v += [(x.invariant, x.detail) for x in check_resolves(md)]
     return v
 
 

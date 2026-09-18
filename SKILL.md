@@ -5,16 +5,24 @@ description: Creates structured component contract markdown files for design sys
 
 ## What this skill produces
 
-One interview produces **one component contract file**, capturing the design intent of a UI component, covering any combination of **supported** target platforms (Web, iOS, Android, macOS) within that single document. Windows and Linux are on the roadmap and deliberately not supported yet — see "Supported platforms" below. The contract opens with a short Design Intent statement, then organizes everything else under four concerns — a plain separation-of-concerns structure so a reader always knows where to look for a given fact, rather than a grab-bag "Properties" section spanning several unrelated ones:
+One interview produces **one component contract**, capturing the design intent of a UI component across any combination of **supported** platforms (Web, iOS, Android, macOS) in a single document. Windows and Linux are on the roadmap and deliberately not supported yet — see "Supported platforms" below.
 
-- **Structure** — the correct native markup/control per platform, composition zones and their ownership/cardinality, adaptive layout, and the layout props/policy that control spatial arrangement
-- **Appearance** — visual variants, interaction states, and design tokens
-- **Behavior** — behavioral props, interactions, the internal state machine, and events emitted/received — per platform wherever that genuinely varies
-- **Accessibility** — roles/attributes per platform, keyboard/gesture navigation, focus management, and screen reader/assistive-technology expectations
+The contract is **six chapters**, in this order, so a reader always knows where a given fact lives:
 
-Sections that describe intent (most of Structure's composition rules, most of Appearance, the shared parts of Behavior) are written once; sections that describe platform-native implementation (Structure's markup/control, most of Accessibility, the platform-specific parts of Behavior) hold one row per targeted platform inside the same section, rather than living in a separate file per platform. The document is meant to work as direct context for an agent implementing or generating the component, not only as something a person reads top to bottom — so nothing in it is inferred or left implicit that an implementer would need to ask about.
+| | |
+|---|---|
+| **1 Intent** | what it is and what need it solves |
+| **2 Structure** | what the thing is, and the space it occupies |
+| **3 Composition** | what it contains, and on what terms |
+| **4 Appearance** | which properties are tokenised, and what varies |
+| **5 Behavior** | what it does, emits, receives, and how its state moves |
+| **6 Accessibility** | semantic exposure — its own chapter, reviewable as an aspect in its own right |
 
-Two checkable artifacts are generated separately, both split per platform because each platform's build process consumes its own, even though the contract itself isn't split. A **structure file** (`[Component].[Platform].structure.json`) is written every time — it carries §2.1's root element, §2.2's zone order, and §6.1–§6.3's accessibility facts in a form checkable against a real *rendered* tree. A **JSON Schema** (`[Component].[Platform].schema.json`) is written only if requested (Q10) — it validates a consumer-supplied props instance, a different subject entirely, and says nothing about whether an implementation honors the contract.
+**A requirement is written once, in plain language, and never names a platform's vocabulary.** "The control is reachable by the platform's sequential focus navigation" is one requirement; that it is Tab on web and a swipe gesture on iOS is a **binding**, held in a companion `[Component].bindings.json`. This is what lets one document serve every platform without a column per platform or a file per platform.
+
+**The contract inherits.** One frontmatter line — `role-archetype: button` — brings in what every platform already guarantees for that role, and the design system's policy brings in its cross-cutting commitments. Neither is restated per component.
+
+**Three things are generated from it, never authored** (Phase 6): a `[Component].resolved.md` for people, with everything inherited resolved in; one `[Component].[platform].canonical.json` per platform — a description an existing test framework can consume, not a test; and, only if asked, a props `[Component].[Platform].schema.json`.
 
 The person using this skill does not need to know HTML, ARIA, native accessibility APIs, or any platform's interaction conventions. The skill derives all technical decisions from plain-language answers about the component's purpose and how users interact with it.
 
@@ -43,7 +51,7 @@ Both are revisited once the four supported platforms are stable, tested, and val
 | `scripts/resolve_view.py <Component>.md [--out FILE]` | The same contract needs its human-readable resolved view. |
 | `scripts/test_scripts.py` | After changing any script. |
 
-**Current limit, stated plainly:** `resolve.py` consumes the six-chapter contract format specified in `docs/contract-md-format-spec.md`. **Phase 5 below does not yet produce that format** — it still writes the earlier contract, with `structure.json` and `schema.json` from Phase 6. The Phase 0B token facts above are real and used by the resolver today; the rest of the wiring is the Phase 5/6 rewrite tracked in `STATUS.md`.
+Phase 5 writes the contract these consume — the six-chapter format specified in `docs/contract-md-format-spec.md` — and Phase 6 runs them.
 
 ## Reference files
 
@@ -58,10 +66,10 @@ Both are revisited once the four supported platforms are stable, tested, and val
 | `references/design-tokens-format.md` | Phase 2 Path B — recognizing whichever token file shape (DTCG, Style Dictionary, CSS custom properties, Tailwind config) the coded reference actually uses. |
 | `references/figma-variables-model.md` | Phase 2 Path A — extracting bound tokens from Figma via structured tool access when available, or the manual-inspection fallback when it isn't. |
 | `references/json-schema-draft-07.md` | Phase 6 — the full keyword reference and the Draft 07 vs. 2020-12 decision. |
-| `references/token-naming-validation.md` | Phase 6 — checking a real, generated implementation's token names against §4.3.2's Token Map, when `generated_downstream` is confirmed. Not a props-schema concern; a separate check against source files, not a JSON instance. |
-| `references/structural-fact-validation.md` | Phase 6 — checking a real *rendered* tree (never source code) for §2.1's root element, §2.2's zone order, and §6.1–§6.3's accessibility facts. Always runs, no precondition — unlike token-name validation, nothing here depends on a design system's own choices. |
+| `references/token-naming-validation.md` | Phase 6 — checking a real, generated implementation's token names against chapter 4.1's token slots, when `generated_downstream` is confirmed. Not a props-schema concern; a separate check against source files, not a JSON instance. |
+| `references/structural-fact-validation.md` | Writing or reviewing a **verifier**, which is where this check now lives — how to obtain a real *rendered* tree per platform (never source code) and read order from it. The skill itself no longer runs it; the canonical document describes the facts, and whoever owns that platform's toolchain checks them. |
 | `references/platform-differences.md` | Comparing how a cross-cutting concern (accessibility API, layout adaptation, RTL, motion) is expressed across platforms, before following into the relevant platform directory for depth. Comparison content only — it does not decide which platform applies to a given component. |
-| `references/native-events-models.md` | Phase 5 §5.3/§5.4 for any non-Web platform row — the native counterpart to `web/dom-events-model.md`, covering the idiom fork on each platform (closures vs. delegates, lambdas vs. listeners, routed vs. classic .NET events, GObject signals vs. Qt signals/slots). |
+| `references/native-events-models.md` | Phase 5 chapter 5.2 Events/chapter 5.2 Events for any non-Web platform row — the native counterpart to `web/dom-events-model.md`, covering the idiom fork on each platform (closures vs. delegates, lambdas vs. listeners, routed vs. classic .NET events, GObject signals vs. Qt signals/slots). |
 
 ### `references/web/` — consulted when Q2 includes Web
 
@@ -70,8 +78,8 @@ Both are revisited once the four supported platforms are stable, tested, and val
 | `wai-aria-patterns.md` | Deriving markup (Phase 3) or accessibility (Phase 4) for a pattern not fully covered by the decision tables below — combobox, menu, tooltip, tree view, slider, grid, accordion, or the full keyboard set for any pattern. |
 | `wcag-mapping.md` | Deriving §6 Accessibility (Phase 4), to ground a requirement in the success criterion it satisfies — optional citation, not a new question to ask the designer. |
 | `html-semantics.md` | Phase 3 edge cases the decision table doesn't resolve — nested interactive content, disabled vs. aria-disabled, form-associated custom elements. |
-| `css-layout-and-interaction.md` | Phase 3 §2.2 Order / §2.3 Adaptive Layout — container queries, and CSS logical properties for RTL-safe positioning. Phase 4/5 §4.1 / §6.3 — the `:focus` vs. `:focus-visible` distinction, `prefers-reduced-motion` and motion tokens. |
-| `dom-events-model.md` | Phase 5 §5.2/§5.3/§5.4 — the framework-agnostic `CustomEvent` contract, and how a contract's behavior/accessibility claims are verified against rendered DOM output rather than framework internals. |
+| `css-layout-and-interaction.md` | Phase 3 chapter 3.1's position column / chapter 2.2 Adaptive layout — container queries, and CSS logical properties for RTL-safe positioning. Phase 4/5 chapter 4.2 Interaction states / chapter 6 Accessibility — the `:focus` vs. `:focus-visible` distinction, `prefers-reduced-motion` and motion tokens. |
+| `dom-events-model.md` | Phase 5 chapter 5.4 Machine/chapter 5.2 Events/chapter 5.2 Events — the framework-agnostic `CustomEvent` contract, and how a contract's behavior/accessibility claims are verified against rendered DOM output rather than framework internals. |
 
 ### Other platforms — consulted when Q2 includes that platform
 
@@ -123,10 +131,10 @@ This check must never be the reason someone can't generate a contract. A skipped
 Everything in `references/` is external and generic — it's the same regardless of whose design system this is. This step is the opposite: a handful of facts specific to *this* design system that don't change component-to-component (token prefix, which platforms use which framework, naming casing, RTL support, whether existing contracts live somewhere findable) and shouldn't be re-derived or re-asked on every single invocation.
 
 1. Look for a context file at `.claude/design-system-context.yml` in the current working directory (create the `.claude/` directory if it doesn't exist yet, when writing in step 3). This is a cheap local file check — do it unconditionally.
-2. **If it exists**, load it silently. Its contents seed defaults for Phase 1 onward (e.g., a per-platform framework default that changes which concrete controls Phase 3 names for iOS/Android, a default platform set to pre-check in Q2) and supply facts later phases read directly rather than ask about (`tokens.prefix` and `tokens.naming_pattern`, which Phase 2 normalizes extracted token names against; `tokens.format`, which tells Phase 2 what file shape it is reading) — seeding a default is not the same as skipping the question. A component can still legitimately differ from the system-wide default (not every component targets every platform the system generally supports), so nothing here should suppress a question, only pre-fill or bias its options.
+2. **If it exists**, load it silently. Its contents seed defaults for Phase 1 onward (e.g., a per-platform framework default that changes which concrete controls Phase 3 names for iOS/Android, a default platform set to pre-check in Q2) and supply facts later phases read directly rather than ask about (`tokens.prefix` and `tokens.patterns`, which Phase 2 normalizes extracted token names against; `tokens.format`, which tells Phase 2 what file shape it is reading) — seeding a default is not the same as skipping the question. A component can still legitimately differ from the system-wide default (not every component targets every platform the system generally supports), so nothing here should suppress a question, only pre-fill or bias its options.
 3. **If it doesn't exist**, don't run a Phase-1-style sequential interview for this — these fields are independent of each other (unlike Phase 1's questions, which deliberately go one-at-a-time because later options depend on earlier answers), so there's no reason to force multiple round-trips. Instead:
    - **Detect first.** Scan the working directory before asking anything: a token file (`tokens.json`, `tailwind.config.*`, `*.tokens.json`, CSS custom-property definitions) for format, prefix, and the `naming-pattern` its canonical paths follow — read several paths, not one, since a slot order is only visible across examples; platform manifests (`Package.swift`/`Podfile` vs. `build.gradle` dependencies) for framework hints; an existing directory of files carrying this skill's frontmatter shape for where contracts already live. This costs nothing and needs no confirmation round-trip when it succeeds outright. **Read the file's actual content, not just its filename** — a `tailwind.config.js` whose colors reference `var(--token-name)` means the real source format is CSS custom properties with Tailwind only as a consumption layer, not "tailwind" as the format; recording it as plain Tailwind would be wrong even though the right filename was found.
-   - **Ask everything left in one batched `AskUserQuestion` call, up to four questions.** Cover token format, prefix, and `naming-pattern`, whether token values are ever hand-typed in components or are strictly generated downstream from the token tree (`generated_downstream` — a policy fact, not a technical detection; see references/token-naming-validation.md for what this gates), per-platform framework (SwiftUI vs. UIKit, Compose vs. View system, GTK vs. Qt — this materially changes which concrete controls Phase 3 names, not cosmetic detail), naming casing, and RTL support. Where step one detected a value — including a confident one — make it the first, pre-recommended option in that question rather than skipping confirmation entirely; a system-wide default deserves a quick confirm, not a silent guess, since every future component inherits it. If more than four fields need either confirmation or asking (a design system spanning several platforms easily exceeds four), use a second batched call rather than forcing everything into one or dropping confirmation for whichever fields didn't fit — order both calls so anything ambiguous or fully undetected comes first, confident detections last, so a second call is the one most likely to be skippable in practice, not the one most likely to matter.
+   - **Ask everything left in one batched `AskUserQuestion` call, up to four questions.** Cover token format and prefix (the detector proposes `naming-pattern` itself — confirm its proposal rather than asking for a slot list), whether token values are ever hand-typed in components or are strictly generated downstream from the token tree (`generated_downstream` — a policy fact, not a technical detection; see references/token-naming-validation.md for what this gates), per-platform framework (SwiftUI vs. UIKit, Compose vs. View system, GTK vs. Qt — this materially changes which concrete controls Phase 3 names, not cosmetic detail), naming casing, and RTL support. Where step one detected a value — including a confident one — make it the first, pre-recommended option in that question rather than skipping confirmation entirely; a system-wide default deserves a quick confirm, not a silent guess, since every future component inherits it. If more than four fields need either confirmation or asking (a design system spanning several platforms easily exceeds four), use a second batched call rather than forcing everything into one or dropping confirmation for whichever fields didn't fit — order both calls so anything ambiguous or fully undetected comes first, confident detections last, so a second call is the one most likely to be skippable in practice, not the one most likely to matter.
    - **When a token tree is found, run the detector on it** rather than reading paths by eye: `python3 scripts/detect_tokens.py <tree> --json`. It proposes `tokens.tiers` (from the direction aliases point, not from group names), `tokens.patterns` (from the observed shapes of component-tier paths) and a list of questions, each with its evidence. It never writes anything. **Confirm tiers and patterns in this step** — they are system-wide and few. **Do not ask its `leaf_map` questions here**: there can be a dozen, and most concern components nobody is documenting today. Those are asked lazily, one component at a time, when `scripts/resolve.py` reports `unmapped-leaf` for a property that component declares; put the detector's `suggested` property first, marked Recommended. A `leaf_map` entry is written only from a confirmed answer — never from a suggestion, and never from a spelling the resolver guessed, because one wrong entry (`default: background`) mis-reads every token that ends in that segment.
    - **Never ask for `naming_convention`'s specific separator/case/prefix directly** — unlike `generated_downstream`, this isn't a fact the designer can just state; it's detected empirically from a real generated name the first time Phase 6's token-name validation runs (see references/token-naming-validation.md's "lock on first success"), then written back here so later components skip re-detection.
    - Write the result to `.claude/design-system-context.yml` when done, and confirm the path to the user. This file is meant to be checked into the design system's own repo, not treated as scratch state — it's shared context for the whole team, not a personal cache.
@@ -145,13 +153,16 @@ last_updated: [YYYY-MM-DD]
 tokens:
   format: dtcg | style-dictionary | css-custom-properties | tailwind  # the token FILE's shape — not a naming fact; see "Three naming facts" below
   prefix: [string, e.g. "ds-", "color-", "--ds-"]
-  naming_pattern: [ordered slot list the canonical paths in this tree follow, e.g. "prefix.tier.property.element.level" — one per design system, detected in Phase 0B from a real token file. Written `naming-pattern` in prose.]
+  # naming-pattern is recorded as `patterns` below — see there. A single ordered slot list was
+  # the field until a real tree disproved the "one per design system" assumption: the eval
+  # fixture's component tier alone holds three shapes (`…{property}`, `…variant.{variant}.{property}`,
+  # `…size.{size}.{property}`), so one list could never have parsed it.
   source: [path to the token tree, relative to the directory holding .claude/ — read by scripts/resolve.py when a contract does not name its own tree]
   tiers:  # which top-level group plays each role — proposed by scripts/detect_tokens.py from alias direction, then confirmed
     primitive: [top-level group, e.g. "core"]
     semantic: [top-level group]
     component: [top-level group]
-  patterns:  # the resolver's form of naming-pattern: one template per path SHAPE, per tier, most specific first. Slots: {component} {property} {state} {*}, or any axis name ({variant}, {size}); anything else is literal. Proposed by the detector, confirmed. A single naming_pattern is the one-template case; reconciling the two fields is part of the Phase 5/6 rewrite.
+  patterns:  # THE naming-pattern field. One template per path SHAPE, per tier, most specific first. Slots: {component} {property} {state} {*}, or any axis name ({variant}, {size}); anything else is literal. Proposed by scripts/detect_tokens.py, confirmed once. A design system with a single shape writes a single template.
     component:
       - [e.g. "component.{component}.variant.{variant}.{property}"]
       - [e.g. "component.{component}.{property}"]
@@ -203,7 +214,7 @@ This is the same principle as "Native platform technology as the stated level" b
 
 A correctly-referenced token pointing at a value someone later decides was wrong is **not** a finding here — the reference logic is sound, and the value is a design decision recorded elsewhere. Likewise, a component that looks right while referencing a token the contract never stated *is* a finding, even though nothing is visibly broken.
 
-**Why this carries more weight than it looks like it should.** Three of the four concerns are grounded in an external standard — Structure in HTML/HIG/Material, Behavior in each platform's event model, Accessibility in ARIA/UIA/AT-SPI. Those are checkable knowing nothing whatsoever about a particular design system. **Appearance is the one concern with no external standard behind it.** There is no specification anywhere that says what this system's surface color should be; the token tree *is* the standard, which is exactly why the Conflict resolution policy carves tokens out as its single deliberate exception. Everything under Appearance — §4.3's Token Map, §4.1's state treatments, §3.2's dimensional variants — is expressed as a reference into that tree, so the reference chain is the only part of Appearance that anything in this skill can hold to account. That makes `naming-pattern` the schema for the one concern with nothing else to fall back on: a broken link in that chain is invisible to every other check here, and — since it may still render something plausible — invisible to visual regression too.
+**Why this carries more weight than it looks like it should.** Three of the four concerns are grounded in an external standard — Structure in HTML/HIG/Material, Behavior in each platform's event model, Accessibility in ARIA/UIA/AT-SPI. Those are checkable knowing nothing whatsoever about a particular design system. **Appearance is the one concern with no external standard behind it.** There is no specification anywhere that says what this system's surface color should be; the token tree *is* the standard, which is exactly why the Conflict resolution policy carves tokens out as its single deliberate exception. Everything under Appearance — chapter 4.1's token slots, chapter 4.2's state treatments, chapter 4.3's dimensional variants — is expressed as a reference into that tree, so the reference chain is the only part of Appearance that anything in this skill can hold to account. That makes `naming-pattern` the schema for the one concern with nothing else to fall back on: a broken link in that chain is invisible to every other check here, and — since it may still render something plausible — invisible to visual regression too.
 
 ### Three naming facts — `naming-pattern`, naming convention, canonical path
 
@@ -212,10 +223,12 @@ Three distinct facts are easy to collapse into one phrase like "the naming conve
 | Term | Example | Scope | Established by | Used by |
 |---|---|---|---|---|
 | **Canonical path** | `ds.semantic.color.bg.surface` | one per token | the token tree itself, read in Phase 2 | Phase 2, to record every Token Map entry in one syntax-neutral form |
-| **`naming-pattern`** | `prefix.tier.property.element.level` | one per **design system** | Phase 0B — detected from a real token file (read several paths; a slot order is only visible across examples), then confirmed in the batched call | Phase 2, as the shape every Token Map entry is recorded in — and so, indirectly, everything under Appearance that references one; Phase 6, to report a structural mismatch as the slot that moved |
+| **`naming-pattern`** | `component.{component}.variant.{variant}.{property}` | one template per path **shape**, per tier — recorded as `tokens.patterns` | Phase 0B — proposed by `scripts/detect_tokens.py` from the tree's own shapes, then confirmed | Phase 2, as the shape every token name is recorded in; `scripts/resolve.py`, to read the tree at all; Phase 6, to report a structural mismatch as the slot that moved |
 | **Naming convention** | `kebab` + prefix `--` + depth `1` → `--semantic-color-bg-surface` | one per **platform** | Phase 6 — detected empirically from a known-correct generated name, then locked (`references/token-naming-validation.md`, Steps 4–5) | Phase 6's token-name validation only |
 
 **A naming convention is a bucket of three independent axes, not one value** — separator/case row, the platform's own added prefix, and scope depth (how many leading canonical words that platform's pipeline drops). They vary independently: kebab stays kebab whether or not a `ds` prefix is present, and either can hold while the truncation depth differs. Step 4's lock records all three because all three must hold, not because they're one fact.
+
+**One design system can need several `naming-pattern` templates, which is why the field is a list.** It was a single ordered slot list until a real tree disproved that: the eval fixture's component tier holds three shapes at once, and `component.button.radius` cannot be parsed by the same template as `component.button.variant.primary.background`. The templates are tried in order, so the most specific comes first.
 
 **`naming-pattern` is written hyphenated, always**, to keep it distinct from this skill's many other uses of "pattern" — WAI-ARIA patterns, the Tabs pattern, Q6's pattern references. A "pattern" unqualified in this skill is never about token names.
 
@@ -272,7 +285,7 @@ that path recorded, not stopping.
 
 ## Conflict resolution policy
 
-**Intent — an interview answer, plus general references — is always authoritative. A provided existing implementation is something to test against that intent, not a second source of truth to reconcile it with.** This follows from how a contract actually gets built: Phase 1's interview plus Phase 3/4's derivation from `references/` are already sufficient to construct a complete, correct contract on their own, for everything except token bindings (§4.3) — no existing implementation needs to be read to get structure, props, behavior, or accessibility right; that's what the interview and the general references are for. So when an implementation is *also* provided, its role is to be checked against a contract that's already fully constructible without it — not to supply competing facts that need arbitrating case by case.
+**Intent — an interview answer, plus general references — is always authoritative. A provided existing implementation is something to test against that intent, not a second source of truth to reconcile it with.** This follows from how a contract actually gets built: Phase 1's interview plus Phase 3/4's derivation from `references/` are already sufficient to construct a complete, correct contract on their own, for everything except token bindings (chapter 4.1 Token slots) — no existing implementation needs to be read to get structure, props, behavior, or accessibility right; that's what the interview and the general references are for. So when an implementation is *also* provided, its role is to be checked against a contract that's already fully constructible without it — not to supply competing facts that need arbitrating case by case.
 
 The one deliberate exception is design tokens: a token's literal binding is a genuinely arbitrary, system-specific fact that no amount of best-practice knowledge or stated intent can derive on its own — that's exactly why Phase 2 treats a coded or Figma source as a legitimate *information* source for tokens specifically, not just something to verify. Everything below assumes a non-token fact.
 
@@ -284,7 +297,7 @@ Use this callout format wherever a mismatch is documented in a contract, so it n
 
 **2. Provided implementation vs. a direct interview answer, same fact.** The interview answer is authoritative — that's what stating intent is for. A mismatch is a finding *about the implementation* (stale, incomplete, or simply wrong), not an open question to re-litigate with the designer. State what the contract requires per the interview answer, then flag the implementation's divergence with the callout — don't stop mid-flow to ask "which one should I trust." *(Inert today for the same reason as case 1.)*
 
-**3. Multiple platform implementations disagreeing with each other on something the contract treats as shared intent (§2.2, §3, etc.).** Don't let two implementations negotiate the truth between themselves. The shared intent was already established once, in the interview — check each platform's implementation against *that*, independently, not against each other. If a genuine, intentional per-platform difference turns up this way, that's a signal the fact isn't actually shared intent after all — move it to a platform-specific row, don't leave it looking like agreement.
+**3. Multiple platform implementations disagreeing with each other on something the contract treats as shared intent (chapter 3.1 Zones, the prop tables, etc.).** Don't let two implementations negotiate the truth between themselves. The shared intent was already established once, in the interview — check each platform's implementation against *that*, independently, not against each other. If a genuine, intentional per-platform difference turns up this way, that's a signal the fact isn't actually shared intent after all — move it to a platform-specific row, don't leave it looking like agreement.
 
 **4. No source covers this case at all (an absence, not a conflict)** — e.g. the Android/Windows status-display gap found while building the eval set. Nothing to adjudicate. The only rule: never present an improvisation as if it were grounded in a reference. State plainly that no source covers it and that judgment was used, the way Toast's contract already does.
 
@@ -310,7 +323,7 @@ After each answer: one short acknowledgement sentence, then immediately ask the 
 
 Conditional follow-ups do not count toward the 10-question total. Once all 10 main answers are collected, proceed to Phase 2.
 
-**The interview goes from general to specific, in the same topic order as the contract itself:** scope, then overview, then structure, then properties, then appearance. There's no dedicated question for §5 Behavior or §6 Accessibility — both are derived, never asked, per the whole premise of this skill. The one exception is a single conditional follow-up attached to Q4 that feeds §5 directly — see there for why it can't be asked any earlier.
+**The interview goes from general to specific, in the same topic order as the contract itself:** scope, then overview, then structure, then properties, then appearance. There's no dedicated question for chapter 5 Behavior or chapter 6 Accessibility — both are derived, never asked, per the whole premise of this skill. The one exception is a single conditional follow-up attached to Q4 that feeds §5 directly — see there for why it can't be asked any earlier.
 
 Platform (Q2) comes right after Name & Purpose even though it isn't itself contract content — it's scope, not a section, and it determines how many rows every later table needs. Action and Interaction (Q3–Q4) sit next to each other because they're jointly the only two inputs Phase 3 needs to derive structure — more fundamental to what the component *is* than how it's composed, so they come before Composition/Parts, not after.
 
@@ -330,7 +343,7 @@ Multi-select:
 - "Android"
 - "macOS"
 
-This answer drives which reference file(s) Phase 3/4 consult, how many platform rows appear in the contract's per-platform tables, and how many per-platform schema files Phase 6 writes. It's scope, not §5 Behavior content — no follow-up here asks about behavior differences yet; that's Q4's job, once there's an actual interaction to ask "does this differ" about.
+This answer drives which reference file(s) Phase 3/4 consult, how many platform rows appear in the contract's per-platform tables, and how many per-platform schema files Phase 6 writes. It's scope, not chapter 5 Behavior content — no follow-up here asks about behavior differences yet; that's Q4's job, once there's an actual interaction to ask "does this differ" about.
 
 **Q3 — Action** *(drives semantic markup derivation in Phase 3, alongside Q4)*
 header: "Intent"
@@ -351,7 +364,7 @@ question: "Which routing modes does it support?"
   - "Each panel has its own URL"
 
 If "Opens or closes something (overlay, drawer, section)" is selected → multi-select follow-up:
-header: "§2 Structure"
+header: "Structure"
 question: "How can it be dismissed? Select all that apply."
   - "A dedicated close/dismiss control (e.g. an X in a header)"
   - "One of its own action buttons also dismisses it (e.g. Cancel, Done)"
@@ -359,16 +372,16 @@ question: "How can it be dismissed? Select all that apply."
   - "A platform-standard gesture or key (Escape, swipe-down, back gesture)"
   - "Automatically, after a delay"
 
-  Don't infer this from the component's name or assume a header close control exists "because that's how it usually works" — a real design might rely on a footer action alone, or on the backdrop/gesture only, with no dedicated control at all. The zone only belongs in §2.2 if this answer actually names it. If one of Q2's selected platforms has a documented dismissal convention for this archetype (a platform convention file, per Reference files above), cite it in this question per "Citing a platform convention" below Q10 — as something to confirm or override, never a default.
+  Don't infer this from the component's name or assume a header close control exists "because that's how it usually works" — a real design might rely on a footer action alone, or on the backdrop/gesture only, with no dedicated control at all. The zone only belongs in chapter 3.1 Zones if this answer actually names it. If one of Q2's selected platforms has a documented dismissal convention for this archetype (a platform convention file, per Reference files above), cite it in this question per "Citing a platform convention" below Q10 — as something to confirm or override, never a default.
 
   If "One of its own action buttons also dismisses it" → open text follow-up:
-  header: "§5 Behavior"
+  header: "Behavior"
   question: "Which action(s) also dismiss it, and does dismissal happen in addition to that action's own effect or instead of it? If the zone holding it can hold more than one action (check its cardinality in Q6), also say how the dismissing one is told apart from its siblings — a fixed label like 'Cancel', a fixed position, or a flag/prop your system provides — not just that 'a footer action' dismisses, since that alone doesn't say which."
 
-  Whether this becomes a real interception fact (contrast Phase 5's delegation principle, which defaults to pass-through) depends entirely on that distinguishing mechanism: if the design system gives the parent an actual way to recognize the dismissing child (a prop it reads, a dedicated position), document that mechanism in §5.1 as genuine interception. If the answer only identifies the action by label with nothing the parent itself could check — the far more common case — the truth is that dismissal happens because the *consumer* wired that specific button's own callback to also call the close handler, not because the parent recognized or reacted to anything. State it that way in §5.1: pass-through stays the documented behavior, with a note that this pattern is commonly wired by the consumer rather than intercepted by the parent. Don't invent a detection mechanism that was never confirmed just to make the interception read as more official than it is.
+  Whether this becomes a real interception fact (contrast Phase 5's delegation principle, which defaults to pass-through) depends entirely on that distinguishing mechanism: if the design system gives the parent an actual way to recognize the dismissing child (a prop it reads, a dedicated position), document that mechanism in chapter 5.1 Requirements as genuine interception. If the answer only identifies the action by label with nothing the parent itself could check — the far more common case — the truth is that dismissal happens because the *consumer* wired that specific button's own callback to also call the close handler, not because the parent recognized or reacted to anything. State it that way in chapter 5.1 Requirements: pass-through stays the documented behavior, with a note that this pattern is commonly wired by the consumer rather than intercepted by the parent. Don't invent a detection mechanism that was never confirmed just to make the interception read as more official than it is.
 
 **Q4 — Interaction** *(drives semantic markup derivation in Phase 3, alongside Q3 — together with Q3's dismissal follow-up above, these are the only places this interview feeds §5 Behavior directly)*
-header: "§2 Structure"
+header: "Structure"
 question: "How does the user interact with it? Pick all that apply. (6 questions left)"
 Multi-select:
 - "Click or tap"
@@ -378,18 +391,18 @@ Multi-select:
 - "No direct interaction — it updates on its own"
 
 If "Choose from a list" → single-select follow-up:
-header: "§2 Structure"
+header: "Structure"
 question: "How many options can be selected at once?"
   - "Just one"
   - "Multiple"
 Then single-select follow-up:
-header: "§2 Structure"
+header: "Structure"
 question: "Is the list always visible, or does it open on demand?"
   - "Always visible"
   - "Opens as a dropdown"
 
 If "No direct interaction — it updates on its own" AND the component is transient rather than a persistent piece of layout (a Toast/Snackbar/notification-banner shape, not a Badge) → single-select follow-up:
-header: "§5 Behavior"
+header: "Behavior"
 question: "If this is triggered again while one is already showing, what happens?"
   - "The new one replaces the current one immediately"
   - "It queues behind the current one and shows after"
@@ -399,28 +412,28 @@ question: "If this is triggered again while one is already showing, what happens
 Cite a platform convention here (per "Citing a platform convention" below Q10) when one of Q2's selected platforms has a documented answer — Android's Snackbar queuing is the clearest current example — but ask this regardless of platform, since it's a real design decision either way, documented convention or not.
 
 If Q2 selected two or more platforms → open text follow-up:
-header: "§5 Behavior"
+header: "Behavior"
 question: "Does anything about this interaction work differently across those platforms — behavior or gestures specifically, not structure or accessibility (those are derived automatically per platform)? Only describe what changes; leave blank if nothing does."
 
 Never assume the HTML element or ARIA role from the component name. Always derive from Q3 (action) and Q4 (interaction).
 
 **Q5 — Composition**
-header: "§2 Structure"
+header: "Composition"
 question: "Does it stand alone, or does it hold other components inside? (5 questions left)"
 Single-select:
 - "Stands alone"
 - "Holds other components inside"
 If "Holds other components" → open text follow-up:
-header: "§2 Structure"
+header: "Composition"
 question: "Which components does it hold? Do any of them already have contracts?"
 
 **Q6 — Parts**
-header: "§2 Structure"
+header: "Composition"
 question: "What are its visible parts? Name each one and say what it's for — showing content, or doing something. (4 questions left)"
 Open text. Add in the description: Examples of content parts: label, image, badge, description. Examples of action parts: close button, chevron, checkbox, spinner.
 
 If the answer names an action part not already covered by Q5's composition list → open text follow-up:
-header: "§2 Structure"
+header: "Composition"
 question: "Should any of these parts be built to match an existing component's pattern — same interaction and accessibility conventions — without embedding it as an actual instance the way Q5's composition works? Name the part and which component's pattern it should follow, or leave blank if none apply."
 
 This is deliberately distinct from Q5: Q5 asks whether a zone *is* another component (composition — the child's own contract fully governs its structure, appearance, behavior, and accessibility). This asks whether a zone should merely *look and behave like* one, while still being specified locally in this contract — see Phase 5's pattern-reference principle for how the two render differently in the output.
@@ -454,10 +467,10 @@ If "Adapts to the space available" → open text follow-up:
 header: "Structure"
 question: "What changes when space is tight? What does your design system call those conditions?"
 
-The first four options feed §3.1 Layout Props; "Adapts to the space available" and its follow-up feed §2.3 Adaptive Layout instead. Both land under the Structure concern either way, even though it's asked here, in the same breath as the rest of this question, since "can its layout change" is one natural conversation for the person answering it.
+The first four options feed chapter 2.3 Layout props; "Adapts to the space available" and its follow-up feed chapter 2.2 Adaptive layout instead. Both land under the Structure concern either way, even though it's asked here, in the same breath as the rest of this question, since "can its layout change" is one natural conversation for the person answering it.
 
 **Q9 — States & tokens**
-header: "§4 Appearance"
+header: "Appearance"
 question: "Which extra states does it have? If your system names them differently, type the correct name in the field below. (1 question left)"
 Multi-select:
 - "Loading"
@@ -467,13 +480,13 @@ Multi-select:
 - "Empty"
 
 After answer → single-select follow-up:
-header: "§4 Appearance"
+header: "Appearance"
 question: "Do you have design tokens for this component?"
   - "Yes — I have a Figma link"
   - "Yes — I have a Storybook or code link"
   - "No — skip for now"
   If yes → open text follow-up:
-  header: "§4 Appearance"
+  header: "Appearance"
   question: "Share the link or file."
 
 **Q10 — Output**
@@ -517,7 +530,7 @@ Token files take different shapes across design systems — DTCG JSON (`$value`/
 
 For every property: record `property | token name | resolved value (if visible)`. Hardcoded values with no token reference = raw. Note the source in the token map.
 
-Record the token by its canonical, syntax-neutral name — not the source file's platform-specific spelling. A CSS custom property's leading `--` and kebab-case, a Swift constant's camelCase, an Android XML resource's `snake_case` — these are that platform's rendering of the token, not the token's identity. If a canonical form is established — `tokens.prefix` and `tokens.naming_pattern` in `.claude/design-system-context.yml` (Phase 0B), the shape of the token tree actually read in Path B, or a form the designer volunteered unprompted — strip the source's wrapping syntax down to that form (`--color-overlay-backdrop` → `color-overlay-backdrop` under a `color-` prefix convention). This is never a question the interview asks; if nothing establishes it, say so in the token map rather than silently adopting whichever platform happened to supply the source file as the default spelling for every platform. Don't reach for `tokens.format` here — it's the file's shape, not a naming fact — and don't confuse any of this with `tokens.naming_convention`, which is per-platform rendering. See "Three naming facts" under Phase 0B.
+Record the token by its canonical, syntax-neutral name — not the source file's platform-specific spelling. A CSS custom property's leading `--` and kebab-case, a Swift constant's camelCase, an Android XML resource's `snake_case` — these are that platform's rendering of the token, not the token's identity. If a canonical form is established — `tokens.prefix` and `tokens.patterns` in `.claude/design-system-context.yml` (Phase 0B), the shape of the token tree actually read in Path B, or a form the designer volunteered unprompted — strip the source's wrapping syntax down to that form (`--color-overlay-backdrop` → `color-overlay-backdrop` under a `color-` prefix convention). This is never a question the interview asks; if nothing establishes it, say so in the token map rather than silently adopting whichever platform happened to supply the source file as the default spelling for every platform. Don't reach for `tokens.format` here — it's the file's shape, not a naming fact — and don't confuse any of this with `tokens.naming_convention`, which is per-platform rendering. See "Three naming facts" under Phase 0B.
 
 If a token's resolved value here contradicts the design-system context file (Phase 0B) — e.g. a different naming prefix than what's on record — never resolve it silently. Surface it with the Conflict resolution policy's callout format, and update the persisted context file if the token source turns out to be current truth. This doesn't map onto that policy's numbered cases — tokens are its deliberate exception, where both the coded reference and the persisted context are legitimate *information* sources on equal footing, not an implementation being tested against already-sufficient intent.
 
@@ -545,14 +558,27 @@ The same logic applies to any implementation or verification work built *from* a
 
 Two different things happen in this phase, at different frequencies — don't run everything per platform by default.
 
-**§2.1 Semantic Markup runs once per platform selected in Q2.** The same Q3 (action) and Q4 (interaction) answers feed every run — what changes is which table resolves them to a concrete structure. Never infer the element/control from the component's name — the same visual form can require completely different structure depending on what the component actually does, and that holds on every platform.
+### Deriving the role-archetype (runs once, not per platform)
+
+The contract's `role-archetype:` is **derived here from Q3 and Q4**, never asked. It is the same input the structure tables below consume, resolved one level higher: not *which control is this on each platform*, but *what is this, on every platform*.
+
+**The criterion is a single question:** does the platform's accessibility layer **convey a distinct role** for this thing? Not "does it feel like its own kind of component" — a Card feels like one and conveys nothing. Convey, not report: Compose has no `Role.Dialog`, yet Android announces a dialog through its pane title, so a field-based reading would wrongly conclude dialog is not a role.
+
+1. **Look for an existing archetype** in the design system's own directory (`contracts.archetypes`) first, then in `system/role-archetypes/`. Match on what the component *is*, not its name — a `SubmitButton`, a `DangerButton` and an `IconButton` all resolve to `button`. One archetype serves many contracts; that fan-out is the point.
+2. **If the criterion says no**, write `role-archetype: none`. That is a real answer, not a missing one — a Card, a Stack, a Divider convey no role, so nothing is inherited and every requirement is stated locally. Spell it out so a reader can tell a decision from an omission.
+3. **If the criterion says yes but no archetype exists**, say so to the user before writing the contract, and offer both paths: add the archetype to the design system's own directory (it is then inherited by every future component with that role), or proceed with `none` and state the requirements locally this once. Never silently pick `none` for something that conveys a role — that is how a role's guarantees get re-derived, slightly differently, per component.
+
+**A composite shell takes the archetype of what the shell itself is**, not of anything it contains: a Modal whose footer holds buttons is not a `button`.
+
+
+****Structure resolution runs once per platform selected in Q2.**** The same Q3 (action) and Q4 (interaction) answers feed every run — what changes is which table resolves them to a concrete structure. Never infer the element/control from the component's name — the same visual form can require completely different structure depending on what the component actually does, and that holds on every platform.
 
 - **Web** → use the decision table below.
 - **iOS / Android / macOS** → use the "Component / structure resolution" table in that platform's reference file instead of the table below (`references/ios/ios-hig-accessibility.md`, `references/android/android-material-accessibility.md`, `references/macos/macos-hig-accessibility.md`, `references/windows/windows-ui-automation.md`, `references/linux/linux-atspi-accessibility.md`). Same Q3/Q4 inputs, that platform's native vocabulary as output.
 
-Each platform's result becomes one row in §2.1's table (see Phase 5) — never a separate document, and never merged with another platform's row even when the two values happen to match.
+Each platform's result becomes one row in the role-archetype's native backing table (see Phase 5) — never a separate document, and never merged with another platform's row even when the two values happen to match.
 
-**§2.2 Composition Zones (Setting cardinality, Setting order below) runs once, not per platform.** Cardinality and position are statements of intent — "the Close button is optional and sits top-right" doesn't change because the implementation platform changed. **§2.3 Adaptive Layout** is the same: the named conditions and what changes under each are shared intent, even though the underlying mechanism differs per platform (see Phase 5 for how to record that without a full Platform column).
+****Chapter 3 Composition (Setting cardinality, Setting order below) runs once, not per platform.**** Cardinality and position are statements of intent — "the Close button is optional and sits top-right" doesn't change because the implementation platform changed. **chapter 2.2 Adaptive layout** is the same: the named conditions and what changes under each are shared intent, even though the underlying mechanism differs per platform (see Phase 5 for how to record that without a full Platform column).
 
 ### Decision table (Web)
 
@@ -575,7 +601,7 @@ Use the combination of Q3 (action) and Q4 (interaction) to pick the right elemen
 |---|---|
 | In-place only (no URL change) | `role="tablist"` container, `role="tab"` triggers (`<button>`), `role="tabpanel"` panels |
 | URL-based only | `<nav>` containing `<a href>` links — no tablist role |
-| Both modes supported | Document both patterns in §2.1. State the condition for each. URL routing takes semantic precedence; `<nav>` + `<a>` + `aria-current` for routed mode, tablist pattern for in-place mode. |
+| Both modes supported | Document both patterns in chapter 2 Structure. State the condition for each. URL routing takes semantic precedence; `<nav>` + `<a>` + `aria-current` for routed mode, tablist pattern for in-place mode. |
 
 **Action: Triggers an action + Interaction: Click or tap**
 | Action detail | Element |
@@ -602,9 +628,9 @@ Never use `<div>` or `<span>` for triggered actions.
 → `role="list"` + `role="listitem"` with pointer-event drag and keyboard fallback (Space to grab, Arrow to move, Space or Enter to drop, Escape to cancel).
 
 **Composite shell**
-→ The root element applies to the shell only. Document sub-component markup in their own contracts — but the shell's *own* zones (§2.2 rows not delegated to a sub-component, e.g. a Close button or a Title) aren't sub-components and have no contract to defer to. Resolve each one against this same decision table (or the platform's own resolution table) using its own action/interaction, and give it its own block in §2.1 alongside the root. A zone that's plain inline content with no independent semantic identity (label text, a decorative wrapper) doesn't need a block of its own — only zones that are themselves interactive, or that carry accessibility weight (a control, a heading targeted by `aria-labelledby`, a live region), do.
+→ The root element applies to the shell only. Document sub-component markup in their own contracts — but the shell's *own* zones (chapter 3.1 Zones rows not delegated to a sub-component, e.g. a Close button or a Title) aren't sub-components and have no contract to defer to. Resolve each one against this same decision table (or the platform's own resolution table) using its own action/interaction, and give it its own block in chapter 2 Structure alongside the root. A zone that's plain inline content with no independent semantic identity (label text, a decorative wrapper) doesn't need a block of its own — only zones that are themselves interactive, or that carry accessibility weight (a control, a heading targeted by `aria-labelledby`, a live region), do.
 
-**A heading zone's Tag/Control is its role, never a specific level.** When an owned zone is a heading (a Title targeted by `aria-labelledby`), name the element as "a heading element" and stop there — never `<h2>`, `<h3>`, or any specific level. Per `references/web/html-semantics.md`, heading level is chosen by the document's outline at the point the component is mounted, not by the component itself; no interview answer could ever resolve this correctly either, since the right level depends on a page this contract doesn't know about. State the row as `Required: Yes`, `Tag/Control: A heading element (<h1>–<h6>) — level set by the consuming page's document outline, not fixed here`. This isn't a gap to flag for confirmation (§3.2's pending-value convention) — it's genuinely out of the contract's scope, and saying so explicitly is the correct, complete answer, not an incomplete one.
+**A heading zone's Tag/Control is its role, never a specific level.** When an owned zone is a heading (a Title targeted by `aria-labelledby`), name the element as "a heading element" and stop there — never `<h2>`, `<h3>`, or any specific level. Per `references/web/html-semantics.md`, heading level is chosen by the document's outline at the point the component is mounted, not by the component itself; no interview answer could ever resolve this correctly either, since the right level depends on a page this contract doesn't know about. State the row as `Required: Yes`, `Tag/Control: A heading element (<h1>–<h6>) — level set by the consuming page's document outline, not fixed here`. This isn't a gap to flag for confirmation (chapter 4.3's pending-value convention) — it's genuinely out of the contract's scope, and saying so explicitly is the correct, complete answer, not an incomplete one.
 
 This only applies to zones the root's own resolution says nothing about. Some archetypes resolve to a compound pattern that already names its constituent zones' elements as part of the single root entry — a radio group's `<fieldset>` + `<legend>` + `<input type="radio">` items, or a tablist's `role="tab"` / `role="tabpanel"` pair. When a zone's element is already stated there, it doesn't get a second, separate block — that would just restate the same fact under a different heading. Owned-zone blocks exist for zones bolted onto an otherwise single-element root that the root's own resolution never mentions (a `<dialog>` says nothing about its Title or Close button), not for zones a compound pattern already accounts for.
 
@@ -612,7 +638,7 @@ This only applies to zones the root's own resolution says nothing about. Some ar
 
 **When multiple valid root elements exist**, document all options and the condition for choosing each.
 
-### Setting cardinality (for §2.2)
+### Setting cardinality (for chapter 3.1 Zones)
 
 Use the user's answers from Q6 to fill the Cardinality column. When the user hasn't specified a maximum, use judgment:
 - A label, title, or primary description → `1`
@@ -623,9 +649,9 @@ Use the user's answers from Q6 to fill the Cardinality column. When the user has
 
 If not derivable from the component's purpose, note as `1+` and flag for confirmation.
 
-**One zone per genuinely different role — don't collapse distinct roles into one "N buttons" zone just because they're all delegated to the same child component type.** Whether an action-holding zone is one row or several depends on what Q6 actually said, not on the child type: "Footer with 1–3 action buttons" (Modal's case) is genuinely one undifferentiated slot — the consumer supplies an arbitrary number of app-defined actions, none of which the contract can say anything specific about. "A footer with Cancel and Save" is different — two named, distinct roles were given, each with its own fixed identity and (per the Q3 dismissal follow-up, if applicable) possibly different behavior. Model that as two separate §2.2 rows (`Cancel action`, cardinality `1`; `Save action`, cardinality `1`), not one row reading "Footer: 2 Button components." Collapsing them forces every later section to bolt on an awkward disambiguation note to say which of the "2 buttons" does what; naming them separately means §5.1 can just say what each one does, the same way any other zone's row already does.
+**One zone per genuinely different role — don't collapse distinct roles into one "N buttons" zone just because they're all delegated to the same child component type.** Whether an action-holding zone is one row or several depends on what Q6 actually said, not on the child type: "Footer with 1–3 action buttons" (Modal's case) is genuinely one undifferentiated slot — the consumer supplies an arbitrary number of app-defined actions, none of which the contract can say anything specific about. "A footer with Cancel and Save" is different — two named, distinct roles were given, each with its own fixed identity and (per the Q3 dismissal follow-up, if applicable) possibly different behavior. Model that as two separate chapter 3.1 Zones rows (`Cancel action`, cardinality `1`; `Save action`, cardinality `1`), not one row reading "Footer: 2 Button components." Collapsing them forces every later section to bolt on an awkward disambiguation note to say which of the "2 buttons" does what; naming them separately means chapter 5.1 Requirements can just say what each one does, the same way any other zone's row already does.
 
-### Setting order (for §2.2)
+### Setting order (for chapter 3.1 Zones)
 
 Mark a zone as `Fixed` when moving it would break the user's expectation or when its position is load-bearing for meaning or accessibility:
 - Close / dismiss buttons → `Fixed — top-right`
@@ -637,11 +663,11 @@ Mark a zone as `Flexible` when its position is a layout preference — e.g., a t
 
 When the target design system supports RTL locales, record `Fixed` positions in logical terms (leading/trailing, start/end, inline-start/inline-end — whichever vocabulary the current platform uses) rather than physical ones (`left`/`right`), since a directionality flag alone does not flip physically-positioned layout on any of the platforms covered here except where the platform's own logical-property system does the work. See `references/platform-differences.md` for how each platform expresses this, then the specific platform file for the mechanism (`references/web/css-layout-and-interaction.md` for Web). If the system is confirmed LTR-only, physical terms are fine.
 
-### Presence toggle for a fixed-content zone (for §3.3)
+### Presence toggle for a fixed-content zone (for chapter 5.3 Behavioral props)
 
 A zone with `Cardinality` starting at `0` is normally optional "for free" — nothing needs deriving beyond the zone itself, because whether it appears is just whether the consumer supplied content for it (an icon element, footer children). That mechanism only works when the zone's *content genuinely varies per instance* — the consumer is authoring something different each time.
 
-It breaks down for a zone whose content is fixed by the design, not authored by the consumer — nothing ever varies between one instance of the zone and the next (a Close button is always the same icon, the same accessible name, the same behavior; only whether it's there at all changes). A fixed-content zone can't signal its own presence through "what was passed in," because nothing is ever passed in — so it needs an explicit boolean prop in §3.3, e.g. `showCloseButton`, derived alongside the zone the same way any other optional-but-not-content-driven fact would be. This holds regardless of whether the zone's markup happens to be bespoke or reuses another component's contract (by composition or by pattern reference, per Phase 5's principles above) — reuse changes what the zone *looks like*, not how its presence gets toggled. When in doubt, ask: if this zone were removed, would the consumer be able to say why by pointing at something they didn't pass in? If yes, presence is content-driven, no prop needed. If no — there was never anything to pass — derive the boolean.
+It breaks down for a zone whose content is fixed by the design, not authored by the consumer — nothing ever varies between one instance of the zone and the next (a Close button is always the same icon, the same accessible name, the same behavior; only whether it's there at all changes). A fixed-content zone can't signal its own presence through "what was passed in," because nothing is ever passed in — so it needs an explicit boolean prop in chapter 5.3 Behavioral props, e.g. `showCloseButton`, derived alongside the zone the same way any other optional-but-not-content-driven fact would be. This holds regardless of whether the zone's markup happens to be bespoke or reuses another component's contract (by composition or by pattern reference, per Phase 5's principles above) — reuse changes what the zone *looks like*, not how its presence gets toggled. When in doubt, ask: if this zone were removed, would the consumer be able to say why by pointing at something they didn't pass in? If yes, presence is content-driven, no prop needed. If no — there was never anything to pass — derive the boolean.
 
 ---
 
@@ -649,13 +675,13 @@ It breaks down for a zone whose content is fixed by the design, not authored by 
 
 Derive from the interview answers and each platform's Phase 3 structure decision. Do not ask the designer about ARIA, UI Automation patterns, AT-SPI roles, or keyboard/gesture navigation directly.
 
-**§6.1 Roles & Attributes runs once per platform selected in Q2** — every platform has its own vocabulary, so this always gets a row per platform, same frequency as §2.1:
+**chapter 6 Accessibility & Attributes runs once per platform selected in Q2** — every platform has its own vocabulary, so this always gets a row per platform, same frequency as chapter 2 Structure:
 - **Web** → the ARIA-specific subsections below.
 - **iOS / Android / macOS** → that platform's reference file, "Accessibility API" section, for the role/state/trait model. There is no separate decision table to duplicate here — the platform files already state what each requires.
 
-**§6.2 Keyboard/Gesture Navigation and §6.4 Screen Reader / Assistive Technology Expectations are shared by default.** Derive once using the web subsections below for the common cases, and add a platform-specific note only where the actual key or gesture genuinely differs (e.g. `Escape` has no touch equivalent) — not as a matter of course.
+**keyboard and gesture navigation and screen-reader expectations are shared by default.** Derive once using the web subsections below for the common cases, and add a platform-specific note only where the actual key or gesture genuinely differs (e.g. `Escape` has no touch equivalent) — not as a matter of course.
 
-**§6.3 Focus Management is shared** — derive once, regardless of platform count.
+**focus management is shared** — derive once, regardless of platform count.
 
 For Web patterns not in Phase 3's decision table (combobox, menu, tooltip, tree, slider, grid, accordion), get the full attribute and keyboard set from `references/web/wai-aria-patterns.md` rather than approximating. `references/web/wcag-mapping.md` grounds a requirement in the WCAG success criterion it satisfies when that's useful context (e.g., for an audited system) — this is optional citation, derived silently, never a question put to the designer.
 
@@ -703,375 +729,291 @@ The visible focus indicator itself should bind to `:focus-visible`, not bare `:f
 
 ## Phase 5: Generate the contract
 
-With all phases complete, write the contract as **one file**, regardless of how many platforms it targets. Fill every section from what you now know — never leave a placeholder unless the user explicitly said information is unavailable. Nothing should be left for a reader (human or agent) to infer or ask about — nothing in this file, ever, is a diff against another file, since there is no other file.
+Two files, always, in the component's own directory:
+
+| File | Holds |
+|---|---|
+| `[ComponentName].md` | six chapters of requirement rows — platform-neutral, human-first |
+| `[ComponentName].bindings.json` | per-platform `expect` values, only where they are not derivable |
+
+The `.md` is **source**, not the reading artifact. Phase 6 generates the resolved view a person reads and the canonical documents a verifier consumes; both inherit the role-archetype's and the policy's requirements, which is why this file never restates them.
 
 **Every concrete fact needs a traceable origin — before writing anything as a requirement, name which of these three it came from:**
-1. **An external, cross-system standard** — something a `references/` file actually states, specifically enough to cover the exact detail being written, not just the general pattern it sits inside. Citing a reference for the archetype ("dialogs need an accessible name via a heading") doesn't license inventing a specific value the reference never gave ("so, `<h2>`") — that's overspecifying past what the citation actually supports. If the specific detail being written isn't in the text of the reference, it isn't grounded by it, even if the section title sounds related.
-2. **An explicit interview answer** (or a persisted `.claude/design-system-context.yml` fact) — the only legitimate source for anything that could reasonably differ between two different design systems, or between two different components' instances of "the same" thing (one Modal's close button and another's aren't guaranteed to agree, so neither can be assumed). If a different team building a different version of this component could reasonably answer differently, it belongs here, never defaulted in Phase 3/4's tables.
-3. **A structural inference from something already established by (1) or (2)** — conditional logic, not a new fact (Q2 selecting 2+ platforms triggering the cross-platform follow-up; a confirmed dismissal action feeding §5.1).
+1. **An external, cross-system standard** — something a `references/` file actually states, specifically enough to cover the exact detail being written, not just the general pattern it sits inside. Citing a reference for the archetype ("dialogs need an accessible name via a heading") doesn't license inventing a specific value the reference never gave ("so, `<h2>`") — that's overspecifying past what the citation actually supports.
+2. **An explicit interview answer** (or a persisted `.claude/design-system-context.yml` fact) — the only legitimate source for anything that could reasonably differ between two design systems, or between two components' instances of "the same" thing.
+3. **A structural inference from something already established by (1) or (2)** — conditional logic, not a new fact.
 
-A detail that fits none of the three is an invented assumption, full stop — cut it. There's a fourth case worth naming because it looks like a gap but isn't one: a detail that's resolved by neither the reference nor any possible interview answer, because it depends on where or how the component gets used, decided outside this contract entirely (a heading's specific level, chosen by the page's own outline at mount time — see the heading-zone rule above). Don't treat that as a pending value to flag for later confirmation (§3.2's convention) — state the role precisely and say explicitly that the concrete resolution is out of scope, which is the complete, correct answer, not an incomplete one.
+A detail that fits none of the three is an invented assumption, full stop — cut it. A fourth case looks like a gap and isn't: a detail resolved by neither the reference nor any possible interview answer, because it depends on where the component is used (a heading's level, chosen by the consuming page's outline). State the role precisely and say the concrete resolution is out of scope.
 
-**Every subsection falls into exactly one of three treatments — decide which before writing it, don't default to one:**
+### Write nothing the component inherits
 
-1. **Always shared, no Platform column** — Design Intent, §2.2 Composition Zones, §3.1 Layout Props, §3.2 Visual Variants, §3.3 Behavioral Props, §4.2 Layout Policy, §4.3 Design Tokens, §5.2 State Machine, §6.3 Focus Management. These describe intent, not implementation — cardinality, purpose, prop values, token bindings, and internal state don't change because the target platform changed. Note that §3.1/§3.2/§3.3 now live under three different top-level concerns (Structure, Appearance, Behavior respectively, per the separation-of-concerns structure) rather than one "Properties" section — the treatment classification doesn't care which concern a subsection lives under, only whether its content is intent or implementation.
-2. **State the intent once, then one manifestation row per platform** — §2.1 Semantic Markup, §5.3 Events Emitted, §5.4 Events Received, §6.1 Roles & Attributes. These sections have two distinct layers, and conflating them is the mistake to avoid: an **intent layer** (the abstract interaction archetype, or what an event/accessibility requirement means) that's genuinely platform-agnostic — the same "button-ness" or "announces on dismissal" regardless of platform — and a **manifestation layer** (the concrete tag, event signature, or attribute syntax) that's structurally platform-specific because every platform has its own vocabulary for expressing the same archetype. State the intent once, in plain language, at the top of the subsection — but never label it "Intent" or the table below "Manifestation" in the output itself; this is how you organize the derivation, not vocabulary to hand the reader. A plain opening sentence followed by "Each platform's [equivalent/event/implementation]:" carries the same structure without requiring anyone reading the finished contract to learn a framework they never asked for.
+The contract holds what is **specific to this component**. Three other layers already hold the rest, and repeating them creates two places to be wrong:
 
-   **This is purely an internal organizing distinction — it never surfaces in Phase 1.** The interview only ever asks intent-level questions (what it does, how it's interacted with, what it's called) — it was never going to ask someone to name a tag or an ARIA attribute, so nothing here changes what gets asked. It only changes how what's already derived gets written up in Phase 5.
+| Already stated by | Example | Never restate |
+|---|---|---|
+| the role-archetype | a button is exposed as a button; both activation keys work | in chapter 6 |
+| the policy | every focused control renders a focus indicator | anywhere |
+| a delegated child's contract | what the Icon inside does | in any chapter |
 
-   Three checks for sorting any given fact into the right layer, useful when a case isn't obvious:
-   - **Translation check** — can it be stated in plain language with zero tag names, API names, or attribute strings? If yes, intent. If the sentence collapses into nonsense without naming a specific platform's vocabulary, manifestation.
-   - **Swap check** — if this platform's expression were replaced by a different, equally valid one on the *same* platform, would the plain-language statement still hold? If it survives the swap, the statement was intent and the swapped things were manifestations of it.
-   - **Fidelity check** — is this the yardstick something gets checked against, or the thing being checked? Yardstick = intent; the thing being measured = manifestation.
+If a requirement you are about to write is already true of every component with this role, it belongs in the archetype, not here. If it is true of every component in the design system, it is policy. Phase 6 will fail the parse if a local id collides with an inherited one.
 
-   Two nuances worth knowing: a manifestation fact can have a smaller intent-level decision embedded in it (`aria-live="polite"` vs. `AutomationProperties.LiveSetting="Polite"` are both manifestations of one intent, but *which* urgency level — polite vs. assertive — is itself a real decision and belongs in the intent sentence, not re-decided per platform). And a manifestation fact that would be identical for *every* component in the design system (naming casing, framework choice) has drifted out of this contract's scope entirely — that's Phase 0B's job, not a per-component table.
+### One statement, and where a platform difference goes
 
-   **A third nuance specific to §2.1: "manifestation" doesn't mean "any technique that produces an equivalent accessible role."** Passing an accessibility-tree check is necessary but not sufficient — see `references/web/wai-aria-patterns.md`'s first rule of ARIA use. A native element bundles behavior (keyboard handling with no JS dependency, right-click/Cmd-click on links, crawlability) that a re-purposed generic element patched with ARIA cannot replicate, even when both report the same role. So for §2.1 specifically, the named native element *is* the compliance condition, not an example among role-equivalent alternatives — only fall back to a re-purposed generic element when no native equivalent exists for the archetype at all.
+The earlier format asked you to sort every subsection into one of three "treatments" — shared, intent-plus-per-platform-manifestation, or shared-with-exceptions. **That classification is gone, and the reason is worth understanding: it existed because the contract was the only file.** Now a requirement is written once, in plain language, and the places a platform can differ are explicit:
 
-   Then give every platform its own manifestation row *underneath* the stated intent — never merge two platforms into one row or write "same as Web," even when the concrete expression happens to be identical, since the manifestation table's job is to show each platform's own expression, not to economize on typing. This matters as much for an agent reading the file as context for implementation as it does for a person: neither should have to resolve a cross-reference to know what applies to their platform, and neither should see the same intent restated six times as if it were six independent facts.
+| The difference is | Goes in |
+|---|---|
+| how the fact is *checked* on that platform — a different `expect` value, a different trigger, a different threshold | `[ComponentName].bindings.json` |
+| a fact with no referent on that platform at all | that binding, as `binds: false` with a stated reason |
+| a genuine difference in the *requirement itself* | a **Divergences** row, in the chapter whose fact it modifies, with a reason |
 
-   A platform's manifestation isn't chosen freely — it's checked for fidelity to the stated intent. If a platform's native vocabulary can't fully carry what the intent requires (a required behavior has no real equivalent, or is only approximated), say so explicitly in that row's Notes rather than listing an imperfect match as if it were clean.
-3. **Shared by default, platform-specific only where a real difference exists** — §2.3 Adaptive Layout, §4.1 Interaction States, §5.1 Interactions, §6.2 Keyboard/Gesture Navigation, §6.4 Screen Reader / Assistive Technology Expectations. Write one shared version first. Add a platform note or column only when there's an actual divergence to record (Q4's cross-platform follow-up surfaces most of these for §5.1; the others come up rarely — hover not existing on touch platforms, `Escape` having no gesture equivalent). Don't add a Platform column pre-emptively "just in case."
+So a statement never names a tag, an ARIA attribute, a Compose `Role`, or a key. `The control is reachable by the platform's sequential focus navigation` is one requirement; that it is Tab on web and a swipe on iOS is a binding. **A statement that collapses into nonsense without naming one platform's vocabulary is written at the wrong level** — that check survives from the old format and is still the most useful one.
 
-   **For the two of these that are tables (§5.1, §6.2), "note or column" is not a free choice — it depends on how many rows actually diverge, and it must be deterministic:**
-   - If every row in the table would carry the same value regardless of platform, there's no divergence — leave the table exactly as it is, no column, no note.
-   - If a genuine divergence exists, add **one Platform column to the whole table** — never a column bolted onto only the differing rows, and never a prose note standing in for what the table itself should say. Every row gets a Platform value, including the rows that don't differ.
-   - For a row whose content is identical across two or more platforms, write that row **once** with a comma-separated platform list (e.g. `Web, Windows`) — don't duplicate the row per platform. This is the opposite of treatment 2's rule, deliberately: treatment 2 sections never have a genuinely identical value across platforms (an ARIA role and a Compose `Role` are never literally the same string), so merging there would hide a real difference; here the content can be truly, literally identical, so merging is honest, not lossy. Only give a row of its own to a platform whose content actually differs from the rest.
-   - §4.1 and §6.4 aren't tables in the template — a platform-scoped exception there is a sentence ("applies to Web and Windows, not Android"), not a column, and needs no further rule than that.
+`binds: false` is not a way to opt out. It means the platform has no referent for the fact — there is no form model off the web — and it carries its reason into every canonical document, so a platform cannot lower its own bar by omission.
 
-**Metadata as YAML frontmatter, not a blockquote.** Open the file with a frontmatter block (`component`, `version`, `status`, `last_updated`, `platforms`) rather than a bulleted blockquote — see the template below. This is a standard, widely-parsed convention (the same one SKILL.md's own frontmatter uses), which matters for the same reason as the rest of this phase: something other than a human may need to read this file's metadata without being told how.
+### The six chapters
 
-**Purpose statement (§1)** — one sentence. What the component is and what need it addresses. Not a description of its parts.
+| Chapter | Holds | Tables |
+|---|---|---|
+| 1 Intent | one or two sentences: what it is, what need it solves | prose only |
+| 2 Structure | what the thing is and the space it occupies | 2.1 Requirements · 2.2 Adaptive layout · 2.3 Layout props |
+| 3 Composition | what it contains, and on what terms | 3.1 Zones · 3.2 Arrangement · 3.3 Delegation |
+| 4 Appearance | which properties are tokenised, and what varies | 4.1 Token slots · 4.2 Interaction states · 4.3 Visual variants |
+| 5 Behavior | what it does, emits, receives, and how its state moves | 5.1 Requirements · 5.2 Events · 5.3 Behavioral props · 5.4 Machine |
+| 6 Accessibility | semantic exposure — reviewable as an aspect in its own right | requirements |
 
-**Ownership is a Structure fact, established once in §2.2 — never restated per concern.** Child-parent containment (which children are obligatory, which are optional, and that nothing outside that list is allowed) is what Cardinality and Accepts already state. Record delegation there — "Accepts: Icon component (delegated to Icon — see Icon.md)" — and nowhere else. That single structural statement already implies the child's appearance, behavior, and accessibility live in its own contract too; don't add a second "also delegated" note under Appearance, Behavior, or Accessibility for the same child, and don't preview it as a summary paragraph in Design Intent either. Reference a child by component name only, e.g. "Icon" — it has its own single contract file (`Icon.md`), so there's no platform-specific resolution to worry about.
+**All six chapters are always present.** A chapter with nothing to say says so in one line (`*Inherited in full from `role-archetype: button`. Nothing component-specific.*`) — an absent chapter is indistinguishable from an overlooked one.
 
-**Composite shells** — the shell owns the root element and platform-specific chrome (e.g., arrow navigation buttons); both show up as that platform's own row in the relevant table (§2.1, etc.), same as any other platform-specific fact. "Hard structural rules" like "minimum 2 tabs required" aren't a separate ownership concept either — that's just Cardinality (`2+`) in §2.2, stated the same way as any other zone's. Everything not captured by §2.2's zones belongs to the sub-components, full stop.
+**Composition owns a zone's existence and terms; Accessibility owns its semantic exposure.** Composition says *a title zone exists, accepts text, cardinality 1, block start*. Accessibility says *the title is the accessible name source*. Nothing is stated twice.
 
-**Pattern references are not composition — don't conflate the two.** Composition (§2.2's Accepts column) is ownership transfer: the zone *is* an instance of the child, so its structure, appearance, behavior, and accessibility all live in the child's contract and never get restated here. A **pattern reference** is different — a zone that isn't a composed instance of another component, but should be built to the same compliance bar (Q6's follow-up surfaces this). The zone is still owned here: write out its own §2.1 block, its own §5.1 row, its own §6.1 entry in full, the same as any other owned zone — a pattern reference never licenses skipping that documentation the way real composition does. What it adds is one line in the zone's §2.1 block: "Pattern: follows [Component]'s pattern (see [Component].md) for interaction and accessibility conventions" — stating that this zone's derivation deliberately reused an already-vetted contract's conventions rather than re-deriving them from Q3/Q4 in isolation, so the design system doesn't accumulate near-duplicate, slightly-diverging versions of the same control. If this zone deliberately simplifies or omits part of what the referenced pattern normally provides (e.g., text-only, no icon slot), say so explicitly in that same line — silently matching a pattern "mostly" is worse than not citing one at all, since a reader would otherwise assume full parity.
+### Requirement rows
 
-**Delegation extends to interactions and events, not just structure.** A zone delegated to a sub-component (§2.2's Accepts column) doesn't get its own row in §5.1 Interactions, §5.3 Events Emitted, or §5.4 Events Received — its interaction behavior lives in that child's own contract, same reasoning as the Ownership principle above. But don't just drop it the way an omitted row would read as an oversight rather than a decision: state once, in §5.1, whether the delegated zone's interaction passes straight through untouched (the default, and by far the more common case — e.g. "Footer action buttons: interaction is Button's own concern, see Button.md; not intercepted here") or whether the shell genuinely intercepts it. Only document interception as a fact that was actually confirmed in the interview — never invent a reaction the designer didn't describe just because an action's name (e.g. "Cancel") sounds like it should have one. For a component with an "opens/closes" action (Q3), Q3's own dismissal follow-up is where this gets confirmed or ruled out directly.
+```
+| when | statement | observe | kind | id |
+```
 
-That follow-up's answer usually does *not* license writing "intercepted" even when it confirms a footer action dismisses the component — check whether the parent actually has a way to recognize which child did it. When the zone holding that action can hold more than one instance (Footer's "1–3 Button components"), "Cancel dismisses it" identifies the action by label, not by anything the parent itself could check at runtime — the far more common real answer is that the *consumer* wired that specific Button's own callback to also call the close handler, and the parent never distinguished it from its siblings at all. That's still pass-through, just pass-through with a note about the common convention — not interception. Reserve "intercepted" for the rarer case where the interview actually confirms a real detection mechanism (a prop the parent reads on its children, a fixed position it treats specially) — and even then, name that mechanism in §5.1 rather than asserting interception happened by some unspecified means.
+- **`when`** leads, so a statement never restates its own condition. `always`, or `when:<condition>` from the closed vocabulary in `system/vocabulary/conditions.json` — plus `when:<zone>_present` for any zone chapter 3 declares, and `when:following:<transition-id>` for an effect of a transition chapter 5.4 declares. Never invent a condition; the resolver lint-fails an unknown one.
+- **`statement`** is one sentence of plain language, stating the requirement positively.
+- **`observe`** is one of the eleven types in `system/vocabulary/observe.json` — it names *how the fact is obtained*, not what kind of fact it is. `needs` is derived from it, which is why bindings stay small.
+- **`kind`** is `state` or `behavior`: is this true at rest, or only after something happens?
+- **`id`** is last and carries an `id-` prefix, so the eye skips it — `id-STR-01`. Number per chapter: `STR`, `CMP`, `APP`, `BEH`, `ACC`, `MCH`. The prefix is stripped downstream.
 
-**Raw vs. token-bound values** — never invent token names. If no token was found, document the raw value and note it as unbound.
+### Token slots (4.1)
 
-**A Visual Variant's *values* need the same discipline as a token, not just the enum's names.** Naming the options (`size: default | large`) is Q7's job and always answerable from the interview. What each option actually *resolves to* is a separate fact, and for a purely stylistic variant (color, weight) it's already covered — that resolution is the Token Map entry. But a *dimensional* variant (a width, a height, anything spatial) has nothing else in the template that captures its resolved value once §3.1 Layout Props and §4.2 Layout Policy don't apply to it — it's easy to state the enum in §3.2 and consider the section done, leaving the actual numbers to whoever implements it. Treat a dimensional variant's resolved values exactly like §4.3's raw-vs-token-bound rule: if a token exists for each value, bind it there; if a source was given but didn't cover this property, or no source exists at all, say so explicitly next to the variant in §3.2 ("no resolved width was provided for `large` — flag for confirmation") rather than leaving the enum looking complete when it isn't. Never fill the gap with an invented number to make the table look finished.
+Declare **which properties are tokenised**, not which token fills them:
 
-**Three distinct prop categories — never mix them:**
-- **Layout Props (§3.1)** — control spatial arrangement via CSS; no DOM change, no token reference.
-- **Visual Variants (§3.2)** — switch which visual style is applied; not token values themselves.
-- **Behavioral Props (§3.3)** — configure what the component does; states, feature flags, operational options.
+```
+| when | property | token | id |
+| always | background | — | id-APP-01 |
+| always | elevation | n/a — this component sits in the content plane | id-APP-03 |
+```
 
-**A duration is not automatically a token — which category it's in depends on what it governs.** A *motion* duration (how long a state change animates — an enter/exit transition, an easing curve) is a real, standard token category (DTCG's `duration` type exists for exactly this) and belongs in §4.3 like any other style value. An *interaction/lifecycle* duration (how long before a toast auto-dismisses, a debounce delay, a show-delay) determines whether and when something happens, not how it renders — that's a Behavioral Prop (§3.3), a numeric operational option with a stated default, the same category `loading`/`disabled` already live in, not a token. This also isn't just a modeling nicety: WCAG 2.2.1 (Timing Adjustable) expects this kind of duration to be configurable per-instance or by the user, which is the opposite of what a token is for — a token is one canonical brand-wide value, a lifecycle timing is closer to a per-instance setting with a sensible default. When in doubt, ask what changes if the value is edited: a repaint/re-render timing edit → token; a DOM-lifecycle edit (something appears, disappears, or fires on a delay) → Behavioral Prop.
+`—` means *resolve it from the tree* — Phase 6 does that against the design system's own naming, and reports one of six outcomes per slot. Write an explicit token path only to pin one deliberately; **a pinned name that is not in the tree fails the parse**, which is how an invented token name is kept out of a design system. A property that does not apply says so with a reason; it is never simply left out.
 
-When the user answered yes to any item in Q8 (layout flexibility), populate §3.1. If they answered "None of the above", omit §3.1.
+Declare a slot for every property in the design system's declared property set that this component actually has. Never invent a token name for a value you could not find — that rule is unchanged and now enforced.
 
-**§2.3 Adaptive Layout is container-relative, never viewport-relative — and it's a treatment-3 section:**
-§2.3 maps available space conditions to layout configurations, and that mapping is shared intent (see treatment 1/2/3 above). Reference §3.1 props by name when describing what changes. Omit §2.3 entirely if the component's layout is identical regardless of available space. If it's useful to name which mechanism each platform uses to implement the same shared condition (CSS Container Queries for Web, Size Classes for iOS, etc.), add that as a short bulleted list under the table, not a Platform column — the condition and its effect don't change per platform, only the plumbing does. See `references/platform-differences.md` for the comparison, then the specific platform file.
+### State machine (5.4)
 
-**Events Emitted/Received (§5.3/§5.4): the intent is shared, the manifestation is always per-platform (treatment 2) — ground each manifestation row in that platform's own idiom:**
-For a **Web** row, record the event name as it would appear in `addEventListener`, not a framework's handler-prop convention — see `references/web/dom-events-model.md` for the `CustomEvent` contract and why this keeps the row verifiable against rendered output regardless of implementation framework. For a native platform's row, see `references/native-events-models.md` for that platform's own idiom (closures vs. delegate protocols on iOS/macOS, lambda callbacks vs. listener interfaces on Android, routed vs. classic .NET events on Windows, GObject signals vs. Qt signals/slots on Linux) — several platforms have more than one live idiom with no single canonical spec, so name the one actually in use rather than defaulting to whichever is more familiar.
+Write one only for a component that owns state which moves. It holds transitions, one per row; closure is generated by Phase 6, never written.
+
+A machine covers **only state this component owns**. A child's state is opaque to the parent — that is what keeps the grid small, since composition turns a product into a sum. The exception is state a parent genuinely coordinates rather than delegates (a combobox's open list, with focus held in the entry), which is why that machine lives in the parent.
+
+Anything that happens *besides* the state change — a value committed, a value left alone — is an ordinary 5.1 requirement conditioned `when:following:<transition-id>`, so the trigger that performs it is bound once.
+
+### What carries over from the old format
+
+These rules are unchanged; only the section they land in has moved.
+
+**Ownership is a Composition fact, established once in 3.1 — never restated per chapter.** Cardinality and Accepts already say which children are obligatory, which optional, and that nothing else is allowed. Record delegation in 3.3 and nowhere else: that single structural statement already implies the child's appearance, behavior and accessibility live in its own contract.
+
+**Pattern references are not composition.** Composition is ownership transfer — the zone *is* an instance of the child. A pattern reference is a zone built to another component's compliance bar without being an instance of it: it is still owned here, so it gets its own rows in full, plus one line saying which contract's conventions it reuses and anything it deliberately simplifies.
+
+**Delegation extends to behavior, not just structure.** A delegated zone gets no rows in 5.1 or 5.2. State once, in 3.3, whether its interaction passes through untouched (the common case) or the shell genuinely intercepts it — and only write "intercepted" where the interview confirmed a real detection mechanism, naming it.
+
+**Three prop categories, never mixed:** layout props (2.3) control spatial arrangement; visual variants (4.3) switch which style applies; behavioral props (5.3) configure what the component does.
+
+**A duration is not automatically a token.** A motion duration (how long a state change animates) is a token, in 4.1. An interaction or lifecycle duration (auto-dismiss, debounce, show-delay) determines whether and when something happens — that is a behavioral prop in 5.3 with a stated default. WCAG 2.2.1 expects that kind of timing to be adjustable, which is the opposite of what a token is for.
+
+**Adaptive layout (2.2) is container-relative, never viewport-relative**, and the condition is shared intent — only the plumbing differs per platform, so it belongs in bindings, not in a Platform column.
+
+**Events (5.2)**: one table, `direction: emitted | received`. The event's *name and payload* are the shared fact; the platform idiom is the binding — `addEventListener` naming for web (see `references/web/dom-events-model.md`), and that platform's own idiom for native (see `references/native-events-models.md`, where several platforms have more than one live idiom and you must name the one in use).
 
 ---
 
 ### Contract template
 
-One file per component, regardless of how many platforms it targets. Path: `[ComponentName]/[ComponentName].md` — see Output for the full directory shape.
+Path: `[ComponentName]/[ComponentName].md`.
 
 ```markdown
 ---
 component: [Name]
 version: 1.0
 status: Draft
+role-archetype: [derived in Phase 3 — a library name, or `none`]
+platforms: [web, ios, android]
 last_updated: [YYYY-MM-DD]
-platforms: [list every platform selected in Q2, e.g. Web, iOS, Android]
 ---
 
 # Component Contract: [Name]
 
-## Design Intent
+## 1. Intent
 
-[One sentence: what the component is and what need it solves. Ownership and delegation aren't restated here — §2.2 Composition Zones already establishes them precisely, once, and that's the only place they need to live.]
+[One or two sentences: what it is, what need it solves. Not a description of its parts.]
 
----
+## 2. Structure
 
-## Structure
+### 2.1 Requirements
 
-### 2.1 Semantic Markup
+| when | statement | observe | kind | id |
+|---|---|---|---|---|
 
-*(Always one row per platform — see Phase 5, treatment 2. State the archetype once; don't repeat it per platform row. This section is the structural commitment only — the actual accessibility attribute wiring belongs in §6.1, not here.)*
+### 2.3 Layout props
 
-[One sentence: what this root fundamentally is, independent of platform — e.g. "A simple, generic trigger," "Navigates to a URL," "A modal overlay." Every platform below implements this same thing.]
+| prop | type | required | default | description |
+|---|---|---|---|---|
 
-Each platform's native equivalent:
+## 3. Composition
 
-| Platform | Tag / Control | Required | Notes |
-|---|---|---|---|
-[One row per platform listed in `platforms`. Web's Tag/Control column holds an HTML tag; most native platforms hold their native control name (see Phase 3). Never merge two platforms into one row, even when the value is identical. If a platform's manifestation can't fully carry the stated intent (a required behavior has no equivalent, or is only approximated), say so explicitly in Notes rather than listing it as a clean match.
+### 3.1 Zones
 
-The native element named here **is** the compliance condition, not one example among alternatives that would produce an equivalent accessible role. Per `references/web/wai-aria-patterns.md`'s first rule of ARIA use: a re-purposed generic element patched with ARIA to report the same role is not equally compliant, even if an accessibility-tree check alone would pass it — it's missing the native behavior (keyboard handling before JS loads, right-click/Cmd-click on links, crawlability, and more) that comes bundled with the real element and isn't visible to a role check. Only accept a re-purposed generic element in this table when the reference material confirms no native equivalent exists for the archetype at all.
+| zone | accepts | cardinality | position | absent | id |
+|---|---|---|---|---|---|
 
-Windows and Linux don't have a concrete "control" the way the other platforms do — their reference files ground structure in an accessibility pattern/role, not a control class. For those two, Tag/Control *is* the pattern/role itself (e.g. Windows: `Implementation-defined — any control exposing the Invoke pattern`; Linux: `GTK: GtkButton / Qt: QPushButton`, or `unspecified` if the target toolkit isn't known) — that's not an exception to stating intent separately, just a case where the platform's manifestation and its accessibility identity happen to be the same thing. The concrete wiring (`AutomationProperties.Name` for Windows, the toolkit's accessible-name API for Linux) still goes in §6.1.]
+## 4. Appearance
 
-> **Root element choice:** [If multiple valid manifestations exist for a single platform, explain when to use each.]
+### 4.1 Token slots
 
-[For each §2.2 zone that is NOT delegated to a sub-component but has its own semantic identity — an interactive control, a heading bound by `aria-labelledby`, a live region — give it its own block, same shape as the root's. Skip zones that are plain inline content with no independent role (label text, a decorative wrapper), and skip zones the root's own resolution above already names as part of a compound pattern (a radio group's `<legend>` and `<input type="radio">` items are already stated in the root row — they don't get a second block here). Omit this whole part when every non-delegated zone is either plain content or already covered by the root — e.g. Badge's single label zone, or RadioGroup's compound `<fieldset>` root.]
-
-**[Zone name from §2.2]:** [one sentence — what this zone fundamentally is, independent of platform]
-
-[If Q6's follow-up named a pattern for this zone: "Pattern: follows [Component]'s pattern (see [Component].md) for interaction and accessibility conventions." — plus a note on any deliberate simplification (e.g. "text-only, no icon slot"). Omit this line entirely for a zone with no named pattern; don't add it pre-emptively.]
-
-| Platform | Tag / Control | Required | Notes |
-|---|---|---|---|
-[One row per platform, same rules as the root's table above.]
-
-[Repeat this block per owned zone that needs one.]
-
-### 2.2 Composition Zones
-
-*(Shared — cardinality and position are intent, not implementation. See Phase 5, treatment 1.)*
-
-> **Cardinality** — how many instances of a zone are valid:
-> - `1` — exactly one, required
-> - `1+` — one or more
-> - `2–5` — minimum two, maximum five (use actual numbers)
-> - `0–1` — optional, at most one
-> - `0+` — optional, no upper limit
->
-> **Order:**
-> - `Fixed` — must appear in the documented position; may be restyled but not repositioned
-> - `Flexible` — position may vary across implementations
-> - `Responsive` — position is fixed per space condition; append both states: `Responsive — left of label ([condition-A]) / above label ([condition-B])`
-
-| Zone | Purpose | Cardinality | Accepts | Order | Absent behaviour |
-|------|---------|-------------|---------|-------|-----------------|
-[One row per visible part. Cover all named parts from Q6.]
-
-### 2.3 Adaptive Layout
-
-*(Shared conditions, treatment 3 — see Phase 5. Omit this section if layout is identical regardless of available space.)*
-
-> How the component's layout changes based on available space. Conditions are named by the design system — do not use pixel values or media query syntax.
-
-| Condition | Layout prop changes | Zone position changes |
-|-----------|--------------------|-----------------------|
-
-[Only if useful — name each platform's underlying mechanism as a short list, not a table column:]
-- Web: via CSS Container Queries
-- iOS: via Size Classes
-
-### 3.1 Layout Props
-
-> Controls spatial arrangement via CSS — no DOM change, no token reference. Omit if the component has no layout flexibility.
-
-| Prop | Values | Default | What changes |
-|------|--------|---------|--------------|
-
-### 4.2 Layout Policy
-
-[Fixed layout rules always enforced — not configurable via props. Examples: a max-width constraint, clip behaviour. Omit if none.]
-
----
-
-## Appearance
-
-### 3.2 Visual Variants
-
-> Switches which visual style is applied. These select a visual mode — they are not token values.
-
-| Prop | Values | Default | Description |
-|------|--------|---------|-------------|
-[For a dimensional variant (width, height, anything spatial — not color/weight), the Description column states each value's resolved token, or flags it explicitly as unconfirmed. See Phase 5's Visual Variant resolution principle above — don't let the enum alone stand in for a value that was never actually established.]
-
-### 4.1 Interaction States
-
-*(Shared by default, treatment 3 — see Phase 5.)*
-
-[Visual states on the component's root element: default, hover, focus, active, disabled, error, selected. Note which are driven by Behavioral Props and which are pure CSS/native responses to user input. If all states are owned by children, say so. Note which platforms a state applies to only if it's not universal (e.g. hover) — don't add a Platform column if every state applies everywhere.]
-
-### 4.3 Design Tokens
-
-#### 4.3.1 Token Strategy
-
-[What tier of tokens this component uses, which properties it owns, which are delegated to children.]
-
-#### 4.3.2 Token Map
-
-[Source: Figma / Storybook / tokens.json / description-only — state clearly]
-
-[The Token column below holds the token's canonical name — the established canonical form (`tokens.prefix` / `tokens.naming_pattern` in `.claude/design-system-context.yml`, or the token tree's own shape as read in Phase 2), not one platform's syntax. A CSS custom property's `--` prefix and kebab-case, a Swift constant's camelCase — those are that platform's rendering of the same token, not its identity. If the source handed you `--color-overlay-backdrop`, this column holds `color-overlay-backdrop` (or whatever the confirmed convention states); a platform's actual spelling only belongs in the per-platform naming table further below, and only when that table applies.]
-
-[Token-bound properties — the same conceptual token regardless of platform:]
-| Property | Token |
-|----------|-------|
-
-[Unbound properties:]
-| Property | Raw value |
-|----------|-----------|
-
-[Only if this design system's generated names genuinely differ by platform (per `tokens.naming_convention` in `.claude/design-system-context.yml`, Phase 0B) — show what each token is actually called on each platform, rather than assuming one string works everywhere:]
-
-| Token | Web | iOS | Android |
+| when | property | token | id |
 |---|---|---|---|
 
-[Omit this table entirely when naming is consistent across platforms — most design systems won't need it, and it shouldn't appear pre-emptively "just in case."]
+### 4.3 Visual variants
 
-[No source provided:]
-> Token map pending — supply a Figma node URL, Storybook URL, or CSS/token file to complete this section.
+| prop | type | required | default | description |
+|---|---|---|---|---|
 
----
+## 5. Behavior
 
-## Behavior
+### 5.2 Events
 
-### 3.3 Behavioral Props
+| when | direction | name | payload | id |
+|---|---|---|---|---|
 
-> Configures what the component does — states, feature flags, operational options. Omit if no configurable behavior beyond visual variants.
+### 5.3 Behavioral props
 
-| Prop | Type | Default | Required | Description |
-|------|------|---------|----------|-------------|
+| prop | type | required | default | description |
+|---|---|---|---|---|
 
-### 5.1 Interactions
+## 6. Accessibility
 
-*(Shared by default, treatment 3 — add a Platform column only if Q4's follow-up confirmed a genuine difference. Zones delegated to a sub-component don't get a row here — see Phase 5's delegation principle. State once whether a delegated zone's interaction passes through untouched or is deliberately intercepted; don't just omit it silently.)*
-
-| Event | Source | Action |
-|-------|--------|--------|
-[One row per interaction on a zone the shell itself owns. Below the table, one sentence per delegated zone: passes through untouched (default), or intercepted (state what the shell actually does).]
-
-### 5.2 State Machine
-
-*(Shared — see Phase 5, treatment 1.)*
-
-[Internal states and transitions. If the component has no internal state: "None — [what manages state instead]."]
-
-### 5.3 Events Emitted
-
-*(Always one row per platform — see Phase 5, treatment 2. State each distinct event's intent once; repeat the block if the component emits more than one conceptually distinct event.)*
-
-[One sentence: what this event announces and what it means, independent of platform — e.g. "Announces that the component has been dismissed, and why (timeout vs. manual)." If there's no event to emit, say "None" once and omit the table below. A delegated zone's event that passes straight through with no re-emission doesn't get a row here either — only a deliberate re-emission (stated in §5.1) becomes an event of the shell's own.]
-
-Each platform's event:
-
-| Platform | Signature | Notes |
-|---|---|---|
-[One row per platform. Web rows ground the signature in the DOM `CustomEvent` name as it would appear in `addEventListener`, per `references/web/dom-events-model.md`; native rows use that platform's own idiom per `references/native-events-models.md`. If the component emits nothing, state that once above instead of writing "None" per platform row.]
-
-### 5.4 Events Received
-
-*(Same shape as 5.3 — state what's listened for once, then each platform's implementation.)*
-
-[One sentence: what this component listens for and how it responds, independent of platform. If it receives nothing, say "None" once and omit the table below.]
-
-Each platform's implementation:
-
-| Platform | Signature | Notes |
-|---|---|---|
-
----
-
-## Accessibility
-
-### 6.1 Roles & Attributes
-
-*(Always one row per platform — see Phase 5, treatment 2. State each element's accessibility requirement once, then how each platform meets it. Repeat the block below once per element that needs distinct accessibility treatment — the root and an internal close button are two separate requirements, not one.)*
-
-**[Element]:** [What this must convey to assistive technology, in plain language, independent of platform — e.g. "Must be announced as a live status region when its content changes, without requiring focus to move" or "Must expose button semantics."]
-
-Each platform's implementation:
-
-| Platform | Attributes | Notes |
-|---|---|---|
-[One row per platform. Web rows use ARIA roles/attributes; native rows use that platform's own vocabulary — see that platform's reference file. Never merge two platforms into one row. Repeat the intent-plus-manifestation block above for each additional element needing its own accessibility treatment.]
-
-### 6.2 Keyboard / Gesture Navigation
-
-*(Shared by default, treatment 3 — add a platform note or column only where the actual key or gesture differs.)*
-
-| Key / Gesture | Behaviour |
-|-----|-----------|
-
-### 6.3 Focus Management
-
-*(Shared — see Phase 5, treatment 1.)*
-
-- **Focus trap:** [Yes — explain / No]
-- **Tab order:** [Expected focus sequence]
-- **On open:** [Where focus moves when the component opens, if applicable]
-- **On close:** [Where focus returns when the component closes, if applicable]
-
-### 6.4 Screen Reader / Assistive Technology Expectations
-
-*(Shared intent by default, treatment 3 — note per platform only if the announcement mechanism differs.)*
-
-- **On reach:** [What is announced when the component first receives focus]
-- **On activation:** [What is announced when the user triggers it]
-- **On state change:** [What is announced when state changes or content updates]
-- **On error / empty:** [What is announced for error or empty states]
+| when | statement | observe | kind | id |
+|---|---|---|---|---|
 ```
 
+Include 2.2, 3.2, 3.3, 4.2 and 5.1/5.4 when the component has something to put in them; keep the six chapter headings regardless.
+
+### Bindings template
+
+Path: `[ComponentName]/[ComponentName].bindings.json`. It holds **only the ids this contract introduces**, and within those, only what is genuinely platform-specific. Most entries are small, because `needs` is derived from `observe` — only `expect` must be authored.
+
+```json
+{
+  "contract": "[Name]",
+  "version": "1.0",
+  "bindings": {
+    "STR-01": {
+      "web":     { "expect": { "max_ratio": 1.0 } },
+      "ios":     { "expect": { "max_ratio": 1.0 } },
+      "android": { "expect": { "max_ratio": 1.0 } }
+    },
+    "BEH-02": {
+      "web":     { "expect": { "equals": true } },
+      "ios":     { "binds": false, "reason": "no platform-level form model exists off the web" }
+    }
+  }
+}
+```
+
+Every requirement needs a binding for every platform in `platforms`, or an explicit `binds: false` with a reason. A missing binding is a lint failure, not a default — it would otherwise be indistinguishable from a requirement nobody got to.
+
 ---
 
-## Phase 6: JSON schema generation (if requested)
+## Phase 6: Resolve, and the optional props schema
 
-**Generate one `.schema.json` per platform selected in Q2.** This isn't because the content differs — it usually won't, since §3.1/§3.2/§3.3 (Layout Props, Visual Variants, Behavioral Props) and §2.2 Composition Zones are all shared sections in the one contract file now, so every platform's schema is typically generated from the exact same inputs. The split exists because each platform's build process consumes its own schema file as a separate step — a compile-time concern, not a content concern. Never add validation rules not stated in the contract. See `references/json-schema-draft-07.md` for the full keyword reference, what NOT to add on your own initiative, and the Draft 07 vs. 2020-12 decision this skill deliberately pins.
+### Resolve the contract
 
-### Mapping contract to schema
+Run the resolver on the contract just written, once per component:
 
-| Contract source | Schema construct |
+```bash
+python3 <skill>/scripts/resolve.py      [ComponentName]/[ComponentName].md --out [ComponentName]/canonical
+python3 <skill>/scripts/resolve_view.py [ComponentName]/[ComponentName].md
+```
+
+The first emits one canonical document per platform in `platforms` — the interchange format a verifier reads. The second emits `[ComponentName].resolved.md`, the artifact a **person** reads: the contract's own chapters with the role-archetype's and the policy's inherited requirements resolved in, origin as a column.
+
+Three kinds of output come back, and they are not the same kind of thing:
+
+| | Means | What to do |
+|---|---|---|
+| **lint** | the document is malformed — an unknown condition, a missing binding, a pinned token that is not in the tree, a machine with two answers for one cell | **fix it and re-run.** The resolver exits non-zero; a contract that does not resolve is not finished |
+| **token gaps** | the document is fine; the **token tree** cannot express something yet | report to the user, by kind and who fixes it. Do not "fix" it by inventing a token name |
+| **machine closure** | how many generated checks the state machine implies | nothing — it is information, not a finding |
+
+**A gap is never a reason to edit the contract into silence.** `absent-from-tree` and `dimension-unmet` are tasks for whoever owns the token tree; `ambiguous` is one question for the author; `unmapped-leaf` means the tree has tokens this design system has not taught the skill to read, and the fix is a `leaf_map` entry in `.claude/design-system-context.yml` — **never a new token**, since one may already exist under a spelling nobody mapped.
+
+### What replaced `structure.json`
+
+Earlier versions emitted `[Component].[Platform].structure.json` and checked it against a rendered tree. **The canonical document replaces it, and the check moved out of this skill.** The reasoning is the one this whole format rests on: the skill's output ends at a *description*, and executing it belongs to whoever owns that platform's toolchain. A verifier reads the canonical document, declares what it can and cannot observe, and reports `pass · fail · unverified · n/a` — anything it cannot observe is named, never passed.
+
+`references/structural-fact-validation.md` keeps its value and changes audience: it is how a **verifier author** obtains a real rendered tree per platform (the live DOM for web, an accessibility-node dump for native) and reads order from it. Its rule still governs — check what actually rendered, never source code, because the contract deliberately refuses to require a particular implementation shape.
+
+### Token-name validation (only if `generated_downstream` is confirmed)
+
+Unchanged in substance, and still a different check from everything above: it asks whether a **real generated symbol** in a platform file (a CSS custom property, a Swift constant, an Android resource) corresponds to the canonical token the contract named. It runs only when `tokens.generated_downstream` is `true` — a hand-typed literal has no generated name to validate, so there is no lesser check to fall back to.
+
+What feeds it now:
+- **the resolved token slots** from chapter 4.1 — every slot Phase 6 reported as `bound`, which is the set of canonical paths this component actually binds. A slot with a gap has nothing to validate and is excluded, not failed twice.
+- `tokens.naming_convention` for that platform's locked convention — all three axes — per `references/token-naming-validation.md`'s "lock on first success".
+- the platform's real generated output, for the candidate names.
+
+Run the algorithm exactly as that reference specifies; never write a per-component variant.
+
+### Props schema (only if Q10 asked for one)
+
+**This survives the move to canonical documents, because it checks a different subject.** The canonical document describes outcomes an implementation must produce; a props schema validates a **consumer-supplied props instance** — is this a legal set of props to pass? Neither answers the other's question, and the schema is consumed by ordinary build tooling that will never read a canonical document.
+
+One file per platform, `[ComponentName].[Platform].schema.json`, derived from the contract's prop tables:
+
+| Contract | Schema |
 |---|---|
-| §3.1 Layout Props — values | `enum` on the property |
-| §3.2 Visual Variants — values | `enum` on the property |
-| §3.3 Behavioral Props — type + default | `properties`, `default` |
-| §3.3 Behavioral Props — Required = Yes | `required` array |
-| §2.2 Zones — required (Cardinality ≥ 1) with sub-components | `properties` with `$ref` or inline `object` |
-| §2.2 Zones — Cardinality minimum | `minItems` on the array |
-| §2.2 Zones — optional (Cardinality starts at 0) | present in `properties`, absent from `required` |
+| 4.3 Visual variants — `enum:a,b,c` type | `enum` on the property |
+| 5.3 Behavioral props — type + default | `properties`, `default` |
+| 5.3 / 2.3 props — `required: yes` | `required` array |
+| 2.3 Layout props — type + default | `properties`, `default` |
+| 3.1 Zones — `accepts: component:X`, cardinality ≥ 1 | `properties` with `$ref` or inline `object` |
+| 3.1 Zones — cardinality minimum | `minItems` on the array |
+| 3.1 Zones — cardinality starting at 0 | present in `properties`, absent from `required` |
 
-Every row above comes from a section that's shared across platforms, so don't expect (or introduce) platform-to-platform variation here — if a design system genuinely does need different props per platform, that's unusual enough to flag to the user rather than silently encode.
+Every row comes from a platform-neutral table, so don't introduce platform-to-platform variation here; if a design system genuinely needs different props per platform, flag it rather than silently encoding it.
 
-### Schema rules
-
-- JSON Schema Draft 07 (`"$schema": "http://json-schema.org/draft-07/schema#"`)
-- `"$id"`: `[component-name]-[platform]` in kebab-case, e.g. `modal-ios` — platform-scoped even though the content is typically shared, so build tooling can address one platform's file unambiguously
-- `"title"`: component display name plus platform, e.g. `"Modal (iOS)"`
-- `"description"` on every property, copied from the contract
-- Enum props: `"type": "string"` + `"enum": [...]`
-- Boolean props: `"type": "boolean"`
-- Number props: `"type": "number"` with `"minimum"` / `"maximum"` only if the contract states bounds
-- Child arrays referencing a sub-component, in `$ref` mode: `"items": { "$ref": "[Child].[SamePlatform].schema.json" }` — always the same platform as the schema currently being generated, so the wiring stays predictable
-- Child arrays, in inline mode: `"type": "array"` + `"minItems"` where stated + an inline `object` shape instead of `$ref`
-
-### Token-name validation (separate from the props schema above, if `generated_downstream` is confirmed)
-
-The schema above covers §3.1/§3.2/§3.3 — layout props, visual variants, behavioral props. It says nothing about §4.3 Design Tokens, because a token binding isn't a prop shape to validate on a JSON instance — it's a claim that a specific named symbol in a real, already-generated platform file corresponds to a specific canonical token path. That's a different kind of check, against different material (source files, not a JSON instance), and it only makes sense to run at all when `.claude/design-system-context.yml`'s `tokens.generated_downstream` is confirmed `true` — see references/token-naming-validation.md's precondition section for why this isn't a fallback-capable check: a hand-typed literal has no name to validate in the first place, and this never substitutes a lesser check when the precondition doesn't hold.
-
-When it does hold, the source data is already sitting in the contract and the context file — nothing new needs to be authored to run it:
-- §4.3.2's Token Map (`Property | Token` rows) supplies every canonical token path this component actually binds to.
-- `design-system-context.yml`'s `tokens.naming_convention` supplies that platform's locked naming convention — all three axes (separator/case row, added prefix, scope depth) — once detected (see references/token-naming-validation.md's "lock on first success" — the first component to exercise this check for a given platform is what sets that platform's row for every component after it).
-- The platform's actual generated output (a `colors.xml`, a CSS custom-properties file, a generated Swift/Kotlin constants module) supplies the candidate names to check.
-
-Run the full algorithm — canonicalize, generate the locked convention's expected form at the locked truncation depth, exact-match, report the specific finding (four alert-level categories, plus a one-time warning when a platform's leading-segment scoping is first detected and needs confirming) — exactly as `references/token-naming-validation.md` specifies. Never write a bespoke variant of it per component; the algorithm is component-agnostic by design, only the token list (from §4.3.2) and the candidate names (from the platform's real output) change per run.
-
-### Structural-fact validation (§2.1, §2.2 Order, §6.1–§6.3 — no precondition, always run)
-
-Unlike token-name validation, this one isn't optional and isn't gated on anything — semantic markup and accessibility facts exist in every implementation regardless of how that design system handles tokens, and the contract already states the exact platform-standard construct expected for each (derived from HIG/Material/WAI-ARIA references in Phase 3/4, never invented per design system), so there's no unknown convention to detect first. **Generate `[Component].[Platform].structure.json` for every platform in Q2, every time — this is as close to mandatory as this skill's optional-schema Q10 gets, because the two sections it covers (§2.1 root element, §6.1–§6.3 accessibility) are the ones this methodology treats as non-negotiable.**
-
-The file's three parts, extracted directly from the contract — not authored by hand, the same way the props schema isn't:
-- `rootElement`, from §2.1's Tag/Control column.
-- `order`, from §2.2's Order/Position column, wherever it states a relative position (Icon precedes Title, Close button in a top corner) rather than just presence.
-- `accessibility`, from every literal role/attribute/keyboard-trigger/focus-target named in §6.1–§6.3.
-
-**Check it against the real, rendered tree a running instance actually produces — never against source code.** This follows directly from "Native platform technology as the stated level" below Phase 2: we don't control how a component is built, only what it needs to produce, so a check that greps an implementation's source file assumes a specific implementation shape the contract explicitly refuses to require, and breaks on anything the contract is supposed to tolerate (a different framework, a minified bundle, a vendored component with no visible source). The real tree comes from the same real device/simulator/browser artifact this skill's blind-implementation testing already produces — the live DOM for Web, a real accessibility-node dump for Android/iOS — never a file on disk. See `references/structural-fact-validation.md` for how to obtain that tree per platform and how the order check reads it. Report a miss as a direct finding — there's no alert/warning severity split here the way token validation needed one; the contract already treats every one of these constructs as required, so an absence is unambiguous. This check confirms the right node exists, with the right role/attribute, in the right position, in what actually rendered — not that it behaves correctly for a real user at runtime; that distinction is spelled out in the reference file's "What this deliberately does not check."
+**Schema rules** — unchanged: Draft 07 (`"$schema": "http://json-schema.org/draft-07/schema#"`); `"$id"` as `[component-name]-[platform]` in kebab-case; `"title"` as display name plus platform; `"description"` on every property, copied from the contract; enums as `"type": "string"` + `"enum"`; numbers with `minimum`/`maximum` only where the contract states bounds; child arrays as `"items": { "$ref": "[Child].[SamePlatform].schema.json" }`, always the same platform as the schema being generated.
 
 ---
 
 ## Output
 
-**Every component gets its own directory** — `[ComponentName]/` (PascalCase) — holding everything this interview produced. Ask for the parent directory to create it in if the user hasn't specified one; never scatter a component's files loose into a directory shared with other components' output.
+**Every component gets its own directory** — `[ComponentName]/` (PascalCase). Its parent is `contracts.path` from the design-system context when that is recorded; otherwise ask once, and record it, so no later component asks again.
 
-Inside `[ComponentName]/`, always this shape, even for a single platform:
-- `[ComponentName].md` — the one contract file, covering every platform selected in Q2 within its own structure (see Phase 5).
-- `[ComponentName].[Platform].schema.json` — one per platform, only if Q10 requested a schema (see Phase 6).
-- `[ComponentName].[Platform].structure.json` — one per platform, always (see Phase 6's structural-fact validation) — the only Phase 6 output that isn't gated behind Q10, since §2.1 and §6.1–§6.3 aren't optional the way a props schema is.
+```
+[ComponentName]/
+├── [ComponentName].md                          the contract — source, authored in Phase 5
+├── [ComponentName].bindings.json               per-platform expect values
+├── [ComponentName].resolved.md                 generated — the artifact a person reads
+├── canonical/
+│   ├── [ComponentName].web.canonical.json      generated — one per platform in `platforms`
+│   └── [ComponentName].ios.canonical.json
+└── [ComponentName].[Platform].schema.json      only if Q10 asked for one
+```
 
-Confirm the full directory tree after writing.
+The first two are authored and belong in version control. The rest are generated: regenerating them must produce identical files, so a diff after a re-run means the contract changed, not the tooling.
+
+Confirm the full tree after writing, and report the resolver's three outputs — lint (must be zero), token gaps (by kind, with who fixes each), and any machine closure count.

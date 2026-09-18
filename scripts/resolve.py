@@ -237,6 +237,43 @@ def slot_requirement(slot):
     return dict(base, statement="%s resolves through a design token." % label,
                 pending={"reason": slot["status"], "detail": slot["detail"]})
 
+def _policy(fm, src, context, root):
+    """(policy text, policy bindings path). ONE policy per design system: `contracts.policy`
+    in the context is its location, and a contract's `policy:` overrides it for itself."""
+    policy_ref, policy_base = fm.get("policy"), src
+    if not policy_ref and (context.get("contracts") or {}).get("policy") and root:
+        policy_ref, policy_base = context["contracts"]["policy"], root
+    if not policy_ref:
+        return "", None
+    path = (policy_base / policy_ref).resolve()
+    if not path.is_file():
+        lint.append("policy %r not found at %s" % (policy_ref, path))
+        return "", None
+    return path.read_text(), path.with_name(path.stem + ".bindings.json")
+
+
+def _tree(fm, src, context, root):
+    facts = context.get("tokens") or {}
+    if fm.get("tokens"):
+        return Tree(str((src / fm["tokens"]).resolve()), facts)
+    if facts.get("source") and root:
+        return Tree(str((root / facts["source"]).resolve()), facts)
+    return None
+
+
+def _bindings(arch_dir, archetype, policy_bindings, own):
+    """(merged bindings, the layers themselves). Later layers override earlier ones."""
+    files = [] if arch_dir is None else [arch_dir / (archetype + ".bindings.json")]
+    files += [policy_bindings, own]
+    layers = [json.loads(f.read_text()) for f in files if f and f.is_file()]
+    merged: dict = {}
+    for layer in layers:
+        for rid, entry in layer.get("bindings", {}).items():
+            merged.setdefault(rid, {}).update(entry)
+    return merged, layers
+
+
+
 def load_sources(contract_path, context_path=None):
     """Everything a contract draws from, located from the contract itself. Shared with the view."""
     contract_path = pathlib.Path(contract_path).resolve()
@@ -249,60 +286,37 @@ def load_sources(contract_path, context_path=None):
     root = ctx.repo_root(context_path) if context_path else None
 
     # role-archetype: the design system's own extensions first, then the shipped library.
+    # `none` is a real answer, not a missing one: a Card conveys no distinct role to assistive
+    # technology, so there is nothing to inherit and every requirement is stated locally. It is
+    # spelled out rather than left blank so a reader can tell a decision from an omission.
     archetype = fm["role-archetype"]
-    search = []
-    local = (context.get("contracts") or {}).get("archetypes")
-    if local and root:
-        search.append(root / local)
-    search.append(LIB / "role-archetypes")
-    arch_dir = next((d for d in search if (d / (archetype + ".md")).is_file()), None)
-    if arch_dir is None:
-        raise SystemExit("role-archetype %r not found in: %s" % (archetype, ", ".join(map(str, search))))
-    arch_text = (arch_dir / (archetype + ".md")).read_text()
-    arch_fm, arch_body = parse_frontmatter(arch_text)
+    arch_dir, arch_fm, arch_text, arch_body = None, {"version": "—"}, "", ""
+    if archetype != "none":
+        search = []
+        local = (context.get("contracts") or {}).get("archetypes")
+        if local and root:
+            search.append(root / local)
+        search.append(LIB / "role-archetypes")
+        arch_dir = next((d for d in search if (d / (archetype + ".md")).is_file()), None)
+        if arch_dir is None:
+            raise SystemExit("role-archetype %r not found in: %s — if this component conveys no "
+                             "distinct role, say `role-archetype: none`"
+                             % (archetype, ", ".join(map(str, search))))
+        arch_text = (arch_dir / (archetype + ".md")).read_text()
+        arch_fm, arch_body = parse_frontmatter(arch_text)
 
-    # policy: ONE file per design system, so its location is a recorded fact, not something
-    # every contract restates and gets wrong when it moves. `contracts.policy` in the context
-    # is the location; a contract's `policy:` frontmatter overrides it for that contract only.
-    # It is always the design system's own file — never `system/policy.md` inside the skill,
-    # which ships blank and is replaced wholesale on the next update.
-    policy_text, policy_bindings = "", None
-    policy_ref = fm.get("policy")
-    policy_base = src
-    if not policy_ref and (context.get("contracts") or {}).get("policy") and root:
-        policy_ref, policy_base = (context["contracts"] or {})["policy"], root
-    if policy_ref:
-        policy_path = (policy_base / policy_ref).resolve()
-        if policy_path.is_file():
-            policy_text = policy_path.read_text()
-            policy_bindings = policy_path.with_name(policy_path.stem + ".bindings.json")
-        else:
-            lint.append("policy %r not found at %s" % (policy_ref, policy_path))
-
-    # Three binding layers, one per ownership layer. Later layers override earlier ones.
-    layer_files = [arch_dir / (archetype + ".bindings.json"), policy_bindings,
-                   src / (component + ".bindings.json")]
-    binding_layers = [json.loads(f.read_text()) for f in layer_files if f and f.is_file()]
-    bindings: dict = {}
-    for layer in binding_layers:
-        for rid, entry in layer.get("bindings", {}).items():
-            bindings.setdefault(rid, {}).update(entry)
-
-    # token tree: the contract's own reference wins; otherwise the design system's.
-    tree, facts = None, (context.get("tokens") or {})
-    if fm.get("tokens"):
-        tree = Tree(str((src / fm["tokens"]).resolve()), facts)
-    elif facts.get("source") and root:
-        tree = Tree(str((root / facts["source"]).resolve()), facts)
-
+    policy_text, policy_bindings = _policy(fm, src, context, root)
+    bindings, binding_layers = _bindings(arch_dir, archetype, policy_bindings,
+                                         src / (component + ".bindings.json"))
+    tree = _tree(fm, src, context, root)
     if tree is not None:
         # A wrong FACT is worse than a missing one: it mis-resolves every component quietly.
         lint.extend("design-system context: " + x for x in tree.problems)
 
     return {"fm": fm, "body": body, "component": component, "src": src,
-            "archetype": archetype, "arch_fm": arch_fm, "arch_text": arch_text, "arch_body": arch_body, "policy_text": policy_text,
-            "bindings": bindings, "binding_layers": binding_layers, "tree": tree,
-            "context_path": context_path}
+            "archetype": archetype, "arch_fm": arch_fm, "arch_text": arch_text,
+            "arch_body": arch_body, "policy_text": policy_text, "bindings": bindings,
+            "binding_layers": binding_layers, "tree": tree, "context_path": context_path}
 
 
 def main():

@@ -15,7 +15,7 @@ That boundary is why the precondition below is a gate and not a preference: with
 Three facts, kept distinct throughout this file (see SKILL.md's "Three naming facts"):
 
 - **Canonical path** — the token's identity, one per token: `ds.semantic.color.bg.surface`.
-- **`naming-pattern`** — the ordered slot schema every canonical path in this tree follows, one per design system: `prefix.tier.property.element.level`. Always hyphenated, to stay distinct from this skill's other uses of "pattern."
+- **`naming-pattern`** — the slot schema this tree's canonical paths follow, recorded as `tokens.patterns` in `.claude/design-system-context.yml`: **a list of templates, one per path shape, per tier** — a real tree commonly has several (`component.{component}.{property}` and `component.{component}.variant.{variant}.{property}` in the same system). Proposed by `scripts/detect_tokens.py` and confirmed in Phase 0B.
 - **Naming convention** — how one *platform's* generated output renders a canonical path, one per platform, three independent axes: separator/case row, added prefix, scope depth.
 
 **`namespace`** keeps its narrow meaning here throughout: the *leading* segments a platform's pipeline scopes away. It is never a synonym for the canonical path.

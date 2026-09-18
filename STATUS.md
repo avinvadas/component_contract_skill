@@ -65,19 +65,22 @@ Four ideas carry the whole thing:
 
 ## What does not exist yet
 
-**The headline: there are two halves in this repo and they have never been joined.**
-`SKILL.md` — the thing a user actually runs — contains **zero** references to `system/`,
-`role-archetype`, the vocabularies, or canonical documents. It still describes the older
-flow (interview → contract + per-platform structure/schema files). Everything above was
-designed and built beside it, not into it.
+**The two halves are now joined.** `SKILL.md` Phase 3 derives the role-archetype, Phase 5
+writes the six-chapter contract and its bindings, and Phase 6 runs `scripts/resolve.py` and
+`scripts/resolve_view.py` to produce the canonical documents and the resolved view.
+`structure.json` is gone: the canonical document replaces it, and checking a rendered tree
+moved to whoever owns that platform's toolchain, which is what the format exists to allow.
+
+What that does NOT mean: the skill has not been run end to end against a real design system
+since the rewrite. The eval suite's stored generations predate it.
 
 | | |
 |---|---|
-| The interview does not know about policy, archetypes, or the token tree | **unwired** |
+| The interview does not know about policy | **unwired** — Phase 0C specifies the layout and scaffold; policy rows are still never asked |
 | iOS and Android verifiers | **sketches, not runnable** |
 | Conformance suite for verifiers (how a new one proves it is correct) | **does not exist** |
 | Role-archetypes tier 2–4 (dialog, list, checkbox, tab, …) | **unbuilt** |
-| The eval suite | **measures v2** — a green run certifies the OLD format, it does not merely miss the new one |
+| The eval suite's stored generations | **predate the format** — kept as a record, not a baseline; the fixtures, cases and invariants are rebuilt |
 | Superseded docs in `docs/` | **kept as history, each bannered** — they record why the design moved, and say so at the top |
 
 So: the **format and the resolver are real and testable**. The **product is not wired**.

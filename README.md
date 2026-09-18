@@ -5,36 +5,34 @@ Answer a structured interview about a UI component, and it will generate a forma
 
 ## What it generates
 
-One interview, **one contract file** per component, covering any combination of supported target platforms (Web, iOS, Android, macOS) within that single document — plus, per platform, a structure file and optionally a JSON Schema, both split per platform because each platform's build process consumes its own.
+One interview, **one contract** per component, covering any combination of supported platforms (Web, iOS, Android, macOS) in a single document — plus the files generated from it.
 
 ```
 ComponentName/
-├── ComponentName.md                     # the one contract — every platform, one document
-├── ComponentName.Web.structure.json     # per platform, always
-├── ComponentName.iOS.structure.json
-├── ComponentName.Web.schema.json        # per platform, optional
-└── ComponentName.iOS.schema.json
+├── ComponentName.md                              # the contract — authored, six chapters
+├── ComponentName.bindings.json                   # how each platform checks it
+├── ComponentName.resolved.md                     # generated — what a person reads
+├── canonical/
+│   ├── ComponentName.web.canonical.json          # generated — one per platform
+│   └── ComponentName.ios.canonical.json
+└── ComponentName.Web.schema.json                 # optional props schema
 ```
 
-- **`ComponentName.md`** — the entire contract, opening with a short Design Intent statement and then organized under four concerns, a plain separation-of-concerns structure rather than a grab-bag "Properties" section spanning several unrelated ones:
-  - **Structure** — semantic markup, composition zones and their ownership/cardinality, adaptive layout, layout props, and layout policy
-  - **Appearance** — visual variants, interaction states, and design tokens
-  - **Behavior** — behavioral props, interactions, the state machine, and events emitted/received
-  - **Accessibility** — roles/attributes, keyboard/gesture navigation, focus management, and screen reader/assistive-technology expectations
+- **`ComponentName.md`** — six chapters: **Intent**, **Structure**, **Composition**, **Appearance**, **Behavior**, **Accessibility**. Accessibility is its own chapter rather than a column, so it can be reviewed as an aspect in its own right. A requirement is written **once**, in plain language, and never names a platform's vocabulary: *"the control is reachable by the platform's sequential focus navigation"* is the requirement; that it is Tab on web and a swipe on iOS is a binding. One frontmatter line — `role-archetype: button` — inherits what every platform already guarantees for that role, so no contract restates it.
 
-  Sections that describe *intent* (Composition Zones, Layout Policy, Visual Variants, Design Tokens, Behavioral Props, State Machine, Focus Management) are written once. Sections that are structurally platform-specific (Semantic Markup, Events Emitted/Received, Accessibility Roles & Attributes) hold one row per targeted platform, in the same table, right next to each other — never a separate file per platform, and never a value merged across platforms or left to be inferred ("same as Web"). A handful of sections (Adaptive Layout, Interaction States, Interactions, Keyboard/Gesture Navigation, Screen Reader expectations) are shared by default and only pick up a platform-specific note where an actual difference exists. The file opens with YAML frontmatter (component name, version, status, platforms) rather than a bespoke metadata block, so both a person and an agent reading it as implementation context can rely on the same standard convention.
+- **`ComponentName.bindings.json`** — per-platform `expect` values, and only where they are not derivable. A requirement with no referent on a platform carries `binds: false` **with a reason**, and still appears in that platform's output, so nothing can lower its own bar by omission.
 
-- **`ComponentName.[Platform].structure.json`** *(one per platform, always)* — the contract's root element, zone order, and accessibility facts, extracted into a form that can be checked against a **rendered tree**: the live DOM for Web, a runtime accessibility-node dump for native platforms. Never against source code — a contract is satisfied by React, SwiftUI, or a framework nobody has invented yet, so long as the outcome matches, and source text can't tell you what actually rendered. This one isn't gated behind the schema question, because semantic markup and accessibility aren't optional the way a props schema is.
+- **`ComponentName.resolved.md`** *(generated)* — the reading artifact: the contract's own chapters with everything inherited resolved in, origin as a column, and any token gaps named with who fixes them.
 
-- **`ComponentName.[Platform].schema.json`** *(optional, one per platform)* — a JSON Schema Draft file validating a **consumer-supplied props instance**: is this a legal set of props for this component? It says nothing about whether an implementation honors the contract; that's the structure file's job. Its content is typically identical across a component's platforms, since it's derived entirely from sections that don't vary by platform — it's split into separate files because each platform's build tooling consumes its own schema as a separate compile-time step, not because the data differs.
+- **`canonical/ComponentName.[platform].canonical.json`** *(generated, one per platform)* — an **interchange format**, not a test. It describes what must hold and what each fact needs in order to be observed; a verifier built on that platform's own tooling reads it, declares what it can and cannot observe, and reports `pass · fail · unverified · n/a`. Anything it cannot observe is named, never passed.
 
-A single-platform component still gets this same directory shape, so adding a second platform later means editing the existing contract's tables to add a row and dropping in that platform's files, never restructuring what's already there.
+- **`ComponentName.[Platform].schema.json`** *(optional)* — JSON Schema validating a **consumer-supplied props instance**: is this a legal set of props? A different subject from everything above, and consumed by ordinary build tooling.
 
 ## Why it exists
 
 A component contract captures **design intent**: what a component is and what it does, beneath its instances. Design intent is the stable ground beneath the ongoing cycle between design and engineering, and it can show up in more ways than a single tool captures at a given moment. The contract is a stable, explicit statement of that intent.
 
-Two separate checkable artifacts come with it, and they check different subjects — worth keeping straight, since it's easy to credit the first with the second's job. The **JSON schema** validates a consumer-supplied props instance (is this a legal set of props for this component?). The **structure file** validates a real implementation's *rendered output* — the live DOM, or a runtime accessibility tree — against the contract's semantic markup and accessibility claims.
+Two checkable artifacts come with it, and they check different subjects — worth keeping straight, since it's easy to credit one with the other's job. The **JSON schema** validates a consumer-supplied props instance (is this a legal set of props?). The **canonical document** describes what a real implementation must produce, for a verifier running that platform's own test framework to check against its rendered output — the live DOM, or a runtime accessibility tree — never against source code.
 
 This creates a documentation-driven process, in which design and engineering both build from — and test against — the same explicit statement of intent, instead of each inferring it separately from whatever specific artifact happens to be at hand.
 

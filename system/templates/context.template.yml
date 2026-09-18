@@ -3,7 +3,6 @@
 
 tokens:
   prefix:              # e.g. "ds" — the canonical prefix, syntax-neutral
-  naming_pattern:      # e.g. "category.concept.variant.state"
   source:              # path to the canonical token tree, relative to the directory holding .claude/
   tiers:               # which top-level group plays each role — from scripts/detect_tokens.py, confirmed
     primitive:         # e.g. "core"

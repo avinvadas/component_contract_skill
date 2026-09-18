@@ -163,6 +163,49 @@ def policy_location_is_a_recorded_fact():
     assert "POL-02" in {x["id"] for x in doc["requirements"]}, "policy not inherited from the context"
 
 
+@test
+def role_archetype_none_is_an_answer_not_a_gap():
+    """Guards: a Card, which conveys no distinct role, having nowhere to say so."""
+    d = pathlib.Path(tempfile.mkdtemp())
+    (d / "Card.md").write_text("""---
+component: Card
+version: 1.0
+role-archetype: none
+platforms: [web]
+---
+
+# Component Contract: Card
+
+## 1. Intent
+
+A surface that groups related content.
+
+## 2. Structure
+
+| when | statement | observe | kind | id |
+|---|---|---|---|---|
+| always | The surface does not exceed the inline size of its container. | layout | state | id-STR-01 |
+
+## 3. Composition
+
+## 4. Appearance
+
+## 5. Behavior
+
+## 6. Accessibility
+""")
+    (d / "Card.bindings.json").write_text(json.dumps(
+        {"contract": "Card", "bindings": {"STR-01": {"web": {"expect": {"max_ratio": 1.0}}}}}))
+    with tempfile.TemporaryDirectory() as out:
+        r = run(HERE / "resolve.py", d / "Card.md", "--out", out)
+        assert r.returncode == 0, r.stdout[-500:] + r.stderr[-500:]
+        doc = json.loads((pathlib.Path(out) / "Card.web.canonical.json").read_text())
+        assert doc["role-archetype"] == "none", doc["role-archetype"]
+        assert {x["id"] for x in doc["requirements"]} == {"STR-01"}, doc["requirements"]
+        v = run(HERE / "resolve_view.py", d / "Card.md", "--out", pathlib.Path(out) / "Card.resolved.md")
+        assert v.returncode == 0, v.stderr[-500:]
+
+
 # ---- detection ----------------------------------------------------------------------
 @test
 def detection_reads_tiers_from_alias_direction_not_names():
