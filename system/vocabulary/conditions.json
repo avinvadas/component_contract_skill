@@ -10,6 +10,15 @@
       },
       "requires_prop": "disabled"
     },
+    "enabled": {
+      "scenario": {
+        "props": {
+          "disabled": false
+        }
+      },
+      "requires_prop": "disabled",
+      "note": "the complement of `disabled`. A requirement that holds only while the control can be used says so \u2014 an `always` row beside a `when:disabled` row that contradicts it is two claims that cannot both hold for a disabled instance"
+    },
     "hardware_keyboard": {
       "scenario": {
         "environment": {

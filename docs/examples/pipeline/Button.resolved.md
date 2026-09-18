@@ -91,8 +91,8 @@ Where a platform gives you this free, and where you build it by hand.
 
 | when | statement | origin | id |
 |---|---|---|---|
-| — | Activating by the platform's primary non-pointer input performs the action. | archetype `button` | id-BTN-04 |
-| when:hardware_keyboard | Both of the platform's standard activation keys perform the action. | archetype `button` | id-BTN-05 |
+| when:enabled | Activating by the platform's primary non-pointer input performs the action. | archetype `button` | id-BTN-04 |
+| when:hardware_keyboard,enabled | Both of the platform's standard activation keys perform the action. | archetype `button` | id-BTN-05 |
 | when:hardware_keyboard | Keyboard activation does not also scroll the surrounding surface. | archetype `button` | id-BTN-06 |
 | when:disabled | Activation performs no action. | archetype `button` | id-BTN-09 |
 | when:inside_form | The control submits its containing form without scripting. | archetype `button` | id-BTN-13 |
@@ -113,7 +113,7 @@ Reviewable as an aspect: everything governing how the component is exposed, name
 | — | The label is the sole source of the accessible name. | this component | id-ACC-02 |
 | — | The control is exposed to assistive technology as a button. | archetype `button` | id-BTN-01 |
 | — | The control has a non-empty accessible name. | archetype `button` | id-BTN-02 |
-| — | The control is reachable by the platform's sequential focus navigation. | archetype `button` | id-BTN-03 |
+| when:enabled | The control is reachable by the platform's sequential focus navigation. | archetype `button` | id-BTN-03 |
 | when:disabled | The control is removed from sequential focus navigation. | archetype `button` | id-BTN-08 |
 | when:disabled | The disabled state is conveyed to assistive technology. | archetype `button` | id-BTN-10 |
 

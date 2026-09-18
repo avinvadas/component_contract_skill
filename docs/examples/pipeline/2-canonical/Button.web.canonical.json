@@ -44,7 +44,11 @@
       "statement": "The control is reachable by the platform's sequential focus navigation.",
       "observe": "focus",
       "kind": "state",
-      "scenario": {},
+      "scenario": {
+        "props": {
+          "disabled": false
+        }
+      },
       "expect": {
         "equals": true
       },
@@ -57,7 +61,11 @@
       "statement": "Activating by the platform's primary non-pointer input performs the action.",
       "observe": "event",
       "kind": "behavior",
-      "scenario": {},
+      "scenario": {
+        "props": {
+          "disabled": false
+        }
+      },
       "expect": {
         "equals": "activated"
       },
@@ -74,6 +82,9 @@
       "scenario": {
         "environment": {
           "hardware_keyboard": true
+        },
+        "props": {
+          "disabled": false
         }
       },
       "expect": {
