@@ -24,7 +24,8 @@ What is proposed, and from what:
 import argparse, collections, json, pathlib, re, sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from tokens import Tree, PROPERTIES, STATES, AXES, DEFAULT_STATES, TIER_ROLES, split_state  # noqa: E402
+from tokens import (Tree, PROPERTIES, STATES, AXES, DEFAULT_STATES, TIER_ROLES,  # noqa: E402
+                    split_state, words, suggest_property, pure_property_spelling)
 
 
 def classify_tiers(tree):
@@ -139,31 +140,6 @@ def propose_patterns(tree, component_tier):
     return templates
 
 
-def words(spelling):
-    """`bgColor` -> [bg, color]; `icon-color` -> [icon, color]."""
-    spaced = re.sub(r"(?<=[a-z0-9])([A-Z])", r" \1", spelling)
-    return [w for w in re.split(r"[\s_\-.]+", spaced.lower()) if w]
-
-
-def suggest_property(spelling, token_type):
-    """Properties whose synonym appears as WHOLE WORDS in the spelling, $type permitting.
-
-    Whole words, because substrings coincide: `iconcolor` contains `oncolor`, which once
-    suggested `icon-color` means *on-color*. A suggestion is still only a suggestion.
-    """
-    w = words(spelling)
-    hits = []
-    for prop, spec in PROPERTIES.items():
-        if spec["type"] != token_type:
-            continue
-        for syn in sorted(spec["syn"], key=len, reverse=True):
-            sw = words(syn)
-            if any(w[i:i + len(sw)] == sw for i in range(len(w) - len(sw) + 1)):
-                hits.append(prop)
-                break
-    return hits
-
-
 # A token whose name does not carry its property (Carbon's `tertiary` is text colour, its
 # `tertiary-hover` a background) can still be read — its `$description` says what it colours.
 # These are the openings a description uses; the first that matches wins, and several
@@ -232,11 +208,17 @@ def detect(tree_path, context=None):
     # templates come first, because the resolver takes the first pattern that matches.
     specific, generic, pattern_questions = [], [], []
     for tpl, info in patterns.items():
+        if sum(len(v) for v in info["by_scope"].values()) < 2:
+            continue      # one token is not a pattern; it is a question about that token
         if not info["unknown"]:
             generic.append({"template": tpl, "examples": info["examples"], "needs_answer": False})
             continue
         scopes = sorted({sc for per in info["unknown"].values() for sc in per})
-        split = len(scopes) > 1
+        # Split per component only when the components DISAGREE — badge's sizes vs toast's
+        # tones. Primer's button, buttonCounter and buttonKeybindingHint all vary by the same
+        # danger/default/invisible/primary, and asking that three times is noise.
+        split = len(scopes) > 1 and any(len({frozenset(v) for v in per.values()}) > 1
+                                        for per in info["unknown"].values())
         for sc in (scopes if split else [None]):
             t = tpl.replace("{component}", sc) if sc else tpl
             examples = info["by_scope"][sc][:3] if sc else info["examples"]
@@ -247,7 +229,10 @@ def detect(tree_path, context=None):
                     "question": "In `%s`, what does segment %d vary by? It takes the values %s."
                                 % (t, pos + 1, ", ".join(sorted(values))),
                     "options": [a for a in AXES if a != "state"],
-                    "template": t, "position": pos, "examples": examples})
+                    "template": t, "position": pos, "examples": examples,
+                    # the components that actually CONTRIBUTED this unknown — never read off the
+                    # template text, which stays generic when only one component has the shape
+                    "components": [sc] if sc else sorted(per)})
             (specific if sc else generic).append({"template": t, "examples": examples, "needs_answer": True})
     proposed_patterns = specific + generic
 
@@ -271,9 +256,30 @@ def detect(tree_path, context=None):
             if len(entry["examples"]) < 2:
                 entry["examples"].append(path)
 
+    # How often each property spelling recurs. A spelling used by many tokens is VOCABULARY —
+    # Primer's `iconColor` across 13 tokens is one question, even though no seed word reads it.
+    # Counted over DISTINCT PARENTS — different variants or parts — not over states of one
+    # token: Carbon's `notification.action-tertiary-inverse` appears three times only as
+    # itself, `-active` and `-hover`, and that is one token family, not vocabulary.
+    parents = collections.defaultdict(set)
+    for p in tree.tokens:
+        if tree.role_of(p) != "component":
+            continue
+        spelling = tree.base_state(p)[0]
+        segs = p.split(".")
+        parent = tuple(segs[:-1]) if split_state(segs[-1])[0] == spelling else tuple(segs[:-2])
+        parents[spelling].add(parent)
+    spelling_count = {s: len(ps) for s, ps in parents.items()}
     proposed_readings, reading_questions = {}, []
     for path in sorted(tree.tokens):
         if tree.role_of(path) != "component" or tree.prop_of(path)[0] is not None:
+            continue
+        # A name that DOES carry its property, in a spelling not yet mapped — Primer's
+        # `bgColor`, `fgColor` — is one spelling question for hundreds of tokens, not a reading
+        # per token. Readings are for names that carry no property at all (Carbon's `tertiary`),
+        # and asked per token there, 358 Primer questions would have replaced ~10.
+        spelling = tree.base_state(path)[0]
+        if pure_property_spelling(spelling, tree.tokens[path]["type"]) or spelling_count[spelling] >= 3:
             continue
         reading, why = propose_reading(tree, path)
         if reading:
@@ -294,6 +300,25 @@ def detect(tree_path, context=None):
             "suggested": suggest_property(spelling, info["type"]),
             "options": [p for p, s in PROPERTIES.items() if s["type"] == info["type"]],
             "examples": info["examples"]})
+
+    # Which component each question concerns. A pattern whose template names its component
+    # literally, a reading of one token, a spelling used by some components and not others.
+    # `None` means system-wide: asked in Phase 0B. Everything else waits for the component.
+    spelling_scopes = collections.defaultdict(set)
+    for p in tree.tokens:
+        if tree.role_of(p) == "component":
+            spelling_scopes[tree.base_state(p)[0]].add(tree.scope_of(p))
+    for q in questions + pattern_questions + reading_questions + leaf_questions:
+        about = q["about"]
+        if about.startswith("patterns"):
+            pass                                       # set where the question was built
+        elif about.startswith("readings."):
+            q["components"] = [tree.scope_of(about[len("readings."):])]
+        elif about.startswith("leaf_map."):
+            used = sorted(s for s in spelling_scopes.get(about[len("leaf_map."):], set()) if s)
+            q["components"] = used or None
+        else:
+            q["components"] = None
 
     return {
         "tree": str(tree_path),
@@ -343,6 +368,8 @@ def main():
     ap.add_argument("tree", help="path to the token tree — or, with --context declaring "
                                  "`tokens.sources`, the directory those sources are relative to")
     ap.add_argument("--context", help="design-system context file whose `tokens:` facts to apply")
+    ap.add_argument("--component", help="only the questions this component needs, plus the "
+                                        "system-wide ones — how the rest stay unasked until needed")
     ap.add_argument("--json", action="store_true", help="machine-readable proposals and questions")
     args = ap.parse_args()
     context = None
@@ -350,6 +377,11 @@ def main():
         import context as ctx
         context = ctx.load(args.context)
     d = detect(args.tree, context)
+    if args.component:
+        scope = args.component
+        d["questions"] = [q for q in d["questions"]
+                          if q.get("components") is None or scope in q["components"]]
+        d["readings"] = {p: r for p, r in d["readings"].items() if p.split(".")[1] == scope}
     print(json.dumps(d, indent=2, default=list) if args.json else report(d))
 
 

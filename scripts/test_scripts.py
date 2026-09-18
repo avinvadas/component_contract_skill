@@ -378,6 +378,46 @@ def carbon_shaped_tree_reads_correctly_and_never_binds_across_variants():
     assert tok != "component.button.tertiary", "bound a primary button's text to the TERTIARY button's"
 
 
+# ---- a real design system's shape: Primer ---------------------------------------------
+@test
+def primer_shaped_tree_asks_per_spelling_and_per_component():
+    """Guards what @primer/primitives exposed: 358 per-token questions where ~10 spelling
+    questions belonged; a Carbon-style fused name (`background-blue`) mistaken for a pure
+    spelling; a state repeated across one token family counted as vocabulary; `accent` read
+    as a property because the first of two same-depth templates won; and every component's
+    naming questions asked at setup, when only one component is being documented."""
+    import detect_tokens
+    from tokens import pure_property_spelling, Tree
+    assert pure_property_spelling("bgColor", "color") and pure_property_spelling("fgColor", "color")
+    assert not pure_property_spelling("background-blue", "color"), "fused property+variant is a reading, not a spelling"
+
+    d = pathlib.Path(tempfile.mkdtemp())
+    tok = lambda v: {"$type": "color", "$value": v}
+    (d / "p.json").write_text(json.dumps({"base": {"blue": tok("#00f"), "gray": tok("#888")}}))
+    (d / "s.json").write_text(json.dumps({"control": {"bg": tok("{base.gray}")}}))
+    (d / "c.json").write_text(json.dumps({
+        "button": {v: {"bgColor": {"rest": tok("{control.bg}"), "hover": tok("{base.blue}")},
+                       "iconColor": {"rest": tok("{base.gray}")}} for v in ("default", "primary", "danger")},
+        "progressBar": {"track": {"bgColor": tok("{base.gray}")},
+                        "bgColor": {"accent": tok("{base.blue}"), "danger": tok("{base.blue}")}},
+        "notification": {"action-hover": tok("{base.blue}"), "action-active": tok("{base.blue}"),
+                         "action": tok("{base.blue}")}}))
+    ctx = {"tokens": {"sources": {"primitive": ["p.json"], "semantic": ["s.json"], "component": ["c.json"]}}}
+    out = detect_tokens.detect(str(d), ctx)
+    leaf = {q["about"] for q in out["questions"] if q["about"].startswith("leaf_map.")}
+    assert "leaf_map.bgColor" in leaf and "leaf_map.iconColor" in leaf, leaf
+    per_token = [q for q in out["questions"] if q["about"].startswith("readings.component.button")]
+    assert not per_token, "a recurring spelling became a question per token: %s" % per_token
+    assert "leaf_map.action" not in leaf, "one token family in three states is not vocabulary"
+    assert all(q["components"] is not None for q in out["questions"] if q["about"].startswith("patterns")), \
+        "a pattern about one component must be asked when that component is contracted, not at setup"
+
+    t = Tree(str(d), dict(ctx["tokens"], patterns={"component": [
+        "component.progressBar.{*}.{property}", "component.progressBar.{property}.{*}"]}))
+    assert t.base_state("component.progressBar.bgColor.accent")[0] == "bgColor", \
+        "read `accent` as the property; the template whose property slot READS must win"
+
+
 # ---- detection ----------------------------------------------------------------------
 @test
 def detection_reads_tiers_from_alias_direction_not_names():

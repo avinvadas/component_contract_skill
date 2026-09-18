@@ -30,7 +30,7 @@ import json, re
 # SEED, not an authority: the alias graph extends them per design system.
 PROPERTIES = {
     "background":     {"type": "color",     "syn": ["background", "bg", "fill", "surface"]},
-    "foreground":     {"type": "color",     "syn": ["foreground", "text", "content", "label", "on-color"]},
+    "foreground":     {"type": "color",     "syn": ["foreground", "fg", "text", "content", "label", "on-color"]},
     "border-color":   {"type": "color",     "syn": ["border", "border-color", "stroke", "outline"]},
     "border-width":   {"type": "dimension", "syn": ["border-width", "stroke-width"]},
     "radius":         {"type": "dimension", "syn": ["radius", "corner-radius", "border-radius"]},
@@ -162,6 +162,46 @@ def split_state(leaf):
     return leaf, None
 
 
+def words(spelling):
+    """`bgColor` -> [bg, color]; `icon-color` -> [icon, color]."""
+    spaced = re.sub(r"(?<=[a-z0-9])([A-Z])", r" \1", spelling)
+    return [w for w in re.split(r"[\s_\-.]+", spaced.lower()) if w]
+
+
+def suggest_property(spelling, token_type):
+    """Properties whose synonym appears as WHOLE WORDS in the spelling, $type permitting.
+
+    Whole words, because substrings coincide: `iconcolor` contains `oncolor`, which once
+    suggested `icon-color` means *on-color*. A suggestion is still only a suggestion.
+    """
+    w = words(spelling)
+    hits = []
+    for prop, spec in PROPERTIES.items():
+        if spec["type"] != token_type:
+            continue
+        for syn in sorted(spec["syn"], key=len, reverse=True):
+            sw = words(syn)
+            if any(w[i:i + len(sw)] == sw for i in range(len(w) - len(sw) + 1)):
+                hits.append(prop)
+                break
+    return hits
+
+
+GENERIC_WORDS = {"color", "colour", "value"}
+
+def pure_property_spelling(spelling, token_type):
+    """Is the spelling NOTHING BUT a property? `bgColor` is (bg + color); Carbon's
+    `background-blue` is not — it carries the variant `blue` too, so it is a per-token reading."""
+    hits = suggest_property(spelling, token_type)
+    if not hits:
+        return False
+    left = set(words(spelling)) - GENERIC_WORDS
+    for prop in hits:
+        for syn in PROPERTIES[prop]["syn"]:
+            left -= set(words(syn))
+    return not left
+
+
 class Tree:
     def __init__(self, path, facts=None):
         """`facts` is the `tokens:` block of the design-system context, confirmed once in
@@ -225,7 +265,7 @@ class Tree:
             if seg not in self.tiers and (self.facts.get("tiers") or {}).get(role):
                 self.problems.append("tokens.tiers.%s is %r, but no top-level %r exists in the tree"
                                      % (role, seg, seg))
-        self.scopes = sorted({self.scope_of(p) for p in self.tokens if self.scope_of(p)})
+
         # ---- alias graph -----------------------------------------------------------
         self.alias, self.consumers = {}, {}
         for p, t in self.tokens.items():
@@ -274,6 +314,8 @@ class Tree:
                 prop = props.pop()
                 self.path_role[target] = prop
                 self.derived[target] = (prop, sorted(cs))
+        # Scopes last: parse() prefers a template whose property slot READS, which needs the map.
+        self.scopes = sorted({self.scope_of(p) for p in self.tokens if self.scope_of(p)})
 
     # ---- naming patterns ----------------------------------------------------------
     @staticmethod
@@ -289,8 +331,14 @@ class Tree:
         return next((r for r, seg in self.T.items() if seg == head), None)
 
     def parse(self, path):
-        """Slots from the first declared pattern the path matches, or None."""
+        """Slots from the declared patterns the path matches, or None.
+
+        When several match, prefer the one whose `{property}` slot actually reads as a
+        property. Primer's progressBar has both `track.bgColor` (part, property) and
+        `bgColor.accent` (property, variant) at the same depth; taking the first match once
+        read `accent` as the property."""
         segs = path.split(".")
+        matched = []
         for tpl in self.patterns.get(self.role_of(path), []):
             if len(tpl) != len(segs):
                 continue
@@ -302,16 +350,26 @@ class Tree:
                 elif name != "*":
                     slots[name] = seg
             else:
+                matched.append(slots)
+        if not matched:
+            return None
+        typ = self.tokens.get(path, {}).get("type") if hasattr(self, "tokens") else None
+        for slots in matched:
+            prop = slots.get("property")
+            if prop and (split_state(prop)[0] in getattr(self, "leafmap", {})
+                         or (typ and suggest_property(split_state(prop)[0], typ))):
                 return slots
-        return None
+        return matched[0]
 
     def scope_of(self, path):
         if self.role_of(path) != "component":
             return None
         slots = self.parse(path)
-        if slots is not None:
-            return slots.get("component")
         segs = path.split(".")
+        if slots is not None and slots.get("component"):
+            return slots["component"]
+        # A template may name its component literally (`component.button.{?}.{property}`) when
+        # detection split it per component; the second segment is still the component.
         return segs[1] if len(segs) >= 3 else None
 
     def in_scope(self, path, scope):
