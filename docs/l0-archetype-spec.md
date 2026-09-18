@@ -1,5 +1,11 @@
 # L0 — Archetype file format
 
+> **Superseded — an early spec for the archetype file.** The thing itself now exists: the format
+> is in [`contract-md-format-spec.md`](contract-md-format-spec.md) and the real files are in
+> [`../system/role-archetypes/`](../system/role-archetypes/). This document still says *archetype*
+> where the format says **role-archetype**, which is the rename that avoided colliding with
+> `observe: role` and ARIA's `role="none"`.
+
 **Status: spec draft.** Companion to `contract-format-v3-proposal.md`.
 Read `v3-handoff.md` first for why this layer exists.
 

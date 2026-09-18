@@ -15,10 +15,15 @@ references/            external standards (WAI-ARIA, WCAG, four HIGs, DTCG)
 system/                SHIPPED: 4 closed vocabularies · role-archetypes · blank templates
    │
    ▼
+facts + policy         THE DESIGN SYSTEM'S OWN, once for the whole system.
+                       facts  = what it IS      (.claude/design-system-context.yml — the token
+                                                 tree's shape; detectable, and a wrong one is lint)
+                       policy = what it DECIDED (system/policy.md — ships blank on purpose;
+                                                 nothing can detect a decision)
+   │
+   ▼
 Button.md              THE DESIGN SYSTEM AUTHORS THIS — one per component.
- + bindings            Plus: its policy (cross-cutting decisions) and its token tree.
- + policy.md
- + token tree
+ + bindings            Plus its token tree, resolved through the facts above.
    │                   scripts/resolve.py
    ▼
 Button.web.canonical.json          ← THE SKILL'S OUTPUT ENDS HERE
@@ -72,7 +77,8 @@ designed and built beside it, not into it.
 | iOS and Android verifiers | **sketches, not runnable** |
 | Conformance suite for verifiers (how a new one proves it is correct) | **does not exist** |
 | Role-archetypes tier 2–4 (dialog, list, checkbox, tab, …) | **unbuilt** |
-| `docs/v3-handoff.md`, `validation-flow-current.md`, `contract-property-validation-map.md` | **stale, describe superseded designs** |
+| The eval suite | **measures v2** — a green run certifies the OLD format, it does not merely miss the new one |
+| Superseded docs in `docs/` | **kept as history, each bannered** — they record why the design moved, and say so at the top |
 
 So: the **format and the resolver are real and testable**. The **product is not wired**.
 Anyone evaluating this should judge the first and not mistake it for the second.

@@ -1,16 +1,30 @@
 # Architecture — what each file is, and how they compose
 
-Five layers. Each is owned by someone different and changes on its own cycle, which is the
+Six layers. Each is owned by someone different and changes on its own cycle, which is the
 constraint the whole design serves: a design system should be able to state an intent once
 and have every platform check it, without the skill knowing what test framework anyone runs.
 
 ```
 references/      external standards           read once, by a human, to author the layer below
 system/          shipped source layer         vocabulary · role-archetypes · templates
+facts + policy   THE DESIGN SYSTEM'S OWN      what it IS  +  what it has DECIDED
 <contract>.md    one component                the design system's own, per component
 *.canonical.json one platform's view          generated — the interchange format
 3-verifiers/     someone else's toolchain     reads canonical, drives XCUITest/Playwright/Compose
 ```
+
+**Facts and policy are both the design system's, and are not the same kind of thing.** A fact
+says what this system *is* — the component tier is called `comp`, `bgColor` means background.
+A policy says what it has *decided* — every focused control renders a focus indicator. The
+difference is not tone, it is what can be done with each:
+
+| | facts (`.claude/design-system-context.yml`) | policy (`system/policy.md`) |
+|---|---|---|
+| detectable | **yes** — `detect_tokens.py` proposes them from the tree | **never**; no amount of reading finds a decision |
+| falsifiable | **yes** — a wrong fact is lint | no; a policy can only be unwise |
+| when missing | the resolver cannot read the tree | the requirement is simply not claimed |
+
+That is why one ships a detector and the other ships a blank template.
 
 **The skill's output ends at the canonical document.** Everything below it belongs to whoever
 owns that toolchain. Every design error in this project's history was the skill reaching

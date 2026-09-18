@@ -1,5 +1,10 @@
 # The validation flow as it currently stands
 
+> **Superseded — this is the v4 flow.** Renamed from `validation-flow-current.md`: the
+> filename claimed a currency it had lost. What the flow actually looks like now is
+> [`../STATUS.md`](../STATUS.md); how the layers fit together is [`../ARCHITECTURE.md`](../ARCHITECTURE.md).
+> Kept because the reasoning that retired it is easier to follow with the thing itself present.
+
 **Status of this document: the design, not the implementation.** What is actually built is
 listed at the bottom, and it is a short list.
 

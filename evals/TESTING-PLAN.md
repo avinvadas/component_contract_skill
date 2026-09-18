@@ -1,5 +1,12 @@
 # Testing environment — plan
 
+> **This suite measures the v2 contract, not the current format.** The fixtures under
+> `fixtures/contracts/` carry `### 2.1 Semantic Markup` and no `role-archetype:`; every case's
+> `expected_output` describes `structure.json` and `schema.json`; `harness/invariants.py` checks
+> for them. So a green run here certifies the OLD format — it does not merely fail to cover the
+> new one. Rebuilding it is part of the Phase 5/6 rewrite tracked in [`../STATUS.md`](../STATUS.md);
+> until then, read a pass as "unchanged against v2" and nothing more.
+
 The purpose of this environment is to battle-test the skill against the four things it claims to be accountable for (see the README's "What this skill is accountable for"). It is deliberately built as three separate suites, because those four claims are not testable by the same mechanism, at the same cost, or at the same frequency — and running them as one undifferentiated pass is the main way this kind of harness ends up expensive and uninformative.
 
 ## Three suites

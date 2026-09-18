@@ -181,7 +181,9 @@ naming:
 
 rtl_supported: true | false
 
-contracts_directory: [path relative to repo root, optional — set once detected, so future runs don't re-scan]
+contracts:  # grouped, because `archetypes` belongs beside `path`. Was `contracts_directory` at the root — two shapes for one fact, and scripts/resolve.py reads this one.
+  path: [where component contracts live, relative to the directory holding .claude/ — optional, set once detected so future runs don't re-scan]
+  archetypes: [this design system's own role-archetype directory, optional — searched before the library shipped in system/role-archetypes/]
 ```
 
 ### What this skill does and does not do with tokens

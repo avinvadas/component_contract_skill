@@ -1,5 +1,10 @@
 # Handoff — contract format v3
 
+> **Superseded — v3, the manifest architecture.** It opens "read this first", and that is no
+> longer true: the build no longer emits a manifest for a schema to validate, and this predates
+> role-archetypes, token slots and state machines. Start at [`../STATUS.md`](../STATUS.md).
+> Kept for the reasoning that led to v5, which `contract-format-v5-interchange.md` records.
+
 **Written 2026-09-09 on Avins-Mac-mini, to carry context to another machine.**
 Read this first, then `contract-format-v3-proposal.md` for the format itself.
 

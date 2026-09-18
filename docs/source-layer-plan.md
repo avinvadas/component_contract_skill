@@ -1,5 +1,11 @@
 # What a contract draws from — file plan and structure
 
+> **Executed — this was the plan, and the layer now exists.** It says the layer "does not exist
+> yet"; it does, in [`../system/`](../system/), described in [`../ARCHITECTURE.md`](../ARCHITECTURE.md).
+> Kept for the decision procedures it works out — when a component needs its own role-archetype,
+> and when a single-platform guarantee is a candidate rather than an inheritance — which the
+> shipped files cite but do not restate.
+
 **Status: plan.** The layer between `references/` and a contract, which does not exist yet.
 
 `references/` holds **external standards** — WAI-ARIA, WCAG, HIG, Material, UIA. A contract

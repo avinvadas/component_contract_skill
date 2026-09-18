@@ -1,5 +1,10 @@
 # What a contract states, and when each part is validated
 
+> **Superseded — maps the properties of a *v3* contract.** It predates the six chapters, token
+> slots and the §5.4 machine, and it assumes a compiler-emitted manifest. The current property
+> set is [`contract-md-format-spec.md`](contract-md-format-spec.md); when each fact is checked
+> is now a property of the canonical document and its verifier, not of a table here.
+
 Every property a v3 contract can hold, by chapter, with where and when it is checked.
 Companion to `contract-format-v3-proposal.md`. Building this surfaced five gaps, listed
 at the end.
