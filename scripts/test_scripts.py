@@ -762,6 +762,49 @@ def implementation_evidence_becomes_questions_never_edits():
 
 
 # ---- detection ----------------------------------------------------------------------
+def naming_tree(flat):
+    """Button and chip tokens named property, state, variant — with or without a namespace."""
+    c = lambda v: {"$type": "color", "$value": v}  # noqa: E731
+    comp = {prop: {st: {v: c("{semantic.x}") for v in ("primary", "secondary")}
+                   for st in ("default", "hover", "active")} for prop in ("background", "text")}
+    tree = {"core": {"blue": c("#00f")}, "semantic": {"x": c("{core.blue}")}}
+    tree.update({"button": comp, "chip": comp} if flat else {"component": {"button": comp, "chip": comp}})
+    d = pathlib.Path(tempfile.mkdtemp())
+    (d / "t.json").write_text(json.dumps(tree))
+    return d / "t.json"
+
+
+@test
+def a_component_tier_without_a_namespace_is_read_never_called_absent():
+    """Rules out: `button.*` beside `semantic.*` in one file, invisible to every lookup — and the
+    lookup then telling the tree's owner to ADD tokens that already exist."""
+    from tokens import Tree
+    import detect_tokens
+    path = naming_tree(flat=True)
+    assert detect_tokens.detect(str(path))["tiers"]["proposed"]["component"] == "*"
+    pattern = {"component": ["component.{component}.{property}.{state}.{variant}"]}
+    t = Tree(str(path), {"tiers": {"primitive": "core", "semantic": "semantic", "component": "*"},
+                         "patterns": pattern})
+    assert not t.problems, t.problems
+    assert t.resolve("background", "button", {"variant": "secondary"}, "hover")[:2] == \
+        ("component.button.background.hover.secondary", "bound")
+    # tiers declared, the component groups left unclaimed: a named problem, not a silent miss
+    t = Tree(str(path), {"tiers": {"primitive": "core", "semantic": "semantic"}, "patterns": pattern})
+    assert any("no tier claims the top-level group(s) button, chip" in p for p in t.problems), t.problems
+
+
+@test
+def detection_reads_which_position_holds_the_property_in_any_order():
+    """Rules out: assuming the property is the last segment — which read `primary` as a
+    property and asked what property it names, an answer that would corrupt every lookup."""
+    import detect_tokens
+    for flat in (False, True):
+        d = detect_tokens.detect(str(naming_tree(flat)))
+        assert [p["template"] for p in d["patterns"]] == ["component.{component}.{property}.{state}.{?}"], d["patterns"]
+        asked = [q["question"] for q in d["questions"]]
+        assert not any(q.startswith("Which property does `primary`") for q in asked), asked
+        assert any("segment 5 vary by? It takes the values primary, secondary" in q for q in asked), asked
+
 @test
 def detection_reads_tiers_from_alias_direction_not_names():
     import detect_tokens

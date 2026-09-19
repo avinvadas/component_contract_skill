@@ -12,11 +12,15 @@ What is proposed, and from what:
 
   tiers      From the DIRECTION aliases point, not from the names. A tier that aliases almost
              nothing is primitive; one that aliases into primitive is semantic; one that
-             aliases into semantic is component. Names are only a tiebreak.
-  patterns   From the observed SHAPES of component-tier paths. A segment that names a known
-             axis (`variant`, `size`) stays literal and the next becomes its slot; a final
-             segment that is a state becomes `{state}`; a varying segment nothing explains
-             becomes `{?}` — and a question.
+             aliases into semantic is component. Names are only a tiebreak. When several
+             unprefixed groups consume semantic (`button.*`, `chip.*`), the components ARE the
+             top-level groups: the component tier is proposed as `*`.
+  patterns   From the observed SHAPES of component-tier paths, by POSITION: across a
+             component's tokens, the position whose values are all states is `{state}`, the one
+             that reads as properties is `{property}`, in whatever order the tree uses. A
+             segment that names a known axis (`variant`, `size`) stays literal and the next
+             becomes its slot; a varying segment nothing explains becomes `{?}` — and a
+             question about that position, never about what property its values name.
   leaf_map   Component-tier property spellings the seed vocabulary cannot read. A suggested
              property is offered only where a known synonym appears in the spelling AND the
              token's $type agrees. It is a suggestion to confirm, not a mapping.
@@ -56,6 +60,12 @@ def classify_tiers(tree):
             named = [c for c in cands if role in c or c in role]
             if len(named) == 1:
                 roles[role] = named[0]
+            elif role == "component" and not named:
+                # Several groups consume the semantic tier and none is called "component":
+                # the components ARE the top-level groups — `button.*`, `chip.*` — with no
+                # namespace. `*` claims every group left over; a list, only these.
+                rest = [t for t in evidence if t not in roles.values()]
+                roles[role] = "*" if sorted(cands) == sorted(rest) else sorted(cands)
     for role in TIER_ROLES:
         if role not in roles:
             questions.append({"about": "tiers.%s" % role,
@@ -108,7 +118,57 @@ def propose_patterns(tree, component_tier):
         return sum(1 for v in values if readable(v, token_type)) * 2 >= len(values)
 
     templates = collections.OrderedDict()
+
+    # ---- position first ----------------------------------------------------------------
+    # Names do not all put the property last: `button.background.hover.primary` is property,
+    # state, variant. Which POSITION holds what is read across a component's tokens of one
+    # depth: the position whose values are all states is `{state}`; the one whose values
+    # mostly read as properties is `{property}`. Only when the property is NOT last is the
+    # shape taken from positions — every property-last tree keeps the sibling reading below,
+    # which knows more about tails. Reading the last segment as a property here once asked
+    # "which property does `primary` name?" — a question whose answer corrupts every lookup.
+    positional = set()
+    groups = collections.defaultdict(list)
+    for p in paths:
+        groups[(p.split(".")[1], p.count("."))].append(p)
+    for (scope, _), members in groups.items():
+        if len(members) < 2:
+            continue
+        rows = [m.split(".") for m in members]
+        ttype = tree.tokens[members[0]]["type"]
+        slots, prop_at = [], []
+        for i in range(2, len(rows[0])):
+            vals = {r[i] for r in rows}
+            if len(vals) == 1 and next(iter(vals)) in AXES:
+                slots.append(next(iter(vals)))
+            elif slots and slots[-1] in AXES:
+                slots.append("{%s}" % slots[-1])
+            elif len(vals) >= 2 and vals <= set(STATES) | set(DEFAULT_STATES):
+                slots.append("{state}")
+            elif sum(1 for v in vals if readable(v, ttype)) * 2 > len(vals):
+                slots.append("{property}")
+                prop_at.append(i)
+            elif len(vals) == 1:
+                slots.append(next(iter(vals)))
+            else:
+                slots.append("{?}")
+        if len(prop_at) != 1 or prop_at[0] == len(rows[0]) - 1:
+            continue                                # property last, or unclear: the reading below
+        tpl = ".".join([component_tier, "{component}"] + slots)
+        entry = templates.setdefault(tpl, {"examples": [], "unknown": collections.defaultdict(
+            lambda: collections.defaultdict(set)), "by_scope": collections.defaultdict(list)})
+        for m, r in zip(members, rows):
+            positional.add(m)
+            if len(entry["examples"]) < 3:
+                entry["examples"].append(m)
+            entry["by_scope"][scope].append(m)
+            for i, slot in enumerate(slots):
+                if slot == "{?}":
+                    entry["unknown"][i + 2][scope].add(r[i + 2])
+
     for path in paths:
+        if path in positional:
+            continue
         segs = path.split(".")
         rest, parent, ttype = segs[2:], tuple(segs[:-1]), tree.tokens[path]["type"]
         last = rest[-1]
@@ -199,6 +259,11 @@ def detect(tree_path, context=None):
         base = Tree(tree_path)
         roles, evidence, questions = classify_tiers(base)
     comp = roles.get("component")
+    if comp == "*" or isinstance(comp, list):
+        # Read the unprefixed groups as the component tier, under `component.`, from here on.
+        base = Tree(tree_path, {"tiers": roles, **({"sources": facts["sources"], "theme": facts.get("theme")}
+                                                   if facts.get("sources") else {})})
+        comp = "component"
     patterns = propose_patterns(base, comp) if comp else {}
 
     # A `{?}` shared by several components can mean different things in each — badge's last

@@ -166,8 +166,8 @@ tokens:
   tiers:  # which top-level group plays each role — proposed by scripts/detect_tokens.py from alias direction, then confirmed
     primitive: [top-level group, e.g. "core"]
     semantic: [top-level group]
-    component: [top-level group]
-  patterns:  # THE naming-pattern field. One template per path SHAPE, per tier, most specific first. Slots: {component} {property} {state} {*}, or any axis name ({variant}, {size}); anything else is literal. Proposed by scripts/detect_tokens.py, confirmed once. A design system with a single shape writes a single template.
+    component: [top-level group — or "*" when the components ARE the top-level groups, with no namespace (`button.*`, `chip.*` beside `semantic.*`): every group no other tier claims; or a list of those groups. A group no tier claims is reported, never silently skipped]
+  patterns:  # THE naming-pattern field. One template per path SHAPE, per tier, most specific first. Slots: {component} {property} {state} {*}, or any axis name ({variant}, {size}), in ANY order — `component.{component}.{property}.{state}.{variant}` is as valid as property-last; anything else is literal. Written as `component.…` even when the tree has no namespace (tier "*"). Proposed by scripts/detect_tokens.py, confirmed once. A design system with a single shape writes a single template.
     component:
       - [e.g. "component.{component}.variant.{variant}.{property}"]
       - [e.g. "component.{component}.{property}"]

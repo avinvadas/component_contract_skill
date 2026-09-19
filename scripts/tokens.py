@@ -269,7 +269,17 @@ class Tree:
         self.facts = facts or {}
         self.problems = []   # a fact that is itself wrong — surfaced as lint, never ignored
         self.T = {r: r for r in TIER_ROLES}
-        self.T.update({k: v for k, v in (self.facts.get("tiers") or {}).items() if k in TIER_ROLES and v})
+        # A component tier WITHOUT a namespace: `button.primary.background` beside `semantic.*`,
+        # every component its own top-level group. `component: "*"` claims every top-level group
+        # no other tier claims; a list names them. They are read as if under `component.`, the
+        # way a tier declared by FILE already is, so everything downstream sees one shape.
+        declared = dict(self.facts.get("tiers") or {})
+        spec = declared.get("component")
+        self.component_groups = None
+        if spec == "*" or isinstance(spec, list):
+            self.component_groups = spec
+            declared.pop("component")
+        self.T.update({k: v for k, v in declared.items() if k in TIER_ROLES and v and isinstance(v, str)})
         self.axes = list(self.facts.get("axes") or AXES)
         self.default_states = list(self.facts.get("default_states") or DEFAULT_STATES)
         # Per-token READINGS, for names that do not carry the property. Carbon's `tertiary` is a
@@ -310,6 +320,8 @@ class Tree:
                                self.problems, theme.get("selector"))
         else:
             raw = json.loads(open(path).read())
+        if self.component_groups is not None:
+            raw = self._namespace_components(raw)
         self.path = path
         self.tokens = {}
         for p, node in _leaves(raw):
@@ -324,6 +336,16 @@ class Tree:
             if seg not in self.tiers and (self.facts.get("tiers") or {}).get(role):
                 self.problems.append("tokens.tiers.%s is %r, but no top-level %r exists in the tree"
                                      % (role, seg, seg))
+        # Tokens no tier claims are invisible to every lookup — and a lookup that cannot see a
+        # token calls it ABSENT, telling the tree's owner to add one that exists. So once tiers
+        # are declared, an unclaimed group is a problem with the facts, named, never a silence.
+        if self.facts.get("tiers") or self.facts.get("sources"):
+            unclaimed = sorted(t for t in self.tiers if t not in self.T.values())
+            if unclaimed:
+                self.problems.append(
+                    "no tier claims the top-level group(s) %s (%d tokens) — if they are components, "
+                    "declare `tiers.component: \"*\"` (every unclaimed group) or list them"
+                    % (", ".join(unclaimed), sum(1 for p in self.tokens if p.split(".")[0] in unclaimed)))
 
         # ---- alias graph -----------------------------------------------------------
         self.alias, self.consumers = {}, {}
@@ -375,6 +397,29 @@ class Tree:
                 self.derived[target] = (prop, sorted(cs))
         # Scopes last: parse() prefers a template whose property slot READS, which needs the map.
         self.scopes = sorted({self.scope_of(p) for p in self.tokens if self.scope_of(p)})
+
+    def _namespace_components(self, raw):
+        """Move the unprefixed component groups under `component.`, and every alias with them."""
+        claimed = {v for k, v in self.T.items() if k != "component"}
+        groups = ([k for k in raw if not k.startswith("$") and k not in claimed]
+                  if self.component_groups == "*" else list(self.component_groups))
+        missing = [g for g in groups if g not in raw]
+        if missing:
+            self.problems.append("tokens.tiers.component lists %s, which the tree does not have"
+                                 % ", ".join(missing))
+        moved = [g for g in groups if g in raw]
+        out = {k: v for k, v in raw.items() if k not in moved}
+        out.setdefault("component", {}).update({g: raw[g] for g in moved})
+
+        def rewrite(node):
+            if isinstance(node, dict):
+                return {k: rewrite(v) for k, v in node.items()}
+            if isinstance(node, str):
+                m = REF.match(node)
+                if m and m.group(1).split(".")[0] in moved:
+                    return "{component.%s}" % m.group(1)
+            return node
+        return rewrite(out)
 
     # ---- naming patterns ----------------------------------------------------------
     @staticmethod
