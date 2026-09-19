@@ -852,11 +852,12 @@ The role-archetype names the interaction states **valid for its role** — `inte
 | state | what changes | driven by |
 | hover | background | platform |
 | focus-visible | focus-ring, border-color | platform |
-| pressed | background | platform |
+| pressed | — | platform |
 | disabled | background, foreground | prop |
 ```
 
-- **`what changes`** is a list of properties from the declared property set — or `nothing — <reason>`. `nothing` is a real answer (*the focus indicator is system policy*, *the platform's own press feedback*), and it must carry its reason; bare `nothing` fails the parse. What the answer may never be is silence: a valid state with no row fails the parse, naming the state.
+- **`what changes`** lists the properties that take **their own token** in that state, from the declared property set — or `—` when none do. A valid state with no row fails the parse, naming the state.
+- **A property that does not change keeps its rest token — never "nothing".** Phase 6 generates that case for every state × tokenised property × variant the contract did not write (`APP-01@pressed[kind=ghost]`: *background keeps its rest token `button.ghost`*), and a verifier checks it by forcing the state. `nothing` is refused: it meant different things in different places — policy draws the indicator, the platform draws it, it genuinely stays put — and an alias means exactly one. If the tree holds this component's own token for a state the contract aliases, the report says so (`state_token_unused`), and you ask which is intended — the tree or the contract is wrong.
 - **4.1 and 4.2 must agree, both ways.** Each property 4.2 lists for a state needs a 4.1 slot in that state, and a rest (`always`) slot; a 4.1 slot in a state 4.2 does not list it for fails too. Together with per-variant expansion, that makes every state × property × variant a case the canonical document states — and a case the tree cannot express yet is a named token gap, never a quiet omission.
 - **`driven by`** — `platform` (the platform produces it: hover, pressed, focus-visible), `prop` (the component is told: disabled, expanded), or `both`.
 - The contract may **add** states its role does not (a selectable Chip's `selected`) with `interaction-states: [selected]` in its own frontmatter. It can never drop one the archetype makes valid.
@@ -865,10 +866,10 @@ The role-archetype names the interaction states **valid for its role** — `inte
 
 ```
 header: "States"
-question: "Your tokens say nothing about how [Component] looks when [pressed / focused by keyboard]. What changes in each — or is it deliberately unchanged?"
+question: "Your tokens say nothing about how [Component] looks when [pressed / focused by keyboard]. Which properties get a token of their own in each? Anything you don't name keeps its resting token."
 ```
 
-Record each answer as it was given, with its reason when it is `nothing`. Never fill a state in from convention.
+Record the properties named; for the rest, write `—` and let Phase 6 generate the aliases. Never fill a state in from convention.
 
 ### State machine (5.4)
 

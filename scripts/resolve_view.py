@@ -42,7 +42,7 @@ for src, label in ((arch_body, "archetype `%s`" % fm["role-archetype"]),
 # bound, and if not, who fixes it. So the view renders two things: a status per row, and
 # a gap table addressed to whoever owns the token tree.
 ENUM_PROPS.update(enum_props(body))
-SLOTS = resolve_slots(body, fm, S["tree"])
+SLOTS = resolve_slots(body, fm, S["tree"], arch_fm)
 STATES = check_states(body, fm, arch_fm, slot_rows(body))
 
 STATUS_LABEL = {
@@ -64,6 +64,8 @@ def token_table():
         status = STATUS_LABEL.get(s_["status"], s_["status"])
         if s_["status"] == "not-applicable":
             status = "n/a — " + s_["detail"]
+        if s_.get("alias_of"):
+            status += " · rest token"
         variant = ", ".join("%s=%s" % kv for kv in (s_.get("variant") or {}).items()) or "—"
         body_rows.append("| %s | %s | %s | %s | %s |" % (s_["property"], s_["state"] or "rest",
                                                          variant, tok, status))
@@ -93,7 +95,8 @@ def element_table():
     return "*Not stated.*" + NL
 
 def gap_table():
-    gaps = [s_ for s_ in SLOTS if s_["status"] not in ("bound", "not-applicable")]
+    gaps = [s_ for s_ in SLOTS if s_["status"] not in ("bound", "not-applicable")
+            and not s_.get("alias_of")]       # an alias's gap is its rest case's, fixed once
     if not gaps:
         return "*None. Every declared property resolves.*" + NL
     intro = ("%d propert%s could not resolve. These are fixed in the token tree, not in "

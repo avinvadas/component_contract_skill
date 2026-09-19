@@ -79,12 +79,12 @@ does not apply says so, with a reason — it is never simply left out.
 
 ### 4.2 Interaction states
 
-Every state the archetype makes valid is answered — what changes, or `nothing` and why.
+Every state the archetype makes valid is answered: the properties that take their own token in it, or `—`. Every other property keeps its rest token.
 
 | state | what changes | driven by |
 |---|---|---|
 | hover | background | platform |
-| focus-visible | nothing — the focus indicator is system policy (POL-02), drawn the same for every control | platform |
+| focus-visible | — | platform |
 | pressed | background | platform |
 | disabled | background | prop |
 

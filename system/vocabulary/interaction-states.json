@@ -1,5 +1,5 @@
 {
-  "comment": "The interaction states a component can be in, closed. A role-archetype declares which are VALID for its role (`interaction-states:` in its frontmatter), a contract may add more, and chapter 4.2 must answer every valid one — what changes, or `nothing — <reason>`. An unanswered state is a lint finding, never a silent default: an unstyled pressed state is a decision somebody has to be able to see. `rest` is implicit — the unconditioned token slots are rest.",
+  "comment": "The interaction states a component can be in, closed. A role-archetype declares which are VALID for its role (`interaction-states:` in its frontmatter), a contract may add more, and chapter 4.2 must answer every valid one — the properties that take their own token in it, or `—`. Every other property keeps its rest token, as a generated alias a verifier checks: never `nothing`, which meant different things in different places. An unanswered state is a lint finding. `rest` is implicit — the unconditioned token slots are rest.",
   "format_version": "1.0",
   "states": {
     "hover": {

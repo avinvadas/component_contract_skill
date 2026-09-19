@@ -58,8 +58,8 @@ Where a platform gives you this free, and where you build it by hand.
 | state | what changes | driven by | valid because |
 |---|---|---|---|
 | hover | background | platform | archetype `button` |
-| focus-visible | nothing — the focus indicator is system policy (POL-02), drawn the same for every control | platform | archetype `button` |
-| pressed | nothing — the platform's own press feedback, unstyled by the system | platform | archetype `button` |
+| focus-visible | — | platform | archetype `button` |
+| pressed | — | platform | archetype `button` |
 | disabled | background | prop | archetype `button` |
 
 ### Tokenised properties
@@ -69,6 +69,8 @@ Where a platform gives you this free, and where you build it by hand.
 | background | rest | — | — | **ambiguous** |
 | background | hover | — | `semantic.color.action.primary-hover` | bound |
 | background | disabled | — | — | **state unexpressed** |
+| background | focus-visible | — | — | **ambiguous** · rest token |
+| background | pressed | — | — | **ambiguous** · rest token |
 
 ### Token gaps
 
@@ -141,4 +143,4 @@ Reviewable as an aspect: everything governing how the component is exposed, name
 
 ---
 
-16 requirements — 3 local, 12 inherited, 1 policy · 1 zones · 3 token cases — 1 bound, 2 gaps, 0 n/a · 4 props
+16 requirements — 3 local, 12 inherited, 1 policy · 1 zones · 5 token cases — 1 bound, 4 gaps, 0 n/a · 4 props

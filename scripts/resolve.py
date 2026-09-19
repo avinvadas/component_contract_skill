@@ -293,7 +293,12 @@ def expand_slots(rows, axes):
                         % (ids, prop, "@" + state if state else "", "; ".join(uncovered)))
     return out
 
-def resolve_slots(body, fm, tree):
+def valid_states(fm, arch_fm):
+    """The archetype's interaction states, plus any the contract's frontmatter adds."""
+    return list(dict.fromkeys(list((arch_fm or {}).get("interaction-states") or [])
+                              + list(fm.get("interaction-states") or [])))
+
+def resolve_slots(body, fm, tree, arch_fm=None):
     """Each declared property, per state and per variant -> a bound token, or a NAMED reason."""
     rows = slot_rows(body)
     if not rows:
@@ -338,6 +343,42 @@ def resolve_slots(body, fm, tree):
         if slot["status"] not in ("bound", "not-applicable"):
             gaps.append(slot)
         out.append(slot)
+    return out + alias_states(out, valid_states(fm, arch_fm), tree, scope)
+
+# A state in which a property does not change is not "nothing": the property keeps its REST
+# token, and saying so is a claim a verifier can check — force the state, and the rest token
+# must still be the one applied. `nothing` meant different things in different places (policy
+# draws it, the platform draws it, it genuinely stays put); an alias means exactly one.
+state_notes: list[dict] = []
+
+def alias_states(cases, states, tree, scope):
+    """Every valid state x tokenised property x variant the contract did not write, as an alias
+    of that property's rest case. A rest case pending in the tree stays pending here, and the
+    gap is reported once, on the rest case, where it is fixed."""
+    out = []
+    have = {(c["property"], c["state"], tuple(sorted(c["variant"].items()))) for c in cases}
+    have_any = {(c["property"], c["state"]) for c in cases}
+    for rest in [c for c in cases if c["state"] is None]:
+        vkey = tuple(sorted(rest["variant"].items()))
+        for st in states:
+            if (rest["property"], st, vkey) in have:
+                continue
+            if not rest["variant"] and (rest["property"], st) in have_any:
+                continue              # a collapsed n/a rest, answered per variant for this state
+            when = "when:" + ",".join([st] + ["%s=%s" % kv for kv in rest["variant"].items()])
+            alias = dict(rest, id="%s@%s%s" % (rest["base_id"], st,
+                                                rest["id"][len(rest["base_id"]):]),
+                         when=when, state=st, alias_of=rest["id"])
+            if rest["status"] == "bound":
+                alias["detail"] = "alias of rest (%s)" % rest["id"]
+                # The tree has this component's own token for the state, and the contract says the
+                # property does not change. One of them is wrong; the person decides which.
+                tok, status, where = _resolve_one(tree, rest["property"], scope, rest["dims"], st)
+                if status == "bound" and where == "component" and tok != rest["token"]:
+                    state_notes.append({"id": alias["id"], "property": rest["property"],
+                                        "state": st, "variant": rest["variant"],
+                                        "rest_token": rest["token"], "tree_token": tok})
+            out.append(alias)
     return out
 
 # ---- interaction states: every valid one is answered -------------------------------------
@@ -354,11 +395,11 @@ def check_states(body, fm, arch_fm, slot_rows_):
     """Chapter 4.2 answers every interaction state valid for this component, and 4.1 agrees.
 
     Valid = the archetype's `interaction-states`, plus any the contract's frontmatter adds. A
-    contract cannot drop one: a pressed state nobody styled is still a pressed state, and the
-    answer `nothing — <reason>` is what makes that a decision instead of an omission.
+    contract cannot drop one. `what changes` names the properties that take their OWN token in
+    that state; `—` says none do. Every other property keeps its rest token — an alias the
+    resolver generates and a verifier checks — so no state is ever left unsaid.
     Returns {state: [properties it changes]} for the report and the view."""
-    valid = list(dict.fromkeys(list(arch_fm.get("interaction-states") or [])
-                               + list(fm.get("interaction-states") or [])))
+    valid = valid_states(fm, arch_fm)
     for st in valid:
         if st not in STATES:
             lint.append("interaction state %r is not in the closed vocabulary (%s)"
@@ -372,9 +413,12 @@ def check_states(body, fm, arch_fm, slot_rows_):
                         % (st, ", ".join(valid) or "none"))
             continue
         cell = r["what changes"].strip()
-        if cell.lower().startswith("nothing"):
-            if not cell[len("nothing"):].lstrip(" —-:").strip():
-                lint.append("§4.2 %s: `nothing` needs a reason — `nothing — <why>`" % st)
+        if cell in ("—", "-", ""):
+            answered[st] = []
+        elif cell.lower().startswith("nothing"):
+            lint.append("§4.2 %s: `nothing` is not an answer — it means different things in "
+                        "different places. Write `—`: every property then keeps its rest token, "
+                        "as an alias a verifier checks" % st)
             answered[st] = []
         else:
             props = [x.strip().strip("`") for x in cell.split(",") if x.strip()]
@@ -388,7 +432,8 @@ def check_states(body, fm, arch_fm, slot_rows_):
     for st in valid:
         if st not in answered:
             lint.append("§4.2: interaction state %r is valid for this component and not "
-                        "addressed — say what changes, or `nothing — <reason>`" % st)
+                        "addressed — name what takes its own token, or `—` if every property "
+                        "keeps its rest token" % st)
 
     slotted = {}
     for r in slot_rows_:
@@ -530,6 +575,14 @@ def slot_label(slot):
     return label
 
 def slot_requirement(slot, platform=None, conv=None, slots=()):
+    req = _slot_requirement(slot, platform, conv, slots)
+    if slot.get("alias_of"):
+        req["alias_of"] = slot["alias_of"]
+        if slot["status"] == "bound":
+            req["statement"] = "%s keeps its rest token `%s`." % (slot_label(slot), slot["token"])
+    return req
+
+def _slot_requirement(slot, platform=None, conv=None, slots=()):
     """A slot becomes a real requirement, bound or explicitly pending — never absent."""
     label = slot_label(slot)
     base = {"id": slot["id"], "property": slot["property"], "observe": "token", "kind": "state",
@@ -698,7 +751,7 @@ def main():
     decided_policy = [r for r in policy_rows if policy_status(r) == "decided"]
     inherited = requirement_rows(arch_body) + decided_policy
     local = requirement_rows(body)
-    slots = resolve_slots(body, fm, S["tree"])
+    slots = resolve_slots(body, fm, S["tree"], S["arch_fm"])
     states = check_states(body, fm, S["arch_fm"], slot_rows(body))
     elements = element_requirements(body, fm, S["archetype"], arch_body)
 
@@ -791,9 +844,11 @@ def main():
     # a task for whoever owns the tree, not a reason to fail the parse.
     if states["valid"]:
         print("\ninteraction states: " + " · ".join(
-            "%s (%s)" % (st, ", ".join(states["answered"][st]) or "nothing")
+            "%s (%s)" % (st, ", ".join(states["answered"][st]) or "rest tokens")
             if st in states["answered"] else "%s (NOT ADDRESSED)" % st for st in states["valid"]))
-    print(f"\ntoken slots: {len(slots)} cases from {len(slot_rows(body))} row(s), "
+    n_alias = sum(1 for s_ in slots if s_.get("alias_of"))
+    print(f"\ntoken slots: {len(slots)} cases from {len(slot_rows(body))} row(s) "
+          f"({n_alias} keep their rest token), "
           f"{sum(1 for s_ in slots if s_['status'] == 'bound')} bound, "
           f"{sum(1 for s_ in slots if s_['status'] == 'not-applicable')} n/a, "
           f"{len(gaps)} gap(s)")
@@ -819,6 +874,12 @@ def main():
         for e in policy_deferred:
             print("  - %-7s %s" % (e["id"], e["decision"]))
 
+    if state_notes:
+        print(f"\nstates: {len(state_notes)} case(s) keep their rest token, while the tree has "
+              f"this component's own token for that state — confirm which is intended:")
+        for n in state_notes:
+            print("  - %-28s rest `%s`, tree has `%s`" % (n["id"], n["rest_token"], n["tree_token"]))
+
     lint[:] = list(dict.fromkeys(lint))   # one finding per fact, not one per platform pass
     print(f"\nlint: {len(lint)} finding(s)")
     for l in lint:
@@ -831,6 +892,7 @@ def main():
                             "variant": g.get("variant") or {},
                             "status": g["status"], "detail": g["detail"]} for g in gaps],
             "interaction_states": states,
+            "state_token_unused": state_notes,
             "policy_to_ask": policy_to_ask,
             "policy_deferred": policy_deferred,
             "closure": [c["id"] for c in machine["closure"]],

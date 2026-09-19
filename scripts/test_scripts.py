@@ -285,10 +285,10 @@ ACC_STATES = """
 
 | state | what changes | driven by |
 |---|---|---|
-| hover | nothing — out of this test's scope | platform |
-| focus-visible | nothing — out of this test's scope | platform |
-| pressed | nothing — out of this test's scope | platform |
-| disabled | nothing — out of this test's scope | prop |
+| hover | — | platform |
+| focus-visible | — | platform |
+| pressed | — | platform |
+| disabled | — | prop |
 """
 
 
@@ -552,7 +552,7 @@ ELEMENT_OK = "| platform | element | id |\n|---|---|---|\n| web | `<button>` | i
 SLOTS_OK = ("| always | background | — | id-APP-01 |\n| when:hover | background | — | id-APP-02 |\n"
             "| when:pressed | background | — | id-APP-03 |\n| when:disabled | background | — | id-APP-04 |\n")
 STATES_OK = ("### 4.2 Interaction states\n\n| state | what changes | driven by |\n|---|---|---|\n"
-             "| hover | background | platform |\n| focus-visible | nothing — policy POL-02 | platform |\n"
+             "| hover | background | platform |\n| focus-visible | — | platform |\n"
              "| pressed | background | platform |\n| disabled | background | prop |\n")
 
 
@@ -584,18 +584,43 @@ def every_valid_interaction_state_is_answered():
         assert any("interaction state %r" % st in l and "not addressed" in l for l in rep["lint"]), \
             (st, rep["lint"])
 
-    no_reason = STATES_OK.replace("nothing — policy POL-02", "nothing")
-    _, rep, _ = states_repo(states=no_reason)
-    assert any("needs a reason" in l for l in rep["lint"]), rep["lint"]
+    # `nothing` meant different things in different places; it is no longer an answer
+    _, rep, _ = states_repo(states=STATES_OK.replace("| focus-visible | — |", "| focus-visible | nothing — policy |"))
+    assert any("`nothing` is not an answer" in l for l in rep["lint"]), rep["lint"]
 
     # 4.2 and 4.1 must agree, in both directions, and a changed property needs a rest case
     unslotted = STATES_OK.replace("| pressed | background |", "| pressed | background, foreground |")
     _, rep, _ = states_repo(states=unslotted)
     assert any("no slot for foreground@pressed" in l for l in rep["lint"]), rep["lint"]
     assert any("no rest (`always`) slot for foreground" in l for l in rep["lint"]), rep["lint"]
-    unlisted = STATES_OK.replace("| pressed | background |", "| pressed | nothing — flat |")
+    unlisted = STATES_OK.replace("| pressed | background |", "| pressed | — |")
     _, rep, _ = states_repo(states=unlisted)
     assert any("does not list background as changing in pressed" in l for l in rep["lint"]), rep["lint"]
+
+
+@test
+def an_unchanged_state_keeps_its_rest_token_as_a_checkable_alias():
+    """Guards: `nothing` as an answer. A property that does not change in a state keeps its rest
+    token — stated per variant, forced and checked like any other case."""
+    _, rep, doc = states_repo()
+    by = {x["id"]: x for x in doc["requirements"] if x["id"].startswith("APP-")}
+    a = by["APP-01@focus-visible[kind=ghost]"]
+    assert a["expect"] == {"equals": "component.button.ghost"} and a["alias_of"] == "APP-01[kind=ghost]", a
+    assert a["scenario"]["state"] == {"focus-visible": True} and a["scenario"]["props"]["disabled"] is False, a
+    assert "keeps its rest token" in a["statement"], a
+    # explicit cases are never shadowed by an alias
+    assert "APP-01@hover[kind=ghost]" not in by and "APP-02[kind=ghost]" in by
+    # the rest case now excludes every state that has a case of its own
+    assert by["APP-01[kind=ghost]"]["scenario"]["state"] == \
+        {"hover": False, "focus-visible": False, "pressed": False}, by["APP-01[kind=ghost]"]["scenario"]
+    assert not rep["state_token_unused"], rep["state_token_unused"]
+
+    # the tree has pressed tokens, and the contract says background does not change in pressed
+    _, rep, doc = states_repo(slots=SLOTS_OK.replace("| when:pressed | background | — | id-APP-03 |\n", ""),
+                              states=STATES_OK.replace("| pressed | background |", "| pressed | — |"))
+    assert not rep["lint"], rep["lint"]
+    flagged = {(n["id"], n["tree_token"]) for n in rep["state_token_unused"]}
+    assert ("APP-01@pressed[kind=ghost]", "component.button.ghost-active") in flagged, flagged
 
 
 @test

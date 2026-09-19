@@ -303,7 +303,8 @@
         },
         "state": {
           "hover": false,
-          "pressed": false
+          "pressed": false,
+          "focus-visible": false
         }
       },
       "needs": [
@@ -326,7 +327,8 @@
         },
         "state": {
           "hover": false,
-          "pressed": false
+          "pressed": false,
+          "focus-visible": false
         }
       },
       "needs": [
@@ -349,7 +351,8 @@
         },
         "state": {
           "hover": false,
-          "pressed": false
+          "pressed": false,
+          "focus-visible": false
         }
       },
       "needs": [
@@ -367,7 +370,13 @@
       "kind": "state",
       "scenario": {
         "props": {
-          "variant": "primary"
+          "variant": "primary",
+          "disabled": false
+        },
+        "state": {
+          "hover": false,
+          "focus-visible": false,
+          "pressed": false
         }
       },
       "needs": [
@@ -385,7 +394,13 @@
       "kind": "state",
       "scenario": {
         "props": {
-          "variant": "secondary"
+          "variant": "secondary",
+          "disabled": false
+        },
+        "state": {
+          "hover": false,
+          "focus-visible": false,
+          "pressed": false
         }
       },
       "needs": [
@@ -403,7 +418,13 @@
       "kind": "state",
       "scenario": {
         "props": {
-          "variant": "ghost"
+          "variant": "ghost",
+          "disabled": false
+        },
+        "state": {
+          "hover": false,
+          "focus-visible": false,
+          "pressed": false
         }
       },
       "needs": [
@@ -421,7 +442,13 @@
       "kind": "state",
       "scenario": {
         "props": {
-          "variant": "primary"
+          "variant": "primary",
+          "disabled": false
+        },
+        "state": {
+          "hover": false,
+          "focus-visible": false,
+          "pressed": false
         }
       },
       "needs": [
@@ -439,7 +466,13 @@
       "kind": "state",
       "scenario": {
         "props": {
-          "variant": "secondary"
+          "variant": "secondary",
+          "disabled": false
+        },
+        "state": {
+          "hover": false,
+          "focus-visible": false,
+          "pressed": false
         }
       },
       "needs": [
@@ -457,7 +490,13 @@
       "kind": "state",
       "scenario": {
         "props": {
-          "variant": "ghost"
+          "variant": "ghost",
+          "disabled": false
+        },
+        "state": {
+          "hover": false,
+          "focus-visible": false,
+          "pressed": false
         }
       },
       "needs": [
@@ -473,7 +512,16 @@
       "property": "border-width",
       "observe": "token",
       "kind": "state",
-      "scenario": {},
+      "scenario": {
+        "state": {
+          "hover": false,
+          "focus-visible": false,
+          "pressed": false
+        },
+        "props": {
+          "disabled": false
+        }
+      },
       "needs": [
         "applied-styles"
       ],
@@ -488,7 +536,16 @@
       "property": "radius",
       "observe": "token",
       "kind": "state",
-      "scenario": {},
+      "scenario": {
+        "state": {
+          "hover": false,
+          "focus-visible": false,
+          "pressed": false
+        },
+        "props": {
+          "disabled": false
+        }
+      },
       "needs": [
         "applied-styles"
       ],
@@ -502,7 +559,16 @@
       "property": "padding-inline",
       "observe": "token",
       "kind": "state",
-      "scenario": {},
+      "scenario": {
+        "state": {
+          "hover": false,
+          "focus-visible": false,
+          "pressed": false
+        },
+        "props": {
+          "disabled": false
+        }
+      },
       "needs": [
         "applied-styles"
       ],
@@ -717,6 +783,920 @@
       "statement": "elevation is not tokenised.",
       "binds": false,
       "reason": "a Button sits in the content plane"
+    },
+    {
+      "id": "APP-01@focus-visible[variant=primary]",
+      "property": "background",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "focus-visible": true
+        },
+        "props": {
+          "variant": "primary",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "background@focus-visible [variant=primary] keeps its rest token `component.button.variant.primary.background`.",
+      "expect": {
+        "equals": "component.button.variant.primary.background"
+      },
+      "alias_of": "APP-01[variant=primary]"
+    },
+    {
+      "id": "APP-01@focus-visible[variant=secondary]",
+      "property": "background",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "focus-visible": true
+        },
+        "props": {
+          "variant": "secondary",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "background@focus-visible [variant=secondary] keeps its rest token `component.button.variant.secondary.background`.",
+      "expect": {
+        "equals": "component.button.variant.secondary.background"
+      },
+      "alias_of": "APP-01[variant=secondary]"
+    },
+    {
+      "id": "APP-01@focus-visible[variant=ghost]",
+      "property": "background",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "focus-visible": true
+        },
+        "props": {
+          "variant": "ghost",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "background@focus-visible [variant=ghost] keeps its rest token `component.button.variant.ghost.background`.",
+      "expect": {
+        "equals": "component.button.variant.ghost.background"
+      },
+      "alias_of": "APP-01[variant=ghost]"
+    },
+    {
+      "id": "APP-02@hover[variant=primary]",
+      "property": "foreground",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "hover": true
+        },
+        "props": {
+          "variant": "primary",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "foreground@hover [variant=primary] keeps its rest token `component.button.variant.primary.text`.",
+      "expect": {
+        "equals": "component.button.variant.primary.text"
+      },
+      "alias_of": "APP-02[variant=primary]"
+    },
+    {
+      "id": "APP-02@focus-visible[variant=primary]",
+      "property": "foreground",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "focus-visible": true
+        },
+        "props": {
+          "variant": "primary",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "foreground@focus-visible [variant=primary] keeps its rest token `component.button.variant.primary.text`.",
+      "expect": {
+        "equals": "component.button.variant.primary.text"
+      },
+      "alias_of": "APP-02[variant=primary]"
+    },
+    {
+      "id": "APP-02@pressed[variant=primary]",
+      "property": "foreground",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "pressed": true
+        },
+        "props": {
+          "variant": "primary",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "foreground@pressed [variant=primary] keeps its rest token `component.button.variant.primary.text`.",
+      "expect": {
+        "equals": "component.button.variant.primary.text"
+      },
+      "alias_of": "APP-02[variant=primary]"
+    },
+    {
+      "id": "APP-02@disabled[variant=primary]",
+      "property": "foreground",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true,
+          "variant": "primary"
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "foreground@disabled [variant=primary] keeps its rest token `component.button.variant.primary.text`.",
+      "expect": {
+        "equals": "component.button.variant.primary.text"
+      },
+      "alias_of": "APP-02[variant=primary]"
+    },
+    {
+      "id": "APP-02@hover[variant=secondary]",
+      "property": "foreground",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "hover": true
+        },
+        "props": {
+          "variant": "secondary",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "foreground@hover [variant=secondary] keeps its rest token `component.button.variant.secondary.text`.",
+      "expect": {
+        "equals": "component.button.variant.secondary.text"
+      },
+      "alias_of": "APP-02[variant=secondary]"
+    },
+    {
+      "id": "APP-02@focus-visible[variant=secondary]",
+      "property": "foreground",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "focus-visible": true
+        },
+        "props": {
+          "variant": "secondary",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "foreground@focus-visible [variant=secondary] keeps its rest token `component.button.variant.secondary.text`.",
+      "expect": {
+        "equals": "component.button.variant.secondary.text"
+      },
+      "alias_of": "APP-02[variant=secondary]"
+    },
+    {
+      "id": "APP-02@pressed[variant=secondary]",
+      "property": "foreground",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "pressed": true
+        },
+        "props": {
+          "variant": "secondary",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "foreground@pressed [variant=secondary] keeps its rest token `component.button.variant.secondary.text`.",
+      "expect": {
+        "equals": "component.button.variant.secondary.text"
+      },
+      "alias_of": "APP-02[variant=secondary]"
+    },
+    {
+      "id": "APP-02@disabled[variant=secondary]",
+      "property": "foreground",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true,
+          "variant": "secondary"
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "foreground@disabled [variant=secondary] keeps its rest token `component.button.variant.secondary.text`.",
+      "expect": {
+        "equals": "component.button.variant.secondary.text"
+      },
+      "alias_of": "APP-02[variant=secondary]"
+    },
+    {
+      "id": "APP-02@hover[variant=ghost]",
+      "property": "foreground",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "hover": true
+        },
+        "props": {
+          "variant": "ghost",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "foreground@hover [variant=ghost] keeps its rest token `component.button.variant.ghost.text`.",
+      "expect": {
+        "equals": "component.button.variant.ghost.text"
+      },
+      "alias_of": "APP-02[variant=ghost]"
+    },
+    {
+      "id": "APP-02@focus-visible[variant=ghost]",
+      "property": "foreground",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "focus-visible": true
+        },
+        "props": {
+          "variant": "ghost",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "foreground@focus-visible [variant=ghost] keeps its rest token `component.button.variant.ghost.text`.",
+      "expect": {
+        "equals": "component.button.variant.ghost.text"
+      },
+      "alias_of": "APP-02[variant=ghost]"
+    },
+    {
+      "id": "APP-02@pressed[variant=ghost]",
+      "property": "foreground",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "pressed": true
+        },
+        "props": {
+          "variant": "ghost",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "foreground@pressed [variant=ghost] keeps its rest token `component.button.variant.ghost.text`.",
+      "expect": {
+        "equals": "component.button.variant.ghost.text"
+      },
+      "alias_of": "APP-02[variant=ghost]"
+    },
+    {
+      "id": "APP-02@disabled[variant=ghost]",
+      "property": "foreground",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true,
+          "variant": "ghost"
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "foreground@disabled [variant=ghost] keeps its rest token `component.button.variant.ghost.text`.",
+      "expect": {
+        "equals": "component.button.variant.ghost.text"
+      },
+      "alias_of": "APP-02[variant=ghost]"
+    },
+    {
+      "id": "APP-03@hover[variant=primary]",
+      "property": "border-color",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "hover": true
+        },
+        "props": {
+          "variant": "primary",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-color@hover [variant=primary] keeps its rest token `component.button.variant.primary.border`.",
+      "expect": {
+        "equals": "component.button.variant.primary.border"
+      },
+      "alias_of": "APP-03[variant=primary]"
+    },
+    {
+      "id": "APP-03@focus-visible[variant=primary]",
+      "property": "border-color",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "focus-visible": true
+        },
+        "props": {
+          "variant": "primary",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-color@focus-visible [variant=primary] keeps its rest token `component.button.variant.primary.border`.",
+      "expect": {
+        "equals": "component.button.variant.primary.border"
+      },
+      "alias_of": "APP-03[variant=primary]"
+    },
+    {
+      "id": "APP-03@pressed[variant=primary]",
+      "property": "border-color",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "pressed": true
+        },
+        "props": {
+          "variant": "primary",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-color@pressed [variant=primary] keeps its rest token `component.button.variant.primary.border`.",
+      "expect": {
+        "equals": "component.button.variant.primary.border"
+      },
+      "alias_of": "APP-03[variant=primary]"
+    },
+    {
+      "id": "APP-03@disabled[variant=primary]",
+      "property": "border-color",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true,
+          "variant": "primary"
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-color@disabled [variant=primary] keeps its rest token `component.button.variant.primary.border`.",
+      "expect": {
+        "equals": "component.button.variant.primary.border"
+      },
+      "alias_of": "APP-03[variant=primary]"
+    },
+    {
+      "id": "APP-03@hover[variant=secondary]",
+      "property": "border-color",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "hover": true
+        },
+        "props": {
+          "variant": "secondary",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-color@hover [variant=secondary] keeps its rest token `component.button.variant.secondary.border`.",
+      "expect": {
+        "equals": "component.button.variant.secondary.border"
+      },
+      "alias_of": "APP-03[variant=secondary]"
+    },
+    {
+      "id": "APP-03@focus-visible[variant=secondary]",
+      "property": "border-color",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "focus-visible": true
+        },
+        "props": {
+          "variant": "secondary",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-color@focus-visible [variant=secondary] keeps its rest token `component.button.variant.secondary.border`.",
+      "expect": {
+        "equals": "component.button.variant.secondary.border"
+      },
+      "alias_of": "APP-03[variant=secondary]"
+    },
+    {
+      "id": "APP-03@pressed[variant=secondary]",
+      "property": "border-color",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "pressed": true
+        },
+        "props": {
+          "variant": "secondary",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-color@pressed [variant=secondary] keeps its rest token `component.button.variant.secondary.border`.",
+      "expect": {
+        "equals": "component.button.variant.secondary.border"
+      },
+      "alias_of": "APP-03[variant=secondary]"
+    },
+    {
+      "id": "APP-03@disabled[variant=secondary]",
+      "property": "border-color",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true,
+          "variant": "secondary"
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-color@disabled [variant=secondary] keeps its rest token `component.button.variant.secondary.border`.",
+      "expect": {
+        "equals": "component.button.variant.secondary.border"
+      },
+      "alias_of": "APP-03[variant=secondary]"
+    },
+    {
+      "id": "APP-03@hover[variant=ghost]",
+      "property": "border-color",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "hover": true
+        },
+        "props": {
+          "variant": "ghost",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-color@hover [variant=ghost] keeps its rest token `component.button.variant.ghost.border`.",
+      "expect": {
+        "equals": "component.button.variant.ghost.border"
+      },
+      "alias_of": "APP-03[variant=ghost]"
+    },
+    {
+      "id": "APP-03@focus-visible[variant=ghost]",
+      "property": "border-color",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "focus-visible": true
+        },
+        "props": {
+          "variant": "ghost",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-color@focus-visible [variant=ghost] keeps its rest token `component.button.variant.ghost.border`.",
+      "expect": {
+        "equals": "component.button.variant.ghost.border"
+      },
+      "alias_of": "APP-03[variant=ghost]"
+    },
+    {
+      "id": "APP-03@pressed[variant=ghost]",
+      "property": "border-color",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "pressed": true
+        },
+        "props": {
+          "variant": "ghost",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-color@pressed [variant=ghost] keeps its rest token `component.button.variant.ghost.border`.",
+      "expect": {
+        "equals": "component.button.variant.ghost.border"
+      },
+      "alias_of": "APP-03[variant=ghost]"
+    },
+    {
+      "id": "APP-03@disabled[variant=ghost]",
+      "property": "border-color",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true,
+          "variant": "ghost"
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-color@disabled [variant=ghost] keeps its rest token `component.button.variant.ghost.border`.",
+      "expect": {
+        "equals": "component.button.variant.ghost.border"
+      },
+      "alias_of": "APP-03[variant=ghost]"
+    },
+    {
+      "id": "APP-04@hover",
+      "property": "border-width",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "hover": true
+        },
+        "props": {
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-width@hover resolves through a design token.",
+      "pending": {
+        "reason": "absent-from-tree",
+        "detail": "semantic.border-width.default"
+      },
+      "alias_of": "APP-04"
+    },
+    {
+      "id": "APP-04@focus-visible",
+      "property": "border-width",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "focus-visible": true
+        },
+        "props": {
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-width@focus-visible resolves through a design token.",
+      "pending": {
+        "reason": "absent-from-tree",
+        "detail": "semantic.border-width.default"
+      },
+      "alias_of": "APP-04"
+    },
+    {
+      "id": "APP-04@pressed",
+      "property": "border-width",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "pressed": true
+        },
+        "props": {
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-width@pressed resolves through a design token.",
+      "pending": {
+        "reason": "absent-from-tree",
+        "detail": "semantic.border-width.default"
+      },
+      "alias_of": "APP-04"
+    },
+    {
+      "id": "APP-04@disabled",
+      "property": "border-width",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-width@disabled resolves through a design token.",
+      "pending": {
+        "reason": "absent-from-tree",
+        "detail": "semantic.border-width.default"
+      },
+      "alias_of": "APP-04"
+    },
+    {
+      "id": "APP-05@hover",
+      "property": "radius",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "hover": true
+        },
+        "props": {
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "radius@hover keeps its rest token `component.button.radius`.",
+      "expect": {
+        "equals": "component.button.radius"
+      },
+      "alias_of": "APP-05"
+    },
+    {
+      "id": "APP-05@focus-visible",
+      "property": "radius",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "focus-visible": true
+        },
+        "props": {
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "radius@focus-visible keeps its rest token `component.button.radius`.",
+      "expect": {
+        "equals": "component.button.radius"
+      },
+      "alias_of": "APP-05"
+    },
+    {
+      "id": "APP-05@pressed",
+      "property": "radius",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "pressed": true
+        },
+        "props": {
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "radius@pressed keeps its rest token `component.button.radius`.",
+      "expect": {
+        "equals": "component.button.radius"
+      },
+      "alias_of": "APP-05"
+    },
+    {
+      "id": "APP-05@disabled",
+      "property": "radius",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "radius@disabled keeps its rest token `component.button.radius`.",
+      "expect": {
+        "equals": "component.button.radius"
+      },
+      "alias_of": "APP-05"
+    },
+    {
+      "id": "APP-06@hover",
+      "property": "padding-inline",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "hover": true
+        },
+        "props": {
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "padding-inline@hover resolves through a design token.",
+      "pending": {
+        "reason": "ambiguous",
+        "detail": [
+          "component.button.size.sm.padding-inline",
+          "component.button.size.md.padding-inline",
+          "component.button.size.lg.padding-inline"
+        ]
+      },
+      "alias_of": "APP-06"
+    },
+    {
+      "id": "APP-06@focus-visible",
+      "property": "padding-inline",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "focus-visible": true
+        },
+        "props": {
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "padding-inline@focus-visible resolves through a design token.",
+      "pending": {
+        "reason": "ambiguous",
+        "detail": [
+          "component.button.size.sm.padding-inline",
+          "component.button.size.md.padding-inline",
+          "component.button.size.lg.padding-inline"
+        ]
+      },
+      "alias_of": "APP-06"
+    },
+    {
+      "id": "APP-06@pressed",
+      "property": "padding-inline",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "pressed": true
+        },
+        "props": {
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "padding-inline@pressed resolves through a design token.",
+      "pending": {
+        "reason": "ambiguous",
+        "detail": [
+          "component.button.size.sm.padding-inline",
+          "component.button.size.md.padding-inline",
+          "component.button.size.lg.padding-inline"
+        ]
+      },
+      "alias_of": "APP-06"
+    },
+    {
+      "id": "APP-06@disabled",
+      "property": "padding-inline",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "padding-inline@disabled resolves through a design token.",
+      "pending": {
+        "reason": "ambiguous",
+        "detail": [
+          "component.button.size.sm.padding-inline",
+          "component.button.size.md.padding-inline",
+          "component.button.size.lg.padding-inline"
+        ]
+      },
+      "alias_of": "APP-06"
+    },
+    {
+      "id": "APP-09@hover",
+      "property": "elevation",
+      "statement": "elevation@hover is not tokenised.",
+      "binds": false,
+      "reason": "a Button sits in the content plane",
+      "alias_of": "APP-09"
+    },
+    {
+      "id": "APP-09@focus-visible",
+      "property": "elevation",
+      "statement": "elevation@focus-visible is not tokenised.",
+      "binds": false,
+      "reason": "a Button sits in the content plane",
+      "alias_of": "APP-09"
+    },
+    {
+      "id": "APP-09@pressed",
+      "property": "elevation",
+      "statement": "elevation@pressed is not tokenised.",
+      "binds": false,
+      "reason": "a Button sits in the content plane",
+      "alias_of": "APP-09"
+    },
+    {
+      "id": "APP-09@disabled",
+      "property": "elevation",
+      "statement": "elevation@disabled is not tokenised.",
+      "binds": false,
+      "reason": "a Button sits in the content plane",
+      "alias_of": "APP-09"
     }
   ]
 }

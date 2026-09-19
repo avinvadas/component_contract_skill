@@ -274,7 +274,9 @@
       "kind": "state",
       "scenario": {
         "state": {
-          "hover": false
+          "hover": false,
+          "focus-visible": false,
+          "pressed": false
         },
         "props": {
           "disabled": false
@@ -331,6 +333,58 @@
         "reason": "dimension-unmet",
         "detail": "semantic.color.surface.neutral"
       }
+    },
+    {
+      "id": "APP-01@focus-visible",
+      "property": "background",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "focus-visible": true
+        },
+        "props": {
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "background@focus-visible resolves through a design token.",
+      "pending": {
+        "reason": "ambiguous",
+        "detail": [
+          "semantic.color.surface.neutral",
+          "semantic.color.action.primary"
+        ]
+      },
+      "alias_of": "APP-01"
+    },
+    {
+      "id": "APP-01@pressed",
+      "property": "background",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "pressed": true
+        },
+        "props": {
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "background@pressed resolves through a design token.",
+      "pending": {
+        "reason": "ambiguous",
+        "detail": [
+          "semantic.color.surface.neutral",
+          "semantic.color.action.primary"
+        ]
+      },
+      "alias_of": "APP-01"
     }
   ]
 }

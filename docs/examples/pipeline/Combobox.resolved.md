@@ -57,10 +57,10 @@ Where a platform gives you this free, and where you build it by hand.
 
 | state | what changes | driven by | valid because |
 |---|---|---|---|
-| hover | nothing — appearance is out of this fixture's scope | platform | archetype `combobox` |
-| focus-visible | nothing — the focus indicator is system policy (POL-02), drawn the same for every control | platform | archetype `combobox` |
-| disabled | nothing — appearance is out of this fixture's scope | prop | archetype `combobox` |
-| expanded | nothing — the list zone appearing is the change, and it is Listbox's contract | prop | archetype `combobox` |
+| hover | — | platform | archetype `combobox` |
+| focus-visible | — | platform | archetype `combobox` |
+| disabled | — | prop | archetype `combobox` |
+| expanded | — | prop | archetype `combobox` |
 
 ### Tokenised properties
 

@@ -180,8 +180,11 @@ here and nowhere else — not again under Appearance, Behavior, or Accessibility
 
 **Every interaction state valid for the component is answered** — the archetype's
 `interaction-states`, plus any the contract's frontmatter adds; the closed set is
-`system/vocabulary/interaction-states.json`. `what changes` is a list of properties, or
-`nothing — <reason>`; a valid state with no row, or `nothing` with no reason, fails the parse.
+`system/vocabulary/interaction-states.json`. `what changes` lists the properties that take
+their own token in that state, or `—`; a valid state with no row fails the parse. Every
+property not listed keeps its rest token: the resolver generates that case per state and
+variant as an alias (`alias_of`), and a verifier checks it with the state forced. `nothing` is
+not an answer — it meant different things in different places.
 4.1 and 4.2 agree both ways: a property listed for a state has a 4.1 slot in that state and a
 rest slot, and a 4.1 slot in a state is listed here.
 

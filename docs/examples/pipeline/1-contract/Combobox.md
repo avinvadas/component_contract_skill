@@ -45,14 +45,14 @@ No token slots: this fixture exercises the machine, not appearance.
 
 ### 4.2 Interaction states
 
-Every state the archetype makes valid is answered — what changes, or `nothing` and why.
+Every state the archetype makes valid is answered: the properties that take their own token in it, or `—`. Every other property keeps its rest token.
 
 | state | what changes | driven by |
 |---|---|---|
-| hover | nothing — appearance is out of this fixture's scope | platform |
-| focus-visible | nothing — the focus indicator is system policy (POL-02), drawn the same for every control | platform |
-| disabled | nothing — appearance is out of this fixture's scope | prop |
-| expanded | nothing — the list zone appearing is the change, and it is Listbox's contract | prop |
+| hover | — | platform |
+| focus-visible | — | platform |
+| disabled | — | prop |
+| expanded | — | prop |
 
 ## 5. Behavior
 
