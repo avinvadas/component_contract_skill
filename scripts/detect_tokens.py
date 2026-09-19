@@ -420,10 +420,12 @@ def report(d):
     out += ["", "## Component scopes", "", ", ".join("`%s`" % s for s in d["scopes"]) or "*none*",
             "", "## Naming patterns", ""]
     for p in d["patterns"]:
-        out.append("- `%s`%s — e.g. `%s`" % (p["template"], "  **needs an answer**" if p["needs_answer"] else "",
+        out.append("- `%s`%s — e.g. `%s`"
+                   % (p["template"], "  **needs an answer**" if p["needs_answer"] else "",
                                             p["examples"][0]))
     if d.get("readings"):
-        out += ["", "## Proposed readings (%d) — from each token's own description; confirm, never assume" % len(d["readings"]), ""]
+        out += ["", "## Proposed readings (%d) — from each token's own description; confirm, never assume"
+                    % len(d["readings"]), ""]
         for path, r in sorted(d["readings"].items()):
             rd = r["reading"]
             out.append("- `%s` → **%s**%s%s — \"%s\"" % (

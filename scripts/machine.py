@@ -124,7 +124,8 @@ def requirements(machine, mb, platform, lint):
     needs = ["interaction", "a11y-tree"]
     reqs = []
     for t in machine["transitions"]:
-        reqs.append({"id": t["id"], "statement": "From %s, %s moves to %s." % (t["from"], t["event"], t["to"]),
+        moves = "From %s, %s moves to %s." % (t["from"], t["event"], t["to"])
+        reqs.append({"id": t["id"], "statement": moves,
                      "observe": "state", "kind": "behavior",
                      "scenario": {"machine": {"state": t["from"]}},
                      "trigger": trigger(t["event"]), "expect": state_expect(t["to"]),

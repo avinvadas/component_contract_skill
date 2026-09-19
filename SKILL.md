@@ -174,7 +174,7 @@ tokens:
   shared:  # component-tier groups that are PATTERNS, not one component — and which components draw from each. Asked once in Phase 0B (detect_tokens.py lists the groups); a component is added to a group when the resolver reports `shared_unconfirmed` and the person says yes
     [group, e.g. control]: [components, e.g. button, segmented-control]
   leaf_map:  # ONLY spellings the resolver cannot read, each from a confirmed answer, asked lazily per component — never a suggestion written unconfirmed
-    [spelling]: background | foreground | border-color | border-width | radius | padding-inline | padding-block | font-size | elevation | opacity | duration
+    [spelling]: background | foreground | border-color | focus-ring | border-width | radius | padding-inline | padding-block | gap | height | font-family | font-size | font-weight | line-height | letter-spacing | elevation | opacity | duration | easing
   generated_downstream: true | false  # confirms/denies hand-typed values as accepted practice — gates Phase 6's token-name validation entirely; see references/token-naming-validation.md
   naming_convention:  # only meaningful when generated_downstream is true — one locked convention per PLATFORM, detected once from a known-correct generated name, never guessed. Three independent axes (row, prefix, scope_depth) that must all hold; see references/token-naming-validation.md Steps 4-5.
     web: { row: dot | kebab | snake | camel | pascal | flat | screaming-snake, prefix: [string, optional], scope_depth: [integer, number of leading canonical words this platform's pipeline consistently omits — 0 if none] }
@@ -847,6 +847,8 @@ The lookup goes in that order: this component's own tokens, then the shared grou
 **A token cell may be a pattern.** `{kind}` stands for each value of that visual-variant prop the row covers; every value it produces must exist in the tree, and a value it cannot produce needs its own row.
 
 While writing, `—` means *resolve it from the tree* — Phase 6 does that against the design system's own naming, writes back what the tree answers,, and reports one of six outcomes per slot. Write an explicit token path only to pin one deliberately; **a pinned name that is not in the tree fails the parse**, which is how an invented token name is kept out of a design system. A property that does not apply says so with a reason; it is never simply left out.
+
+**Colour is not the only thing tokenised.** The closed property set covers type (`font-family`, `font-size`, `font-weight`, `line-height`, `letter-spacing`), space (`padding-inline`, `padding-block`, `gap`), size (`height`, `radius`, `border-width`), depth (`elevation`, `opacity`) and motion (`duration`, `easing`) beside colour (`background`, `foreground`, `border-color`, `focus-ring`). A token only fills a property of its own `$type`, and dimensions expand along the `size` axis where colours expand along `variant`.
 
 Declare a slot for every property in the design system's declared property set that this component actually has. Never invent a token name for a value you could not find — that rule is unchanged and now enforced.
 

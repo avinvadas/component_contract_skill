@@ -116,6 +116,17 @@ def parse_tables(text):
         tables.append((headers, rows))
     return tables
 
+# A markdown table's first row is its header. A row that carries an id or a backticked value is
+# DATA, so a table starting with one has lost its header — usually a block appended after a blank
+# line, which silently became a table of its own. Nine token slots once vanished that way.
+def check_table_headers(text):
+    for headers, rows in parse_tables(text):
+        if any(re.search(r"`|^id-|^when:", h) for h in headers):
+            lint.append("a table starts with a data row (%s…) — it has no header, so nothing reads "
+                        "it. A block appended after a blank line becomes a table of its own."
+                        % " | ".join(headers[:3])[:60])
+
+
 def requirement_rows(text):
     """Rows from any table shaped like a requirement table."""
     out = []
@@ -830,6 +841,7 @@ def main():
     states = check_states(body, fm, S["arch_fm"], slot_rows(body))
     elements = element_requirements(body, fm, S["archetype"], arch_body)
 
+    check_table_headers(body)
     for headers, rows in parse_tables(body):
         if "cardinality" in headers:
             check_cardinality(rows)
@@ -932,7 +944,8 @@ def main():
 
     if machine["transitions"]:
         grid = len(machine["states"]) * len(machine["events"])
-        print(f"\nmachine: {len(machine['states'])} states x {len(machine['events'])} events = {grid} cells — "
+        print(f"\nmachine: {len(machine['states'])} states x {len(machine['events'])} events "
+              f"= {grid} cells — "
               f"{len(machine['transitions'])} authored, {len(machine['unreachable'])} unreachable, "
               f"{len(machine['closure'])} closure (generated)")
         for c in machine["closure"]:
@@ -956,7 +969,8 @@ def main():
         print(f"\nshared groups: {len(shared_notes)} case(s) a shared group could fill, and "
               f"{kebab(fm['component'])} is not declared a member — ask:")
         for n in shared_notes:
-            print("  - %-28s `%s` (group %s: %s)" % (n["id"], n["token"], n["group"], ", ".join(n["members"])))
+            print("  - %-28s `%s` (group %s: %s)"
+                  % (n["id"], n["token"], n["group"], ", ".join(n["members"])))
 
     if state_notes:
         print(f"\nstates: {len(state_notes)} case(s) keep their rest token, while the tree has "

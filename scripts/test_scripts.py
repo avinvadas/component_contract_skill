@@ -213,6 +213,7 @@ A surface that groups related content.
 
 
 # ---- accumulation: the second component benefits from the first -------------------------
+C = lambda v: {"$type": "color", "$value": v}  # noqa: E731
 ACC_TREE = {
   "core": {"color": {"purple": {"$type": "color", "$value": "#4C00A8"},
                      "white":  {"$type": "color", "$value": "#FFFFFF"},
@@ -221,10 +222,10 @@ ACC_TREE = {
                                 "subtle": {"$type": "color", "$value": "{core.color.gray}"}},
                          "fg": {"inverse": {"$type": "color", "$value": "{core.color.white}"}}}},
   "component": {
-    "button": {"primary":   {"bgColor":   {"default": {"$type": "color", "$value": "{semantic.color.bg.strong}"}},
-                             "textColor": {"default": {"$type": "color", "$value": "{semantic.color.fg.inverse}"}}},
-               "secondary": {"bgColor":   {"default": {"$type": "color", "$value": "{semantic.color.bg.subtle}"}},
-                             "textColor": {"default": {"$type": "color", "$value": "{semantic.color.fg.inverse}"}}}},
+    "button": {"primary":   {"bgColor":   {"default": C("{semantic.color.bg.strong}")},
+                             "textColor": {"default": C("{semantic.color.fg.inverse}")}},
+               "secondary": {"bgColor":   {"default": C("{semantic.color.bg.subtle}")},
+                             "textColor": {"default": C("{semantic.color.fg.inverse}")}}},
     "chip":   {"bgColor":   {"default": {"$type": "color", "$value": "{semantic.color.bg.subtle}"}},
                "textColor": {"default": {"$type": "color", "$value": "{semantic.color.fg.inverse}"}}}}}
 
@@ -363,7 +364,8 @@ def the_second_component_asks_nothing_the_first_settled():
 
     # ---- and the run can say what it learned ------------------------------------------
     d = run(HERE / "learned.py", "diff", "--context", ctxf)
-    for expected in ("tokens.leaf_map.bgColor = background", "POL-01", "POL-03", "POL-04 literal denial: deferred"):
+    for expected in ("tokens.leaf_map.bgColor = background", "POL-01", "POL-03",
+                     "POL-04 literal denial: deferred"):
         assert expected in d.stdout, "learned.py did not report %r:\n%s" % (expected, d.stdout)
 
 
@@ -377,7 +379,8 @@ def carbon_shaped_tree_reads_correctly_and_never_binds_across_variants():
     from tokens import Tree
     d = pathlib.Path(tempfile.mkdtemp())
     (d / "palette.json").write_text(json.dumps({
-        "blue": {"60": {"$type": "color", "$value": {"colorSpace": "srgb", "components": [0, 0.4, 1], "hex": "#0f62fe"}}},
+        "blue": {"60": {"$type": "color",
+                        "$value": {"colorSpace": "srgb", "components": [0, 0.4, 1], "hex": "#0f62fe"}}},
         "gray": {"30": {"$type": "color", "$value": "#c6c6c6"}}}))
     (d / "theme.json").write_text(json.dumps({
         "text-on-color": {"$type": "color", "$value": "{gray.30}"}}))
@@ -385,7 +388,8 @@ def carbon_shaped_tree_reads_correctly_and_never_binds_across_variants():
         "primary":  {"$type": "color", "$extensions": {"carbon.themes": {"white": "{blue.60}"}}},
         "tertiary": {"$type": "color", "$extensions": {"carbon.themes": {"white": "{blue.60}"}}},
         "disabled": {"$type": "color", "$extensions": {"carbon.themes": {"white": "{gray.30}"}}}}}))
-    facts = {"sources": {"primitive": ["palette.json"], "semantic": ["theme.json"], "component": ["button.json"]},
+    facts = {"sources": {"primitive": ["palette.json"], "semantic": ["theme.json"],
+                         "component": ["button.json"]},
              "theme": {"name": "white", "value_path": ["$extensions", "carbon.themes", "{theme}"]},
              "readings": {"component.button.primary":  {"property": "background", "variant": "primary"},
                           "component.button.tertiary": {"property": "foreground", "variant": "tertiary"},
@@ -393,10 +397,12 @@ def carbon_shaped_tree_reads_correctly_and_never_binds_across_variants():
     t = Tree(str(d), facts)
     assert not t.problems, t.problems
     # tiers from files; themed values read; aliases rewritten across files
-    assert t.tokens["component.button.primary"]["value"] == "{primitive.blue.60}", t.tokens["component.button.primary"]
+    assert t.tokens["component.button.primary"]["value"] == "{primitive.blue.60}", \
+        t.tokens["component.button.primary"]
     # a DTCG 2025 colour object is a value, never an alias
     assert "primitive.blue.60" not in t.alias, "a colour object was read as an alias"
-    assert t.resolve("background", "button", {"variant": "primary"})[:2] == ("component.button.primary", "bound")
+    assert t.resolve("background", \
+        "button", {"variant": "primary"})[:2] == ("component.button.primary", "bound")
     assert t.resolve("background", "button", {"variant": "primary"}, "disabled")[:2] == \
         ("component.button.disabled", "bound"), "a token for every variant must stay eligible"
     tok, status, _ = t.resolve("foreground", "button", {"variant": "primary"})
@@ -414,7 +420,8 @@ def primer_shaped_tree_asks_per_spelling_and_per_component():
     import detect_tokens
     from tokens import pure_property_spelling, Tree
     assert pure_property_spelling("bgColor", "color") and pure_property_spelling("fgColor", "color")
-    assert not pure_property_spelling("background-blue", "color"), "fused property+variant is a reading, not a spelling"
+    assert not pure_property_spelling("background-blue", \
+        "color"), "fused property+variant is a reading, not a spelling"
 
     d = pathlib.Path(tempfile.mkdtemp())
     tok = lambda v: {"$type": "color", "$value": v}
@@ -458,7 +465,30 @@ def css_variables_are_a_token_tree_and_a_theme_overrides_root():
     assert light.tokens["semantic.primary"]["type"] == "color"
     assert light.tokens["semantic.ring"]["value"] == "{semantic.primary}", "var(--x) must read as an alias"
     assert dark.tokens["semantic.primary"]["value"] == "oklch(0.9 0 0)"
-    assert dark.tokens["semantic.radius"]["value"] == "0.625rem", ".dark must inherit what it does not redefine"
+    assert dark.tokens["semantic.radius"]["value"] == "0.625rem", \
+        ".dark must inherit what it does not redefine"
+
+
+@test
+def tailwind_declares_its_tokens_in_at_theme_not_root():
+    """Rules out: calling a token absent that the tree declares — Tailwind v4 (and shadcn on top
+    of it) puts radius, type and spacing in `@theme`, and only colours in `:root`."""
+    from tokens import load_css
+    d = pathlib.Path(tempfile.mkdtemp())
+    (d / "t.css").write_text("""@import "tailwindcss";
+@theme inline {
+  --radius-md: calc(var(--radius) * 0.8);
+  --text-sm: 0.875rem;
+}
+:root { --radius: 0.625rem; --primary: oklch(0.2 0 0); }
+.dark { --primary: oklch(0.9 0 0); }
+""")
+    light = load_css(str(d / "t.css"))
+    assert set(light) == {"radius-md", "text-sm", "radius", "primary"}, sorted(light)
+    assert light["text-sm"]["$type"] == "dimension" and light["primary"]["$type"] == "color"
+    dark = load_css(str(d / "t.css"), ".dark")
+    assert dark["primary"]["$value"] != light["primary"]["$value"], "a theme selector overrides :root"
+    assert "radius-md" in dark, "a theme inherits what it does not redefine"
 
 
 @test
@@ -470,7 +500,8 @@ def token_slots_are_non_overlapping_cases_with_web_names_and_stated_transforms()
     import resolve
     conv = {"row": "kebab", "prefix": "--cds-", "scope_depth": 1}
     assert resolve.platform_name("component.button.primary-hover", conv) == "--cds-button-primary-hover"
-    assert resolve.platform_name("semantic.primary-foreground", {"prefix": "--", "scope_depth": 1}) == "--primary-foreground"
+    assert resolve.platform_name("semantic.primary-foreground", \
+        {"prefix": "--", "scope_depth": 1}) == "--primary-foreground"
     assert resolve.parse_transform("alpha 80%", "X") == {"alpha": 80.0}
     resolve.lint.clear(); resolve.parse_transform("80 percent", "X")
     assert resolve.lint, "a transform outside the grammar must be lint"
@@ -480,7 +511,8 @@ def token_slots_are_non_overlapping_cases_with_web_names_and_stated_transforms()
     resolve.lint.clear()
     default = resolve.slot_scenario(slots[0], slots)
     assert default == {"props": {"disabled": False}, "state": {"hover": False}}, default
-    assert resolve.slot_scenario(slots[1], slots)["props"] == {"disabled": False}, "hover applies only while enabled"
+    assert resolve.slot_scenario(slots[1], \
+        slots)["props"] == {"disabled": False}, "hover applies only while enabled"
     assert resolve.slot_scenario(slots[2], slots) == {"props": {"disabled": True}}
 
 
@@ -508,7 +540,8 @@ tokens:
 %s%s""" % (n, "      variant: %s\n" % n.split("-")[0] if n != "disabled" else "",
            "      state: %s\n" % n.split("-")[1] if "-" in n else
            ("      state: disabled\n" if n == "disabled" else ""))
-    for n in ("primary", "primary-hover", "primary-active", "ghost", "ghost-hover", "ghost-active", "disabled"))
+    for n in ("primary", "primary-hover", "primary-active", "ghost", "ghost-hover",
+              "ghost-active", "disabled"))
 
 STATES_CONTRACT = """---
 component: Button
@@ -589,7 +622,8 @@ def every_valid_interaction_state_is_answered():
             (st, rep["lint"])
 
     # `nothing` meant different things in different places; it is no longer an answer
-    _, rep, _ = states_repo(states=STATES_OK.replace("| focus-visible | — |", "| focus-visible | nothing — policy |"))
+    said_nothing = STATES_OK.replace("| focus-visible | — |", "| focus-visible | nothing — policy |")
+    _, rep, _ = states_repo(states=said_nothing)
     assert any("`nothing` is not an answer" in l for l in rep["lint"]), rep["lint"]
 
     # 4.2 and 4.1 must agree, in both directions, and a changed property needs a rest case
@@ -610,7 +644,8 @@ def an_unchanged_state_keeps_its_rest_token_as_a_checkable_alias():
     by = {x["id"]: x for x in doc["requirements"] if x["id"].startswith("APP-")}
     a = by["APP-01@focus-visible[kind=ghost]"]
     assert a["expect"] == {"equals": "component.button.ghost"} and a["alias_of"] == "APP-01[kind=ghost]", a
-    assert a["scenario"]["state"] == {"focus-visible": True} and a["scenario"]["props"]["disabled"] is False, a
+    assert a["scenario"]["state"] == {"focus-visible": True}, a
+    assert a["scenario"]["props"]["disabled"] is False, a
     assert "keeps its rest token" in a["statement"], a
     # explicit cases are never shadowed by an alias
     assert "APP-01@hover[kind=ghost]" not in by and "APP-02[kind=ghost]" in by
@@ -640,7 +675,8 @@ def a_slot_applies_to_every_variant_and_a_specific_row_overrides():
     # one token for every variant stays eligible for each
     assert by["APP-04[kind=ghost]"]["expect"] == {"equals": "component.button.disabled"}
 
-    specific = SLOTS_OK + "| when:hover,kind=ghost | background | n/a — ghost has no hover fill | id-APP-05 |\n"
+    ghost_na = "| when:hover,kind=ghost | background | n/a — ghost has no hover fill | id-APP-05 |\n"
+    specific = SLOTS_OK + ghost_na
     _, rep, doc = states_repo(slots=specific)
     ids = {x["id"] for x in doc["requirements"]}
     assert "APP-05" in ids and "APP-02[kind=ghost]" not in ids and "APP-02[kind=primary]" in ids, ids
@@ -650,6 +686,15 @@ def a_slot_applies_to_every_variant_and_a_specific_row_overrides():
     assert any("background@hover is not addressed for kind=primary" in l for l in rep["lint"]), rep["lint"]
     _, rep, _ = states_repo(slots=SLOTS_OK + "| when:hover,kind=tertiary | background | — | id-APP-09 |\n")
     assert any("'tertiary' is not a value of `kind`" in l for l in rep["lint"]), rep["lint"]
+
+
+@test
+def a_table_that_lost_its_header_is_a_finding_not_a_silence():
+    """Rules out: rows appended after a blank line becoming a table of their own, read by
+    nothing. Nine token slots were added to a lab contract that way and simply did not exist."""
+    stray = SLOTS_OK + "\n| always | radius | `component.button.primary` | id-APP-09 |\n"
+    _, rep, _ = states_repo(slots=stray)
+    assert any("no header" in l for l in rep["lint"]), rep["lint"]
 
 
 @test
@@ -664,7 +709,8 @@ def the_element_carrying_the_role_is_structure():
     assert any("no element row for web" in l for l in rep["lint"]), rep["lint"]
     _, rep, _ = states_repo(element=ELEMENT_OK.replace("`<button>`", "`<div>`"))
     assert any("not a native backing" in l for l in rep["lint"]), rep["lint"]
-    _, rep, _ = states_repo(element=ELEMENT_OK.replace("`<button>`", "custom — `<div>` with the button pattern"))
+    custom = ELEMENT_OK.replace("`<button>`", "custom — `<div>` with the button pattern")
+    _, rep, _ = states_repo(element=custom)
     assert not rep["lint"], rep["lint"]
 
 
@@ -695,7 +741,8 @@ def a_shared_group_is_searched_only_for_its_members_and_named_by_scope():
     """Guards: a pattern token (`control.radius`, used by several components) being either
     invisible to the lookup or mistaken for this component's own."""
     radius = SLOTS_OK + "| always | radius | — | id-APP-09 |\n"
-    _, rep, by = resolved(states_contract_repo(radius, "  shared:\n    control: [button, segmented-control]\n"))
+    member = "  shared:\n    control: [button, segmented-control]\n"
+    _, rep, by = resolved(states_contract_repo(radius, member))
     assert by["APP-09"]["expect"] == {"equals": "component.control.radius"}, by["APP-09"]
     assert by["APP-09"]["scope"] == "shared:control" and by["APP-01[kind=ghost]"]["scope"] == "component"
     assert rep["specificity"] == {"component": 8, "shared:control": 1}, rep["specificity"]
@@ -716,7 +763,8 @@ def writeback_states_what_the_tree_answers_as_patterns_and_nothing_else():
     r = run(HERE / "writeback.py", repo / "Button.md")
     assert r.returncode == 0, r.stderr
     text = (repo / "Button.md").read_text()
-    assert "| when:hover | background | `component.button.{kind}-hover` | component | id-APP-02 |" in text, text
+    assert "| when:hover | background | `component.button.{kind}-hover` | component | id-APP-02 |" in text, \
+        text
     assert "| when:pressed | background | `component.button.{kind}-active` | component | id-APP-03 |" in text
     assert "| when:disabled | background | `component.button.disabled` | component | id-APP-04 |" in text
     # a pin is never replaced — only its scope is filled
@@ -731,7 +779,8 @@ def writeback_states_what_the_tree_answers_as_patterns_and_nothing_else():
     bad = text.replace("`component.button.{kind}-hover`", "`component.button.{kind}-over`")
     (repo / "Button.md").write_text(bad)
     _, rep, _ = resolved(repo)
-    assert any("gives 'component.button.primary-over' for kind=primary" in l for l in rep["lint"]), rep["lint"]
+    assert any("gives 'component.button.primary-over' for kind=primary" in l for l in rep["lint"]), \
+        rep["lint"]
     # a scope the tree contradicts is a finding
     (repo / "Button.md").write_text(text.replace("`component.button.disabled` | component",
                                                  "`component.button.disabled` | semantic"))
@@ -800,7 +849,8 @@ def detection_reads_which_position_holds_the_property_in_any_order():
     import detect_tokens
     for flat in (False, True):
         d = detect_tokens.detect(str(naming_tree(flat)))
-        assert [p["template"] for p in d["patterns"]] == ["component.{component}.{property}.{state}.{?}"], d["patterns"]
+        assert [p["template"] for p in d["patterns"]] == ["component.{component}.{property}.{state}.{?}"], \
+            d["patterns"]
         asked = [q["question"] for q in d["questions"]]
         assert not any(q.startswith("Which property does `primary`") for q in asked), asked
         assert any("segment 5 vary by? It takes the values primary, secondary" in q for q in asked), asked
@@ -890,7 +940,8 @@ def web_verifier_scenario_must_be_established():
             spec.loader.exec_module(v)
         except SystemExit:
             pass
-    no_icon = {"name": "x", "props": {}, "html": '<button data-zone="root"><span data-zone="label">S</span></button>'}
+    no_icon = {"name": "x", "props": {},
+               "html": '<button data-zone="root"><span data-zone="label">S</span></button>'}
     assert not v.matches({"zones": {"icon": "present"}}, no_icon)
     assert not v.matches({"state": {"hover": True}}, v.WIT[0])
     assert not v.matches({"machine": {"state": "expanded"}}, v.WIT[0])

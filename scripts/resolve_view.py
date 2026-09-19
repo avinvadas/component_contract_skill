@@ -142,7 +142,8 @@ def machine_section():
     for r, origin in [(r, "archetype `%s`" % fm["role-archetype"]) for r in arch_rows] + \
                      [(r, "this component") for r in own_rows]:
         rows_.append("| %s | %s | %s | %s | %s |" % (r["from"], r["event"], r["to"], origin,
-                                                    ("id-" + r["id"]) if r.get("id", "—") not in ("—", "-", "") else "—"))
+                                                    ("id-" + r["id"])
+                                                    if r.get("id", "—") not in ("—", "-", "") else "—"))
     out = md_table(["from", "event", "to", "origin", "id"], rows_)
     grid = len(merged["states"]) * len(merged["events"])
     if merged["closure"]:

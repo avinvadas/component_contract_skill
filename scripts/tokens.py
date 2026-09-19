@@ -30,7 +30,8 @@ import json, re
 # SEED, not an authority: the alias graph extends them per design system.
 PROPERTIES = {
     "background":     {"type": "color",     "syn": ["background", "bg", "fill", "surface"]},
-    "foreground":     {"type": "color",     "syn": ["foreground", "fg", "text", "content", "label", "on-color"]},
+    "foreground":     {"type": "color",     "syn": ["foreground", "fg", "text", "content", "label",
+                                                    "on-color"]},
     "border-color":   {"type": "color",     "syn": ["border", "border-color", "stroke", "outline"]},
     "border-width":   {"type": "dimension", "syn": ["border-width", "stroke-width"]},
     "radius":         {"type": "dimension", "syn": ["radius", "corner-radius", "border-radius"]},
@@ -41,7 +42,25 @@ PROPERTIES = {
     "opacity":        {"type": "number",    "syn": ["opacity", "alpha"]},
     "focus-ring":     {"type": "color",     "syn": ["focus-ring", "ring"]},
     "duration":       {"type": "duration",  "syn": ["duration", "enter-duration", "exit-duration"]},
+    # Type, spacing, size and motion are tokenised as often as colour is. A property may accept
+    # more than one $type where design systems genuinely differ: a line height is a length in one
+    # tree and a unitless number in another, and both are the same fact about the component.
+    "font-family":    {"type": ("fontFamily", "other"), "syn": ["font-family", "typeface", "font"]},
+    "font-weight":    {"type": ("fontWeight", "number"), "syn": ["font-weight", "weight"]},
+    "line-height":    {"type": ("dimension", "number"), "syn": ["line-height", "leading"]},
+    "letter-spacing": {"type": "dimension", "syn": ["letter-spacing", "tracking"]},
+    "gap":            {"type": "dimension", "syn": ["gap", "spacing", "space-between"]},
+    "height":         {"type": "dimension", "syn": ["height", "control-height", "min-height"]},
+    "easing":         {"type": ("cubicBezier", "other"), "syn": ["easing", "curve", "timing-function"]},
 }
+
+def types_of(prop):
+    """The $type(s) a token must carry to satisfy a property."""
+    t = PROPERTIES[prop]["type"]
+    return t if isinstance(t, tuple) else (t,)
+
+def fits(prop, token_type):
+    return token_type in types_of(prop)
 
 # State suffixes fused into a leaf. `background-hover` is one segment carrying two facts.
 STATES = ["hover", "pressed", "active", "focus-visible", "focus", "disabled", "selected", "checked", "error"]
@@ -102,12 +121,21 @@ CSS_VAR_DECL = re.compile(r"--([\w-]+)\s*:\s*([^;]+);")
 CSS_VAR_REF = re.compile(r"^\s*var\(\s*--([\w-]+)\s*\)\s*$")
 
 def _css_block(text, selector):
-    """The declarations inside the first block whose selector is exactly `selector`."""
+    """The declarations inside every block whose selector is exactly `selector`, joined.
+
+    `@theme` counts as a selector of its own: Tailwind v4 (and so shadcn, and any system built
+    on it) declares its non-colour tokens — radius, type, spacing — inside `@theme`, not in
+    `:root`. Reading only `:root` once reported shadcn's radius as absent from its own tree.
+    """
+    out = []
     for m in re.finditer(r"([^{}]+)\{([^{}]*)\}", text):
-        sels = [x.strip() for x in m.group(1).split(",")]
-        if selector in sels:
-            return m.group(2)
-    return None
+        # Only the LAST line before `{` is the selector: what precedes it is the previous
+        # statement — `@import "tailwindcss";` once made every selector unreadable.
+        head = m.group(1).strip().split("\n")[-1].strip()
+        sels = [x.strip() for x in head.split(",")]
+        if selector in sels or (selector == "@theme" and sels[0].split(" ")[0] == "@theme"):
+            out.append(m.group(2))
+    return "\n".join(out) or None
 
 def _css_type(value):
     v = value.strip().lower()
@@ -128,7 +156,8 @@ def load_css(path, selector=":root"):
     text = re.sub(r"/\*.*?\*/", "", open(path).read(), flags=re.S)
     # A theme selector OVERRIDES `:root` — shadcn's `.dark` redefines the colours and inherits
     # `--radius`, so reading `.dark` alone would lose every token it does not repeat.
-    blocks = [_css_block(text, ":root")] + ([_css_block(text, selector)] if selector != ":root" else [])
+    blocks = [_css_block(text, "@theme"), _css_block(text, ":root")] + \
+            ([_css_block(text, selector)] if selector != ":root" else [])
     if not any(blocks):
         return {}
     decls = [d for b in blocks if b for d in CSS_VAR_DECL.findall(b)]
@@ -168,7 +197,8 @@ def load_sources(base, sources, theme=None, value_path=None, problems=None, sele
     for src in pairs:
         tier, pat = src.get("tier"), src.get("path")
         if tier not in ("primitive", "semantic", "component"):
-            problems.append("tokens.sources: %r has tier %r — expected primitive, semantic or component" % (pat, tier))
+            problems.append("tokens.sources: %r has tier %r — expected primitive, semantic or component"
+                            % (pat, tier))
             continue
         files = sorted(_glob.glob(str(_pl.Path(base) / pat)))
         if not files:
@@ -198,7 +228,8 @@ def load_sources(base, sources, theme=None, value_path=None, problems=None, sele
                 if len(homes) == 1:
                     return "{%s.%s}" % (next(iter(homes)), target)
                 if len(homes) > 1:
-                    problems.append("alias {%s} is defined in more than one tier: %s" % (target, sorted(homes)))
+                    problems.append("alias {%s} is defined in more than one tier: %s"
+                                    % (target, sorted(homes)))
         return node
     return {tier: rewrite(tree) for tier, tree in tiers.items()}
 
@@ -226,7 +257,7 @@ def suggest_property(spelling, token_type):
     w = words(spelling)
     hits = []
     for prop, spec in PROPERTIES.items():
-        if spec["type"] != token_type:
+        if token_type not in (spec["type"] if isinstance(spec["type"], tuple) else (spec["type"],)):
             continue
         for syn in sorted(spec["syn"], key=len, reverse=True):
             sw = words(syn)
@@ -294,7 +325,8 @@ class Tree:
             props = props if isinstance(props, list) else [props]
             bad = [x for x in props if x not in PROPERTIES]
             if bad:
-                self.problems.append("tokens.readings.%s: %s is not a property" % (tok, ", ".join(map(str, bad))))
+                self.problems.append("tokens.readings.%s: %s is not a property"
+                                     % (tok, ", ".join(map(str, bad))))
                 continue
             self.readings[str(tok)] = {"property": tuple(props), "variant": r.get("variant"),
                                        "state": r.get("state")}
@@ -533,10 +565,10 @@ class Tree:
         # A role derived from the alias graph is evidence about THIS path, and beats a
         # spelling match — it is what the tree's own consumers say the token is for.
         prop = self.path_role.get(path) or self.leafmap.get(base)
-        if prop and PROPERTIES[prop]["type"] != self.tokens[path]["type"]:
+        if prop and not fits(prop, self.tokens[path]["type"]):
             # `border` is a colour here, a width there. $type decides, not the spelling.
-            for cand, spec in PROPERTIES.items():
-                if base in spec["syn"] and spec["type"] == self.tokens[path]["type"]:
+            for cand in PROPERTIES:
+                if base in PROPERTIES[cand]["syn"] and fits(cand, self.tokens[path]["type"]):
                     return cand, state
             return None, state
         return prop, state
@@ -602,9 +634,9 @@ class Tree:
         # cannot know which segment names the property — in `...bgColor.default` it would
         # guess `default`, and someone mapping `default: background` would poison every token
         # that ends in `.default`. A path lets a person see the shape and declare it.
-        want = PROPERTIES[prop]["type"]
+        want = types_of(prop)
         unread = sorted(p for p in self.tokens
-                        if self.in_scope(p, scope) and self.tokens[p]["type"] == want
+                        if self.in_scope(p, scope) and self.tokens[p]["type"] in want
                         and self.prop_of(p)[0] is None)
         if unread:
             return None, "unmapped-leaf", unread[:3]
@@ -613,8 +645,9 @@ class Tree:
     def suggest(self, prop, state):
         """A path in THIS tree's shape, for the tree owner. Never written into a contract."""
         group = {"color": "color", "dimension": None, "shadow": "elevation",
-                 "duration": "motion.duration", "number": "opacity"}
-        t = PROPERTIES[prop]["type"]
+                 "duration": "motion.duration", "number": "opacity",
+                 "fontFamily": "type", "fontWeight": "type", "cubicBezier": "motion.easing"}
+        t = types_of(prop)[0]
         stem = group.get(t)
         sem = self.T["semantic"]
         if not stem or stem == prop:

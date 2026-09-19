@@ -49,14 +49,15 @@ def main():
         base = name.split(" at ")[0]
         return back.get(base, base) + (" at " + name.split(" at ")[1] if " at " in name else "")
 
-    from tokens import PROPERTIES
+    from tokens import PROPERTIES, types_of
 
     def of_type(ref, prop):
         """A shorthand carries more than one kind of token — `border: var(--strokeWidthThin) solid
         var(--colorNeutralStroke1)` — and only the one of the property's own type answers it."""
         tok = tree.tokens.get(ref.split(" at ")[0])
-        want = PROPERTIES.get(prop, {}).get("type")
-        return tok is None or want is None or tok["type"] == want
+        if tok is None or prop not in PROPERTIES:
+            return True
+        return tok["type"] in types_of(prop)
 
     def seen(obs, prop=None):
         refs = list(dict.fromkeys(r for r in (canon(r) for c in (obs or {}).get("css") or []
@@ -74,7 +75,8 @@ def main():
         if c.get("alias_of"):
             # The rest case already carries the same observation: one question, not five.
             rest = by_id.get(c["alias_of"], {})
-            if rest.get("status") == r["status"] and seen(rest.get("observed"), c["property"]) == (refs, lits):
+            same = seen(rest.get("observed"), c["property"]) == (refs, lits)
+            if rest.get("status") == r["status"] and same:
                 continue
         where = "%s (%s)" % (R.slot_label(c), r["observed"].get("witness", "?"))
         if r["status"] == "FAIL" and c["status"] == "bound":

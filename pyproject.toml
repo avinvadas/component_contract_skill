@@ -1,0 +1,17 @@
+# Style only. The project has no Python dependencies and nothing here affects behaviour; it
+# exists so an editor stops reporting this code as a hundred problems. The limit is 110 because
+# that is how the code is written: prose comments wrap at ~95, and a handful of table-shaped
+# expressions read better on one line than split.
+[tool.ruff]
+line-length = 110
+target-version = "py39"
+
+[tool.ruff.lint]
+# E501 (line length) is covered by line-length above; E741 is `l` as a loop variable in printing.
+ignore = ["E741"]
+
+[tool.black]
+line-length = 110
+
+[tool.pycodestyle]
+max-line-length = 110
