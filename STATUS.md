@@ -70,6 +70,45 @@ Four ideas carry the whole thing:
 | Role-archetypes: button 12, link 9, combobox 9, heading 3, text 2 | **tier 1 only** |
 | Worked example: Button + IconButton + Combobox, three platforms | **3 components** |
 
+## What a verifier can check, per platform
+
+The contract states the same requirements for every platform. **What can be CHECKED differs by
+platform, and the difference is not small.** Measured on Fluent 2's Button, one contract, both
+platforms.
+
+**On the web — the whole contract.** A browser keeps `var(--token)` references alive at runtime,
+so the appearance half is checkable as logic: which token each property references, in every
+state and variant, followed through the applied cascade. Structure, behaviour and accessibility
+are read from the accessibility tree, real focus order, real key presses and real form
+submission. Fluent's Button: 236 requirements checked, 2 unverified (touch target and user
+text-size, which headless Chrome cannot establish).
+
+**On a compiled native app — the accessibility and behaviour half only.** Six requirements on
+Fluent's iOS Button, read through XCUITest:
+
+| Requirement | Read from | Result |
+|---|---|---|
+| Exposed to assistive technology as a button | accessibility type | pass |
+| Has a non-empty accessible name | accessibility label | pass |
+| Disabled state conveyed to assistive technology | enabled trait | pass |
+| Disabled control performs no action | activation count after a tap | pass |
+| Label scales with the user's text-size setting | geometry at two text sizes | pass |
+| Meets the platform's minimum touch target | frame in points | **fail — 40pt, minimum 44** |
+
+Everything else is unverified, for two different reasons, and they must not be confused:
+
+| Unverified | Why | Fixable? |
+|---|---|---|
+| every token row (~225 of 231) | a compiled app keeps no token references — a token resolves to a colour when the view is drawn, and comparing colours is comparing values | **no** — not by any tool; the appearance half travels to native as intent only |
+| which class carries the role | XCUITest reports the accessibility type, not the UIKit class | yes, with a different probe |
+| keyboard focus order, keyboard activation (4) | Full Keyboard Access is not driven | yes |
+| accessibility activation | the probe drives a touch, which is not what the requirement names | yes |
+
+So a native verifier answers *is this exposed, named, stated and behaving correctly* — never
+*is this drawn from the tokens the design system says*. A verifier declares its own limits in
+`capability.json`, and every requirement it cannot observe is reported unverified, by name,
+never passed.
+
 ## What does not exist yet
 
 **The two halves are now joined.** `SKILL.md` Phase 3 derives the role-archetype, Phase 5
