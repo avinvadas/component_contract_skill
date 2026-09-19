@@ -1,5 +1,5 @@
 {
-  "comment": "Nothing platform-specific. Every entry falls out of the observe vocabulary \u2014 which is what a clean archetype looks like, and a useful contrast with button.",
+  "comment": "Nothing platform-specific. Every entry falls out of the observe vocabulary — which is what a clean archetype looks like, and a useful contrast with button.",
   "role-archetype": "heading",
   "version": "1.0",
   "bindings": {
@@ -7,18 +7,6 @@
       "web": {
         "expect": {
           "equals": "heading"
-        },
-        "also": {
-          "identity": {
-            "one_of": [
-              "h1",
-              "h2",
-              "h3",
-              "h4",
-              "h5",
-              "h6"
-            ]
-          }
         }
       },
       "ios": {

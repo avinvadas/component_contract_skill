@@ -13,6 +13,16 @@ by a decorative icon. Unlike Link, it does not navigate.
 
 ## 2. Structure
 
+### Element
+
+Which element carries the role on each platform — checked, not just documented.
+
+| platform | element |
+|---|---|
+| web | `<button>` |
+| ios | SwiftUI `Button` |
+| android | Compose `Button` |
+
 ### Native backing
 
 Where a platform gives you this free, and where you build it by hand.
@@ -46,28 +56,55 @@ Where a platform gives you this free, and where you build it by hand.
 
 ## 3. Appearance
 
+### Interaction states
+
+| state | what changes | driven by | valid because |
+|---|---|---|---|
+| hover | background | platform | archetype `button` |
+| focus-visible | nothing — the focus indicator is system policy (POL-02), drawn the same for every control | platform | archetype `button` |
+| pressed | background | platform | archetype `button` |
+| disabled | background | prop | archetype `button` |
+
 ### Tokenised properties
 
-| when | property | token | status |
-|---|---|---|---|
-| always | background | `component.button.variant.primary.background` | bound |
-| always | foreground | `component.button.variant.primary.text` | bound |
-| always | border-color | `component.button.variant.primary.border` | bound |
-| always | border-width | — | **absent from tree** |
-| always | radius | `component.button.radius` | bound |
-| always | padding-inline | — | **ambiguous** |
-| when:hover | background | `component.button.variant.primary.background-hover` | bound |
-| when:disabled | background | — | **state unexpressed** |
-| always | elevation | — | n/a — a Button sits in the content plane |
+| property | state | variant | token | status |
+|---|---|---|---|---|
+| background | rest | variant=primary | `component.button.variant.primary.background` | bound |
+| background | rest | variant=secondary | `component.button.variant.secondary.background` | bound |
+| background | rest | variant=ghost | `component.button.variant.ghost.background` | bound |
+| foreground | rest | variant=primary | `component.button.variant.primary.text` | bound |
+| foreground | rest | variant=secondary | `component.button.variant.secondary.text` | bound |
+| foreground | rest | variant=ghost | `component.button.variant.ghost.text` | bound |
+| border-color | rest | variant=primary | `component.button.variant.primary.border` | bound |
+| border-color | rest | variant=secondary | `component.button.variant.secondary.border` | bound |
+| border-color | rest | variant=ghost | `component.button.variant.ghost.border` | bound |
+| border-width | rest | — | — | **absent from tree** |
+| radius | rest | — | `component.button.radius` | bound |
+| padding-inline | rest | — | — | **ambiguous** |
+| background | hover | variant=primary | `component.button.variant.primary.background-hover` | bound |
+| background | hover | variant=secondary | `component.button.variant.secondary.background-hover` | bound |
+| background | hover | variant=ghost | `component.button.variant.ghost.background-hover` | bound |
+| background | pressed | variant=primary | — | **state unexpressed** |
+| background | pressed | variant=secondary | — | **state unexpressed** |
+| background | pressed | variant=ghost | — | **state unexpressed** |
+| background | disabled | variant=primary | — | **state unexpressed** |
+| background | disabled | variant=secondary | — | **state unexpressed** |
+| background | disabled | variant=ghost | — | **state unexpressed** |
+| elevation | rest | — | — | n/a — a Button sits in the content plane |
 
 ### Token gaps
 
-3 properties could not resolve. These are fixed in the token tree, not in this contract — leave the cells above unbound until the tree can express them.
+8 properties could not resolve. These are fixed in the token tree, not in this contract — leave the cells above unbound until the tree can express them.
 
 | property | what is wrong | what to do |
 |---|---|---|
 | border-width | no token anywhere expresses this property | add `semantic.border-width.default` |
 | padding-inline | 3 candidates; scope and dimension did not narrow it | pin one: `component.button.size.sm.padding-inline`, `component.button.size.md.padding-inline`, `component.button.size.lg.padding-inline` |
+| background@pressed | `component.button.variant.primary.background` exists but carries no `pressed` state | add a `pressed` variant of that token |
+| background@pressed | `component.button.variant.primary.background` exists but carries no `pressed` state | add a `pressed` variant of that token |
+| background@pressed | `component.button.variant.primary.background` exists but carries no `pressed` state | add a `pressed` variant of that token |
+| background@disabled | `component.button.variant.primary.background` exists but carries no `disabled` state | add a `disabled` variant of that token |
+| background@disabled | `component.button.variant.primary.background` exists but carries no `disabled` state | add a `disabled` variant of that token |
 | background@disabled | `component.button.variant.primary.background` exists but carries no `disabled` state | add a `disabled` variant of that token |
 
 ### Requirements
@@ -133,4 +170,4 @@ Reviewable as an aspect: everything governing how the component is exposed, name
 
 ---
 
-17 requirements — 4 local, 12 inherited, 1 policy · 2 zones · 9 token slots — 5 bound, 3 gaps, 1 n/a · 5 props
+17 requirements — 4 local, 12 inherited, 1 policy · 2 zones · 22 token cases — 13 bound, 8 gaps, 1 n/a · 5 props

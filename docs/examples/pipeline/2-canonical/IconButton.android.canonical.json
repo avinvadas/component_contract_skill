@@ -6,6 +6,21 @@
   "role-archetype": "button",
   "requirements": [
     {
+      "id": "STR-04",
+      "statement": "The element carrying the role is Button.",
+      "observe": "element",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "one_of": [
+          "Button"
+        ]
+      },
+      "needs": [
+        "identity"
+      ]
+    },
+    {
       "id": "BTN-01",
       "statement": "The control is exposed to assistive technology as a button.",
       "observe": "role",
@@ -254,9 +269,13 @@
     },
     {
       "id": "APP-01",
+      "property": "background",
       "observe": "token",
       "kind": "state",
       "scenario": {
+        "state": {
+          "hover": false
+        },
         "props": {
           "disabled": false
         }
@@ -274,7 +293,29 @@
       }
     },
     {
+      "id": "APP-07",
+      "property": "background",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "hover": true
+        },
+        "props": {
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "background@hover resolves through `semantic.color.action.primary-hover`.",
+      "expect": {
+        "equals": "semantic.color.action.primary-hover"
+      }
+    },
+    {
       "id": "APP-06",
+      "property": "background",
       "observe": "token",
       "kind": "state",
       "scenario": {

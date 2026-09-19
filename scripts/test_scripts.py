@@ -106,7 +106,9 @@ def slots_of(repo):
     with tempfile.TemporaryDirectory() as out:
         r = run(HERE / "resolve.py", repo / "contracts/Button.md", "--out", out)
         doc = json.loads((pathlib.Path(out) / "Button.web.canonical.json").read_text())
-    reqs = {x["id"]: x for x in doc["requirements"] if x["id"].startswith("APP-")}
+    # Slots expand per variant now; these tests are about the default variant's resolution.
+    reqs = {x["id"].replace("[variant=primary]", ""): x for x in doc["requirements"]
+            if x["id"].startswith("APP-") and "[" not in x["id"].replace("[variant=primary]", "")}
     return r, reqs
 
 
@@ -254,6 +256,7 @@ A test component.
 
 ## 2. Structure
 
+%s
 ## 3. Composition
 
 ## 4. Appearance
@@ -268,7 +271,25 @@ A test component.
 ## 5. Behavior
 
 ## 6. Accessibility
-""" % (name, archetype, name, extra)
+""" % (name, archetype, name, ACC_ELEMENT if archetype == "button" else "",
+       extra + (ACC_STATES if archetype == "button" else ""))
+
+ACC_ELEMENT = """| platform | element | id |
+|---|---|---|
+| web | `<button>` | id-STR-01 |
+| ios | SwiftUI `Button` | id-STR-02 |
+"""
+
+ACC_STATES = """
+### 4.2 Interaction states
+
+| state | what changes | driven by |
+|---|---|---|
+| hover | nothing — out of this test's scope | platform |
+| focus-visible | nothing — out of this test's scope | platform |
+| pressed | nothing — out of this test's scope | platform |
+| disabled | nothing — out of this test's scope | prop |
+"""
 
 
 def acc_resolve(repo, name):
@@ -457,6 +478,165 @@ def token_slots_are_non_overlapping_cases_with_web_names_and_stated_transforms()
     assert default == {"props": {"disabled": False}, "state": {"hover": False}}, default
     assert resolve.slot_scenario(slots[1], slots)["props"] == {"disabled": False}, "hover applies only while enabled"
     assert resolve.slot_scenario(slots[2], slots) == {"props": {"disabled": True}}
+
+
+# ---- interaction states, variants and the element ------------------------------------
+STATES_TREE = {"core": {"blue": {"$type": "color", "$value": "#0f62fe"}},
+               "component": {"button": {
+                   "primary":        {"$type": "color", "$value": "{core.blue}"},
+                   "primary-hover":  {"$type": "color", "$value": "{core.blue}"},
+                   "primary-active": {"$type": "color", "$value": "{core.blue}"},
+                   "ghost":          {"$type": "color", "$value": "{core.blue}"},
+                   "ghost-hover":    {"$type": "color", "$value": "{core.blue}"},
+                   "ghost-active":   {"$type": "color", "$value": "{core.blue}"},
+                   "disabled":       {"$type": "color", "$value": "{core.blue}"}}}}
+STATES_CONTEXT = """\
+tokens:
+  source: tokens.json
+  tiers:
+    primitive: core
+    component: component
+  prop_axes:
+    kind: variant
+  readings:
+""" + "".join("""    component.button.%s:
+      property: background
+%s%s""" % (n, "      variant: %s\n" % n.split("-")[0] if n != "disabled" else "",
+           "      state: %s\n" % n.split("-")[1] if "-" in n else
+           ("      state: disabled\n" if n == "disabled" else ""))
+    for n in ("primary", "primary-hover", "primary-active", "ghost", "ghost-hover", "ghost-active", "disabled"))
+
+STATES_CONTRACT = """---
+component: Button
+version: 1.0
+role-archetype: button
+platforms: [web]
+---
+
+# Component Contract: Button
+
+## 1. Intent
+
+A test.
+
+## 2. Structure
+
+%(element)s
+## 3. Composition
+
+## 4. Appearance
+
+### 4.1 Token slots
+
+| when | property | token | id |
+|---|---|---|---|
+%(slots)s
+%(states)s
+### 4.3 Visual variants
+
+| prop | type | required | default | description |
+|---|---|---|---|---|
+| `kind` | enum:primary,ghost | no | `primary` | emphasis |
+
+## 5. Behavior
+
+### 5.3 Behavioral props
+
+| prop | type | required | default | description |
+|---|---|---|---|---|
+| `disabled` | boolean | no | `false` | blocks activation |
+
+## 6. Accessibility
+"""
+ELEMENT_OK = "| platform | element | id |\n|---|---|---|\n| web | `<button>` | id-STR-01 |\n"
+SLOTS_OK = ("| always | background | — | id-APP-01 |\n| when:hover | background | — | id-APP-02 |\n"
+            "| when:pressed | background | — | id-APP-03 |\n| when:disabled | background | — | id-APP-04 |\n")
+STATES_OK = ("### 4.2 Interaction states\n\n| state | what changes | driven by |\n|---|---|---|\n"
+             "| hover | background | platform |\n| focus-visible | nothing — policy POL-02 | platform |\n"
+             "| pressed | background | platform |\n| disabled | background | prop |\n")
+
+
+def states_repo(element=ELEMENT_OK, slots=SLOTS_OK, states=STATES_OK):
+    repo = pathlib.Path(tempfile.mkdtemp())
+    (repo / ".claude").mkdir()
+    (repo / "tokens.json").write_text(json.dumps(STATES_TREE))
+    (repo / ".claude/design-system-context.yml").write_text(STATES_CONTEXT)
+    (repo / "Button.md").write_text(STATES_CONTRACT % {"element": element, "slots": slots, "states": states})
+    report = repo / "report.json"
+    with tempfile.TemporaryDirectory() as out:
+        r = run(HERE / "resolve.py", repo / "Button.md", "--out", out, "--report", report)
+        doc = json.loads((pathlib.Path(out) / "Button.web.canonical.json").read_text()) \
+            if (pathlib.Path(out) / "Button.web.canonical.json").is_file() else None
+    assert report.is_file(), "resolve.py crashed:\n" + r.stderr[-1200:]
+    return r, json.loads(report.read_text()), doc
+
+
+@test
+def every_valid_interaction_state_is_answered():
+    """Guards: a contract that styles hover and disabled and says nothing about pressed or the
+    focus indicator — which is how the first lab Buttons were written, and nothing noticed."""
+    r, rep, doc = states_repo()
+    assert not rep["lint"], rep["lint"]
+    assert rep["interaction_states"]["valid"] == ["hover", "focus-visible", "pressed", "disabled"]
+
+    _, rep, _ = states_repo(states="")
+    for st in ("hover", "focus-visible", "pressed", "disabled"):
+        assert any("interaction state %r" % st in l and "not addressed" in l for l in rep["lint"]), \
+            (st, rep["lint"])
+
+    no_reason = STATES_OK.replace("nothing — policy POL-02", "nothing")
+    _, rep, _ = states_repo(states=no_reason)
+    assert any("needs a reason" in l for l in rep["lint"]), rep["lint"]
+
+    # 4.2 and 4.1 must agree, in both directions, and a changed property needs a rest case
+    unslotted = STATES_OK.replace("| pressed | background |", "| pressed | background, foreground |")
+    _, rep, _ = states_repo(states=unslotted)
+    assert any("no slot for foreground@pressed" in l for l in rep["lint"]), rep["lint"]
+    assert any("no rest (`always`) slot for foreground" in l for l in rep["lint"]), rep["lint"]
+    unlisted = STATES_OK.replace("| pressed | background |", "| pressed | nothing — flat |")
+    _, rep, _ = states_repo(states=unlisted)
+    assert any("does not list background as changing in pressed" in l for l in rep["lint"]), rep["lint"]
+
+
+@test
+def a_slot_applies_to_every_variant_and_a_specific_row_overrides():
+    """Guards: token slots silently describing only the default variant."""
+    _, rep, doc = states_repo()
+    by = {x["id"]: x for x in doc["requirements"] if x["id"].startswith("APP-")}
+    assert by["APP-02[kind=primary]"]["expect"] == {"equals": "component.button.primary-hover"}
+    assert by["APP-02[kind=ghost]"]["expect"] == {"equals": "component.button.ghost-hover"}
+    assert by["APP-02[kind=ghost]"]["scenario"]["props"] == {"kind": "ghost", "disabled": False}
+    # `pressed` found under the tree's own spelling, `active`
+    assert by["APP-03[kind=ghost]"]["expect"] == {"equals": "component.button.ghost-active"}
+    # one token for every variant stays eligible for each
+    assert by["APP-04[kind=ghost]"]["expect"] == {"equals": "component.button.disabled"}
+
+    specific = SLOTS_OK + "| when:hover,kind=ghost | background | n/a — ghost has no hover fill | id-APP-05 |\n"
+    _, rep, doc = states_repo(slots=specific)
+    ids = {x["id"] for x in doc["requirements"]}
+    assert "APP-05" in ids and "APP-02[kind=ghost]" not in ids and "APP-02[kind=primary]" in ids, ids
+
+    only_ghost = SLOTS_OK.replace("| when:hover | background |", "| when:hover,kind=ghost | background |")
+    _, rep, _ = states_repo(slots=only_ghost)
+    assert any("background@hover is not addressed for kind=primary" in l for l in rep["lint"]), rep["lint"]
+    _, rep, _ = states_repo(slots=SLOTS_OK + "| when:hover,kind=tertiary | background | — | id-APP-09 |\n")
+    assert any("'tertiary' is not a value of `kind`" in l for l in rep["lint"]), rep["lint"]
+
+
+@test
+def the_element_carrying_the_role_is_structure():
+    """Guards: `<button>` living only in an archetype table the contract never showed, checked
+    as a side-note of an accessibility row."""
+    _, rep, doc = states_repo()
+    first = doc["requirements"][0]
+    assert first["id"] == "STR-01" and first["observe"] == "element", first
+    assert first["expect"] == {"one_of": ["button"]} and first["needs"] == ["identity"], first
+    _, rep, _ = states_repo(element="")
+    assert any("no element row for web" in l for l in rep["lint"]), rep["lint"]
+    _, rep, _ = states_repo(element=ELEMENT_OK.replace("`<button>`", "`<div>`"))
+    assert any("not a native backing" in l for l in rep["lint"]), rep["lint"]
+    _, rep, _ = states_repo(element=ELEMENT_OK.replace("`<button>`", "custom — `<div>` with the button pattern"))
+    assert not rep["lint"], rep["lint"]
 
 
 # ---- detection ----------------------------------------------------------------------

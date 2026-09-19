@@ -13,7 +13,8 @@ and the canonical documents can never be built from different inputs.
 import argparse, pathlib, re, sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from resolve import (parse_frontmatter, requirement_rows,  # noqa: E402
-                     parse_tables, resolve_slots, load_sources)
+                     parse_tables, resolve_slots, load_sources, check_states,
+                     slot_rows, state_rows, enum_props, ENUM_PROPS, ELEMENT_HEADERS)
 import machine as sm  # noqa: E402
 
 _ap = argparse.ArgumentParser(description="Generate the resolved view of a contract.")
@@ -40,7 +41,9 @@ for src, label in ((arch_body, "archetype `%s`" % fm["role-archetype"]),
 # A reader does not need a five-way taxonomy — they need to know whether a property is
 # bound, and if not, who fixes it. So the view renders two things: a status per row, and
 # a gap table addressed to whoever owns the token tree.
+ENUM_PROPS.update(enum_props(body))
 SLOTS = resolve_slots(body, fm, S["tree"])
+STATES = check_states(body, fm, arch_fm, slot_rows(body))
 
 STATUS_LABEL = {
     "bound":            "bound",
@@ -61,9 +64,33 @@ def token_table():
         status = STATUS_LABEL.get(s_["status"], s_["status"])
         if s_["status"] == "not-applicable":
             status = "n/a — " + s_["detail"]
-        body_rows.append("| %s | %s | %s | %s |" % (s_.get("when", "always"),
-                                                    s_["property"], tok, status))
-    return md_table(["when", "property", "token", "status"], body_rows)
+        variant = ", ".join("%s=%s" % kv for kv in (s_.get("variant") or {}).items()) or "—"
+        body_rows.append("| %s | %s | %s | %s | %s |" % (s_["property"], s_["state"] or "rest",
+                                                         variant, tok, status))
+    # One row per case the canonical document checks: the contract states a slot once, and
+    # the resolver expands it per variant — so this table is where a reader sees every case.
+    return md_table(["property", "state", "variant", "token", "status"], body_rows)
+
+def state_table():
+    """Every interaction state valid for this component, and the contract's answer to it."""
+    if not STATES["valid"]:
+        return "*None — the `%s` archetype has no interaction states.*" % fm["role-archetype"] + NL
+    own = {r["state"].strip("`"): r for r in state_rows(body)}
+    added = set(fm.get("interaction-states") or [])
+    rows_ = []
+    for st in STATES["valid"]:
+        r = own.get(st)
+        answer = r["what changes"] if r else "**not addressed**"
+        rows_.append("| %s | %s | %s | %s |" % (st, answer, (r or {}).get("driven by", "—"),
+                     "this component" if st in added else "archetype `%s`" % fm["role-archetype"]))
+    return md_table(["state", "what changes", "driven by", "valid because"], rows_)
+
+def element_table():
+    for headers, rws in parse_tables(body):
+        if ELEMENT_HEADERS <= set(headers) and "statement" not in headers:
+            return md_table(["platform", "element"],
+                            ["| %s | %s |" % (r["platform"], r["element"]) for r in rws])
+    return "*Not stated.*" + NL
 
 def gap_table():
     gaps = [s_ for s_ in SLOTS if s_["status"] not in ("bound", "not-applicable")]
@@ -151,6 +178,7 @@ def native_backing():
 zones, tokens, props, events, diverge = [], [], [], [], []
 for headers, rws in parse_tables(body):
     if "zone" in headers:        zones = rws
+    elif "platform" in headers and "element" in headers: continue
     elif "token" in headers:     tokens = rws
     elif "prop" in headers:      props += rws
     elif "direction" in headers: events = rws
@@ -193,6 +221,11 @@ P.append(intent)
 P.append("")
 P.append("## 2. Structure")
 P.append("")
+P.append("### Element")
+P.append("")
+P.append("Which element carries the role on each platform — checked, not just documented.")
+P.append("")
+P.append(element_table())
 P.append("### Native backing")
 P.append("")
 P.append("Where a platform gives you this free, and where you build it by hand.")
@@ -209,6 +242,9 @@ P.append("")
 P.append(zone_table(False))
 P.append("## 3. Appearance")
 P.append("")
+P.append("### Interaction states")
+P.append("")
+P.append(state_table())
 P.append("### Tokenised properties")
 P.append("")
 P.append(token_table())
@@ -255,7 +291,7 @@ P.append("")
 n_bound = sum(1 for s_ in SLOTS if s_["status"] == "bound")
 n_na    = sum(1 for s_ in SLOTS if s_["status"] == "not-applicable")
 n_gap   = len(SLOTS) - n_bound - n_na
-slot_summary = "%d token slots — %d bound, %d gap%s, %d n/a" % (
+slot_summary = "%d token cases — %d bound, %d gap%s, %d n/a" % (
     len(SLOTS), n_bound, n_gap, "" if n_gap == 1 else "s", n_na)
 P.append("%d requirements — %d local, %d inherited, %d policy · %d zones · %s · %d props"
          % (len(rows), n_local, n_arch, n_pol, len(zones), slot_summary, len(props)))

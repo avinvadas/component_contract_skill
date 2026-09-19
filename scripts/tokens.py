@@ -39,11 +39,12 @@ PROPERTIES = {
     "font-size":      {"type": "dimension", "syn": ["font-size", "text-size"]},
     "elevation":      {"type": "shadow",    "syn": ["elevation", "shadow"]},
     "opacity":        {"type": "number",    "syn": ["opacity", "alpha"]},
+    "focus-ring":     {"type": "color",     "syn": ["focus-ring", "ring"]},
     "duration":       {"type": "duration",  "syn": ["duration", "enter-duration", "exit-duration"]},
 }
 
 # State suffixes fused into a leaf. `background-hover` is one segment carrying two facts.
-STATES = ["hover", "pressed", "active", "focus", "disabled", "selected", "checked", "error"]
+STATES = ["hover", "pressed", "active", "focus-visible", "focus", "disabled", "selected", "checked", "error"]
 
 # Segments that introduce a dimension axis; the segment after one is that axis's value.
 AXES = ["variant", "size", "state", "mode", "tone", "emphasis", "density"]

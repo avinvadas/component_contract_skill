@@ -80,14 +80,12 @@ def observe(req, root):  # noqa: C901
     o, exp = req["observe"], req["expect"]
     if o == "role":
         got = root["attrs"].get("role") or root["tag"]
-        ok, why = got == exp.get("equals"), f"role={got!r}"
-        # `also` carries a second observation of the same requirement. Here it is the one
-        # that matters: a div patched with role=button satisfies the role check and fails
-        # identity, which is the entire reason the two are separate observations.
-        if ok and (ident := req.get("also", {}).get("identity")):
-            if root["tag"] not in ident.get("one_of", []):
-                return (False, f"role={got!r} but rendered tag is <{root['tag']}>, not {ident['one_of']}")
-        return (ok, why)
+        return (got == exp.get("equals"), f"role={got!r}")
+    if o == "element":
+        # Structure, checked apart from the role: a div patched with role=button passes the role
+        # check and fails this one, which is the entire reason the two are separate requirements.
+        want = exp.get("one_of") or [exp.get("equals")]
+        return (root["tag"] in want, f"carried by <{root['tag']}>, expected {' or '.join('<%s>' % t for t in want)}")
     if o == "name":
         n = accessible_name(root)
         if "present" in exp:  return (bool(n) == exp["present"], f"name={n!r}")

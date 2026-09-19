@@ -1,5 +1,5 @@
 {
-  "comment": "The observation types a requirement may name. Describes what a platform's accessibility layer exposes \u2014 not a view about design. `needs` is derived from this table, so bindings carry it only when a requirement needs more (via needs_also).",
+  "comment": "The observation types a requirement may name. Describes what a platform's accessibility layer exposes — not a view about design. `needs` is derived from this table, so bindings carry it only when a requirement needs more (via needs_also).",
   "format_version": "1.0",
   "observe": {
     "role": {
@@ -11,7 +11,18 @@
         "equals",
         "one_of"
       ],
-      "note": "computed, never authored \u2014 reading a role attribute checks what someone typed"
+      "note": "computed, never authored — reading a role attribute checks what someone typed"
+    },
+    "element": {
+      "means": "the platform element or control class that carries the role — `<button>` on the web",
+      "needs": [
+        "identity"
+      ],
+      "expect": [
+        "one_of",
+        "equals"
+      ],
+      "note": "stated per platform in chapter 2's element table; the structural half of what a native backing guarantees, where `role` is the exposed half"
     },
     "name": {
       "means": "the accessible name the platform computes for the element",
@@ -106,7 +117,7 @@
         "equals",
         "present"
       ],
-      "note": "which token a property REFERENCES in the applied cascade, followed through var() chains \u2014 logic, not value; the value is visual regression's job"
+      "note": "which token a property REFERENCES in the applied cascade, followed through var() chains — logic, not value; the value is visual regression's job"
     },
     "prop": {
       "means": "the component's declared API surface",

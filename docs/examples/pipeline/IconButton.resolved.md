@@ -13,6 +13,16 @@ action is conventional enough to be recognised without a label — close, back, 
 
 ## 2. Structure
 
+### Element
+
+Which element carries the role on each platform — checked, not just documented.
+
+| platform | element |
+|---|---|
+| web | `<button>` |
+| ios | SwiftUI `Button` |
+| android | Compose `Button` |
+
 ### Native backing
 
 Where a platform gives you this free, and where you build it by hand.
@@ -43,12 +53,22 @@ Where a platform gives you this free, and where you build it by hand.
 
 ## 3. Appearance
 
+### Interaction states
+
+| state | what changes | driven by | valid because |
+|---|---|---|---|
+| hover | background | platform | archetype `button` |
+| focus-visible | nothing — the focus indicator is system policy (POL-02), drawn the same for every control | platform | archetype `button` |
+| pressed | nothing — the platform's own press feedback, unstyled by the system | platform | archetype `button` |
+| disabled | background | prop | archetype `button` |
+
 ### Tokenised properties
 
-| when | property | token | status |
-|---|---|---|---|
-| always | background | — | **ambiguous** |
-| when:disabled | background | — | **state unexpressed** |
+| property | state | variant | token | status |
+|---|---|---|---|---|
+| background | rest | — | — | **ambiguous** |
+| background | hover | — | `semantic.color.action.primary-hover` | bound |
+| background | disabled | — | — | **state unexpressed** |
 
 ### Token gaps
 
@@ -121,4 +141,4 @@ Reviewable as an aspect: everything governing how the component is exposed, name
 
 ---
 
-16 requirements — 3 local, 12 inherited, 1 policy · 1 zones · 2 token slots — 0 bound, 2 gaps, 0 n/a · 4 props
+16 requirements — 3 local, 12 inherited, 1 policy · 1 zones · 3 token cases — 1 bound, 2 gaps, 0 n/a · 4 props

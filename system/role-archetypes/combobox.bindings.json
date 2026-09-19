@@ -1,5 +1,5 @@
 {
-  "comment": "iOS has no native combobox, so every entry binds against semantics an implementation must produce by hand. That is the point: not free does not mean not required. CBX-07 and CBX-08 used to expect `closed-uncommitted` and `committed` \u2014 strings no platform exposes, each packing a state and an effect together. The state now lives in the machine; each effect is its own requirement, with no trigger of its own, because `when:following:` names the transition that performs it.",
+  "comment": "iOS has no native combobox, so every entry binds against semantics an implementation must produce by hand. That is the point: not free does not mean not required. CBX-07 and CBX-08 used to expect `closed-uncommitted` and `committed` — strings no platform exposes, each packing a state and an effect together. The state now lives in the machine; each effect is its own requirement, with no trigger of its own, because `when:following:` names the transition that performs it.",
   "role-archetype": "combobox",
   "version": "1.0",
   "bindings": {
@@ -22,13 +22,6 @@
       "macos": {
         "expect": {
           "equals": "combobox"
-        },
-        "also": {
-          "identity": {
-            "one_of": [
-              "AXComboBox"
-            ]
-          }
         }
       }
     },

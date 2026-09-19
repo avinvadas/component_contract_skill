@@ -30,6 +30,17 @@ by a decorative icon. Unlike Link, it does not navigate.
 |---|---|---|---|---|
 | `fullWidth` | boolean | no | `false` | fills the container's inline size |
 
+### 2.4 Element
+
+Which element carries the role, per platform. Chapter 2's only platform-vocabulary table:
+the statement is the archetype's; this is where each platform's answer to it lives.
+
+| platform | element | id |
+|---|---|---|
+| web | `<button>` | id-STR-02 |
+| ios | SwiftUI `Button` | id-STR-03 |
+| android | Compose `Button` | id-STR-04 |
+
 ## 3. Composition
 
 ### 3.1 Zones
@@ -62,8 +73,20 @@ does not apply says so, with a reason — it is never simply left out.
 | always | radius | `component.button.radius` | id-APP-05 |
 | always | padding-inline | — | id-APP-06 |
 | when:hover | background | — | id-APP-07 |
+| when:pressed | background | — | id-APP-10 |
 | when:disabled | background | — | id-APP-08 |
 | always | elevation | n/a — a Button sits in the content plane | id-APP-09 |
+
+### 4.2 Interaction states
+
+Every state the archetype makes valid is answered — what changes, or `nothing` and why.
+
+| state | what changes | driven by |
+|---|---|---|
+| hover | background | platform |
+| focus-visible | nothing — the focus indicator is system policy (POL-02), drawn the same for every control | platform |
+| pressed | background | platform |
+| disabled | background | prop |
 
 ### 4.3 Visual variants
 

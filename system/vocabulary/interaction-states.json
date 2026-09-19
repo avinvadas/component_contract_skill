@@ -1,0 +1,51 @@
+{
+  "comment": "The interaction states a component can be in, closed. A role-archetype declares which are VALID for its role (`interaction-states:` in its frontmatter), a contract may add more, and chapter 4.2 must answer every valid one — what changes, or `nothing — <reason>`. An unanswered state is a lint finding, never a silent default: an unstyled pressed state is a decision somebody has to be able to see. `rest` is implicit — the unconditioned token slots are rest.",
+  "format_version": "1.0",
+  "states": {
+    "hover": {
+      "condition": "hover",
+      "driven_by": "platform",
+      "tree_spellings": [
+        "hover"
+      ]
+    },
+    "focus-visible": {
+      "condition": "focus-visible",
+      "driven_by": "platform",
+      "tree_spellings": [
+        "focus-visible",
+        "focus"
+      ]
+    },
+    "pressed": {
+      "condition": "pressed",
+      "driven_by": "platform",
+      "tree_spellings": [
+        "pressed",
+        "active"
+      ]
+    },
+    "disabled": {
+      "condition": "disabled",
+      "driven_by": "prop",
+      "tree_spellings": [
+        "disabled"
+      ]
+    },
+    "expanded": {
+      "condition": "expanded",
+      "driven_by": "prop",
+      "tree_spellings": [
+        "expanded",
+        "open"
+      ]
+    }
+  },
+  "lint": [
+    "a valid state with no chapter 4.2 row",
+    "a chapter 4.2 row naming a property with no chapter 4.1 slot for that state",
+    "a chapter 4.1 slot in a state chapter 4.2 does not list for that property",
+    "a property that changes in some state but has no rest (unconditioned) slot",
+    "a slot restricted to some values of a visual axis, with the remaining values unaddressed"
+  ]
+}

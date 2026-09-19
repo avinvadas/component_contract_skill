@@ -131,6 +131,18 @@ Props that affect the component's own geometry. Kept apart from visual variants 
 behavioral props, which live in chapters 4 and 5 — the separation is the point, and
 physical distance is what enforces it.
 
+### 2.4 Element
+
+| platform | element | id |
+|---|---|---|
+
+Which element carries the role, per platform — `<button>` on the web, SwiftUI `Button` on iOS.
+The one table that names platform vocabulary, because the platform is its first column: the
+archetype's statement stays neutral and each row is that platform's answer. Each row becomes an
+`element` requirement in that platform's canonical document. Required for every platform when
+the archetype is not `none`; must be one of the archetype's native backings, or say
+`custom — <reason>`.
+
 ## 3 · Composition
 
 **What it contains, and on what terms.**
@@ -166,8 +178,19 @@ here and nowhere else — not again under Appearance, Behavior, or Accessibility
 | state | what changes | driven by |
 |---|---|---|
 
+**Every interaction state valid for the component is answered** — the archetype's
+`interaction-states`, plus any the contract's frontmatter adds; the closed set is
+`system/vocabulary/interaction-states.json`. `what changes` is a list of properties, or
+`nothing — <reason>`; a valid state with no row, or `nothing` with no reason, fails the parse.
+4.1 and 4.2 agree both ways: a property listed for a state has a 4.1 slot in that state and a
+rest slot, and a 4.1 slot in a state is listed here.
+
 `driven by`: `prop` · `platform` · `both`. The distinction matters — a platform-drawn pressed
 state is not something an implementation must produce, and a prop-driven one is.
+
+A 4.1 slot without a `<prop>=<value>` condition applies to every value of the component's
+visual-variant props, and the resolver expands it into one case per value; a row naming a value
+overrides the general row for that value only. So every state × property × variant is a case.
 
 ### 4.3 Visual variants
 

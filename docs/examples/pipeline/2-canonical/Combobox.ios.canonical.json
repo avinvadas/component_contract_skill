@@ -6,6 +6,21 @@
   "role-archetype": "combobox",
   "requirements": [
     {
+      "id": "STR-02",
+      "statement": "The element carrying the role is TextField.",
+      "observe": "element",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "one_of": [
+          "TextField"
+        ]
+      },
+      "needs": [
+        "identity"
+      ]
+    },
+    {
       "id": "CBX-01",
       "statement": "The control is exposed to assistive technology as a combo box.",
       "observe": "role",

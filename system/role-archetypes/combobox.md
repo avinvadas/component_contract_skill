@@ -2,6 +2,7 @@
 role-archetype: combobox
 version: 1.0
 platforms: [web, ios, android, macos]
+interaction-states: [hover, focus-visible, disabled, expanded]
 kind: mixed
 ---
 

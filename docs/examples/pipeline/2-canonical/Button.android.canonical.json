@@ -6,6 +6,21 @@
   "role-archetype": "button",
   "requirements": [
     {
+      "id": "STR-04",
+      "statement": "The element carrying the role is Button.",
+      "observe": "element",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "one_of": [
+          "Button"
+        ]
+      },
+      "needs": [
+        "identity"
+      ]
+    },
+    {
       "id": "BTN-01",
       "statement": "The control is exposed to assistive technology as a button.",
       "observe": "role",
@@ -277,53 +292,185 @@
       ]
     },
     {
-      "id": "APP-01",
+      "id": "APP-01[variant=primary]",
+      "property": "background",
       "observe": "token",
       "kind": "state",
       "scenario": {
-        "state": {
-          "hover": false
-        },
         "props": {
+          "variant": "primary",
           "disabled": false
+        },
+        "state": {
+          "hover": false,
+          "pressed": false
         }
       },
       "needs": [
         "applied-styles"
       ],
-      "statement": "background resolves through `component.button.variant.primary.background`.",
+      "statement": "background [variant=primary] resolves through `component.button.variant.primary.background`.",
       "expect": {
         "equals": "component.button.variant.primary.background"
       }
     },
     {
-      "id": "APP-02",
+      "id": "APP-01[variant=secondary]",
+      "property": "background",
       "observe": "token",
       "kind": "state",
-      "scenario": {},
+      "scenario": {
+        "props": {
+          "variant": "secondary",
+          "disabled": false
+        },
+        "state": {
+          "hover": false,
+          "pressed": false
+        }
+      },
       "needs": [
         "applied-styles"
       ],
-      "statement": "foreground resolves through `component.button.variant.primary.text`.",
+      "statement": "background [variant=secondary] resolves through `component.button.variant.secondary.background`.",
+      "expect": {
+        "equals": "component.button.variant.secondary.background"
+      }
+    },
+    {
+      "id": "APP-01[variant=ghost]",
+      "property": "background",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "variant": "ghost",
+          "disabled": false
+        },
+        "state": {
+          "hover": false,
+          "pressed": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "background [variant=ghost] resolves through `component.button.variant.ghost.background`.",
+      "expect": {
+        "equals": "component.button.variant.ghost.background"
+      }
+    },
+    {
+      "id": "APP-02[variant=primary]",
+      "property": "foreground",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "variant": "primary"
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "foreground [variant=primary] resolves through `component.button.variant.primary.text`.",
       "expect": {
         "equals": "component.button.variant.primary.text"
       }
     },
     {
-      "id": "APP-03",
+      "id": "APP-02[variant=secondary]",
+      "property": "foreground",
       "observe": "token",
       "kind": "state",
-      "scenario": {},
+      "scenario": {
+        "props": {
+          "variant": "secondary"
+        }
+      },
       "needs": [
         "applied-styles"
       ],
-      "statement": "border-color resolves through `component.button.variant.primary.border`.",
+      "statement": "foreground [variant=secondary] resolves through `component.button.variant.secondary.text`.",
+      "expect": {
+        "equals": "component.button.variant.secondary.text"
+      }
+    },
+    {
+      "id": "APP-02[variant=ghost]",
+      "property": "foreground",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "variant": "ghost"
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "foreground [variant=ghost] resolves through `component.button.variant.ghost.text`.",
+      "expect": {
+        "equals": "component.button.variant.ghost.text"
+      }
+    },
+    {
+      "id": "APP-03[variant=primary]",
+      "property": "border-color",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "variant": "primary"
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-color [variant=primary] resolves through `component.button.variant.primary.border`.",
       "expect": {
         "equals": "component.button.variant.primary.border"
       }
     },
     {
+      "id": "APP-03[variant=secondary]",
+      "property": "border-color",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "variant": "secondary"
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-color [variant=secondary] resolves through `component.button.variant.secondary.border`.",
+      "expect": {
+        "equals": "component.button.variant.secondary.border"
+      }
+    },
+    {
+      "id": "APP-03[variant=ghost]",
+      "property": "border-color",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "variant": "ghost"
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "border-color [variant=ghost] resolves through `component.button.variant.ghost.border`.",
+      "expect": {
+        "equals": "component.button.variant.ghost.border"
+      }
+    },
+    {
       "id": "APP-04",
+      "property": "border-width",
       "observe": "token",
       "kind": "state",
       "scenario": {},
@@ -338,6 +485,7 @@
     },
     {
       "id": "APP-05",
+      "property": "radius",
       "observe": "token",
       "kind": "state",
       "scenario": {},
@@ -351,6 +499,7 @@
     },
     {
       "id": "APP-06",
+      "property": "padding-inline",
       "observe": "token",
       "kind": "state",
       "scenario": {},
@@ -368,7 +517,8 @@
       }
     },
     {
-      "id": "APP-07",
+      "id": "APP-07[variant=primary]",
+      "property": "background",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -376,30 +526,186 @@
           "hover": true
         },
         "props": {
+          "variant": "primary",
           "disabled": false
         }
       },
       "needs": [
         "applied-styles"
       ],
-      "statement": "background@hover resolves through `component.button.variant.primary.background-hover`.",
+      "statement": "background@hover [variant=primary] resolves through `component.button.variant.primary.background-hover`.",
       "expect": {
         "equals": "component.button.variant.primary.background-hover"
       }
     },
     {
-      "id": "APP-08",
+      "id": "APP-07[variant=secondary]",
+      "property": "background",
       "observe": "token",
       "kind": "state",
       "scenario": {
+        "state": {
+          "hover": true
+        },
         "props": {
-          "disabled": true
+          "variant": "secondary",
+          "disabled": false
         }
       },
       "needs": [
         "applied-styles"
       ],
-      "statement": "background@disabled resolves through a design token.",
+      "statement": "background@hover [variant=secondary] resolves through `component.button.variant.secondary.background-hover`.",
+      "expect": {
+        "equals": "component.button.variant.secondary.background-hover"
+      }
+    },
+    {
+      "id": "APP-07[variant=ghost]",
+      "property": "background",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "hover": true
+        },
+        "props": {
+          "variant": "ghost",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "background@hover [variant=ghost] resolves through `component.button.variant.ghost.background-hover`.",
+      "expect": {
+        "equals": "component.button.variant.ghost.background-hover"
+      }
+    },
+    {
+      "id": "APP-10[variant=primary]",
+      "property": "background",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "pressed": true
+        },
+        "props": {
+          "variant": "primary",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "background@pressed [variant=primary] resolves through a design token.",
+      "pending": {
+        "reason": "dimension-unmet",
+        "detail": "component.button.variant.primary.background"
+      }
+    },
+    {
+      "id": "APP-10[variant=secondary]",
+      "property": "background",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "pressed": true
+        },
+        "props": {
+          "variant": "secondary",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "background@pressed [variant=secondary] resolves through a design token.",
+      "pending": {
+        "reason": "dimension-unmet",
+        "detail": "component.button.variant.primary.background"
+      }
+    },
+    {
+      "id": "APP-10[variant=ghost]",
+      "property": "background",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "state": {
+          "pressed": true
+        },
+        "props": {
+          "variant": "ghost",
+          "disabled": false
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "background@pressed [variant=ghost] resolves through a design token.",
+      "pending": {
+        "reason": "dimension-unmet",
+        "detail": "component.button.variant.primary.background"
+      }
+    },
+    {
+      "id": "APP-08[variant=primary]",
+      "property": "background",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true,
+          "variant": "primary"
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "background@disabled [variant=primary] resolves through a design token.",
+      "pending": {
+        "reason": "dimension-unmet",
+        "detail": "component.button.variant.primary.background"
+      }
+    },
+    {
+      "id": "APP-08[variant=secondary]",
+      "property": "background",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true,
+          "variant": "secondary"
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "background@disabled [variant=secondary] resolves through a design token.",
+      "pending": {
+        "reason": "dimension-unmet",
+        "detail": "component.button.variant.primary.background"
+      }
+    },
+    {
+      "id": "APP-08[variant=ghost]",
+      "property": "background",
+      "observe": "token",
+      "kind": "state",
+      "scenario": {
+        "props": {
+          "disabled": true,
+          "variant": "ghost"
+        }
+      },
+      "needs": [
+        "applied-styles"
+      ],
+      "statement": "background@disabled [variant=ghost] resolves through a design token.",
       "pending": {
         "reason": "dimension-unmet",
         "detail": "component.button.variant.primary.background"
@@ -407,6 +713,7 @@
     },
     {
       "id": "APP-09",
+      "property": "elevation",
       "statement": "elevation is not tokenised.",
       "binds": false,
       "reason": "a Button sits in the content plane"

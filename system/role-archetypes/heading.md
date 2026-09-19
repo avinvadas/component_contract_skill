@@ -2,6 +2,7 @@
 role-archetype: heading
 version: 1.0
 platforms: [web, ios, android, macos]
+interaction-states: []
 kind: native-backed
 ---
 

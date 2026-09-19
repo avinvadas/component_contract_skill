@@ -24,6 +24,17 @@ action is conventional enough to be recognised without a label — close, back, 
 |---|---|---|---|---|
 | always | The control's inline and block sizes are equal. | layout | state | id-STR-01 |
 
+### 2.4 Element
+
+Which element carries the role, per platform. Chapter 2's only platform-vocabulary table:
+the statement is the archetype's; this is where each platform's answer to it lives.
+
+| platform | element | id |
+|---|---|---|
+| web | `<button>` | id-STR-02 |
+| ios | SwiftUI `Button` | id-STR-03 |
+| android | Compose `Button` | id-STR-04 |
+
 ## 3. Composition
 
 ### 3.1 Zones
@@ -39,7 +50,19 @@ action is conventional enough to be recognised without a label — close, back, 
 | when | property | token | id |
 |---|---|---|---|
 | always | background | — | id-APP-01 |
+| when:hover | background | — | id-APP-07 |
 | when:disabled | background | — | id-APP-06 |
+
+### 4.2 Interaction states
+
+Every state the archetype makes valid is answered — what changes, or `nothing` and why.
+
+| state | what changes | driven by |
+|---|---|---|
+| hover | background | platform |
+| focus-visible | nothing — the focus indicator is system policy (POL-02), drawn the same for every control | platform |
+| pressed | nothing — the platform's own press feedback, unstyled by the system | platform |
+| disabled | background | prop |
 
 ## 5. Behavior
 

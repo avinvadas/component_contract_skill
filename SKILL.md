@@ -475,6 +475,8 @@ The first four options feed chapter 2.3 Layout props; "Adapts to the space avail
 **Q9 — States & tokens**
 header: "Appearance"
 question: "Which extra states does it have? If your system names them differently, type the correct name in the field below. (1 question left)"
+
+These are states **beyond** the interaction states its role already makes valid — a button's hover, keyboard focus, pressed and disabled are never optional, and are answered in chapter 4.2 whatever is picked here. An answer that is an interaction state (Selected) goes into the contract's `interaction-states:`; the others (Loading, Error, Empty) are component states, carried by props.
 Multi-select:
 - "Loading"
 - "Error"
@@ -779,9 +781,9 @@ So a statement never names a tag, an ARIA attribute, a Compose `Role`, or a key.
 | Chapter | Holds | Tables |
 |---|---|---|
 | 1 Intent | one or two sentences: what it is, what need it solves | prose only |
-| 2 Structure | what the thing is and the space it occupies | 2.1 Requirements · 2.2 Adaptive layout · 2.3 Layout props |
+| 2 Structure | what the thing is and the space it occupies | 2.1 Requirements · 2.2 Adaptive layout · 2.3 Layout props · 2.4 Element |
 | 3 Composition | what it contains, and on what terms | 3.1 Zones · 3.2 Arrangement · 3.3 Delegation |
-| 4 Appearance | which properties are tokenised, and what varies | 4.1 Token slots · 4.2 Interaction states · 4.3 Visual variants |
+| 4 Appearance | which properties are tokenised, in every state and variant | 4.1 Token slots · 4.2 Interaction states · 4.3 Visual variants |
 | 5 Behavior | what it does, emits, receives, and how its state moves | 5.1 Requirements · 5.2 Events · 5.3 Behavioral props · 5.4 Machine |
 | 6 Accessibility | semantic exposure — reviewable as an aspect in its own right | requirements |
 
@@ -797,9 +799,25 @@ So a statement never names a tag, an ARIA attribute, a Compose `Role`, or a key.
 
 - **`when`** leads, so a statement never restates its own condition. `always`, or `when:<condition>` from the closed vocabulary in `system/vocabulary/conditions.json` — plus `when:<zone>_present` for any zone chapter 3 declares, and `when:following:<transition-id>` for an effect of a transition chapter 5.4 declares. Never invent a condition; the resolver lint-fails an unknown one.
 - **`statement`** is one sentence of plain language, stating the requirement positively.
-- **`observe`** is one of the eleven types in `system/vocabulary/observe.json` — it names *how the fact is obtained*, not what kind of fact it is. `needs` is derived from it, which is why bindings stay small.
+- **`observe`** is one of the twelve types in `system/vocabulary/observe.json` — it names *how the fact is obtained*, not what kind of fact it is. `needs` is derived from it, which is why bindings stay small.
 - **`kind`** is `state` or `behavior`: is this true at rest, or only after something happens?
 - **`id`** is last and carries an `id-` prefix, so the eye skips it — `id-STR-01`. Number per chapter: `STR`, `CMP`, `APP`, `BEH`, `ACC`, `MCH`. The prefix is stripped downstream.
+
+### Element (2.4)
+
+Which element carries the role, **one row per platform** — Phase 3's structure resolution, written down:
+
+```
+| platform | element | id |
+| web | `<button>` | id-STR-02 |
+| ios | SwiftUI `Button` | id-STR-03 |
+```
+
+This is the one table in the contract that names platform vocabulary, and it is allowed to because a platform is its first column: the archetype's statement (*exposed as a button*) stays neutral, and this is each platform's answer to it. It is checked, not only documented — each row becomes an `element` requirement in that platform's canonical document, observed on the element that carries the role (the native `<button>` inside a custom element's shadow root, say). Names go in backticks.
+
+- A row per platform in the frontmatter, whenever the archetype is not `none` — a missing row fails the parse.
+- The element must be one of the archetype's **Native backing** for that platform. A deliberate departure is written `custom — <what carries the role, and why>`; the archetype's requirements still bind, now with nothing provided free.
+- Never a fixed heading level — a heading's element is chosen by the page's outline, so name the range, not a level.
 
 ### Token slots (4.1)
 
@@ -814,6 +832,43 @@ Declare **which properties are tokenised**, not which token fills them:
 `—` means *resolve it from the tree* — Phase 6 does that against the design system's own naming, and reports one of six outcomes per slot. Write an explicit token path only to pin one deliberately; **a pinned name that is not in the tree fails the parse**, which is how an invented token name is kept out of a design system. A property that does not apply says so with a reason; it is never simply left out.
 
 Declare a slot for every property in the design system's declared property set that this component actually has. Never invent a token name for a value you could not find — that rule is unchanged and now enforced.
+
+**A slot covers every variant unless it says otherwise.** `when:hover | background | —` is one row, and Phase 6 expands it into one case per value of each visual-variant prop in 4.3 — `APP-02[kind=primary]`, `APP-02[kind=ghost]`, … — each resolved against that variant's tokens and checked separately. Write the row once; the resolver does the multiplying, so no variant is silently left to the default. Where one variant differs, add a row for that value only and it overrides the general row for it alone:
+
+```
+| when:hover | background | — | id-APP-02 |
+| when:hover,kind=ghost | background | n/a — a ghost button has no hover fill | id-APP-05 |
+```
+
+`<prop>=<value>` is checked against 4.3: a value that prop does not have fails the parse. A value no row covers — possible only when every row for a property and state names values — also fails, naming the uncovered values. Dimensions expand along a `size` axis instead, never along emphasis. `n/a` is one case for every value at once.
+
+**`transform`** — an optional column. When a state is expressed as a token at a stated transform rather than its own token (shadcn's hover is `primary` at 80% alpha), write `alpha 80%` there. It is compared exactly; an unstated transform in the implementation is a mismatch.
+
+### Interaction states (4.2) — every valid state is answered
+
+The role-archetype names the interaction states **valid for its role** — `interaction-states:` in its frontmatter; a button's are `hover`, `focus-visible`, `pressed`, `disabled`. The closed set, and how each state is spelled in token trees (`pressed` is `active` in Carbon), is `system/vocabulary/interaction-states.json`. Chapter 4.2 answers **every one** of them:
+
+```
+| state | what changes | driven by |
+| hover | background | platform |
+| focus-visible | focus-ring, border-color | platform |
+| pressed | background | platform |
+| disabled | background, foreground | prop |
+```
+
+- **`what changes`** is a list of properties from the declared property set — or `nothing — <reason>`. `nothing` is a real answer (*the focus indicator is system policy*, *the platform's own press feedback*), and it must carry its reason; bare `nothing` fails the parse. What the answer may never be is silence: a valid state with no row fails the parse, naming the state.
+- **4.1 and 4.2 must agree, both ways.** Each property 4.2 lists for a state needs a 4.1 slot in that state, and a rest (`always`) slot; a 4.1 slot in a state 4.2 does not list it for fails too. Together with per-variant expansion, that makes every state × property × variant a case the canonical document states — and a case the tree cannot express yet is a named token gap, never a quiet omission.
+- **`driven by`** — `platform` (the platform produces it: hover, pressed, focus-visible), `prop` (the component is told: disabled, expanded), or `both`.
+- The contract may **add** states its role does not (a selectable Chip's `selected`) with `interaction-states: [selected]` in its own frontmatter. It can never drop one the archetype makes valid.
+
+**Where the answers come from.** The token tree first: Phase 2 has already read which states this component's tokens carry, and a state with tokens is a state that changes those properties. For each valid state the tree says nothing about, ask — one question, listing only those states:
+
+```
+header: "States"
+question: "Your tokens say nothing about how [Component] looks when [pressed / focused by keyboard]. What changes in each — or is it deliberately unchanged?"
+```
+
+Record each answer as it was given, with its reason when it is `nothing`. Never fill a state in from convention.
 
 ### State machine (5.4)
 
@@ -875,6 +930,11 @@ last_updated: [YYYY-MM-DD]
 | prop | type | required | default | description |
 |---|---|---|---|---|
 
+### 2.4 Element
+
+| platform | element | id |
+|---|---|---|
+
 ## 3. Composition
 
 ### 3.1 Zones
@@ -888,6 +948,11 @@ last_updated: [YYYY-MM-DD]
 
 | when | property | token | id |
 |---|---|---|---|
+
+### 4.2 Interaction states
+
+| state | what changes | driven by |
+|---|---|---|
 
 ### 4.3 Visual variants
 
@@ -912,7 +977,7 @@ last_updated: [YYYY-MM-DD]
 |---|---|---|---|---|
 ```
 
-Include 2.2, 3.2, 3.3, 4.2 and 5.1/5.4 when the component has something to put in them; keep the six chapter headings regardless.
+Include 2.2, 3.2, 3.3 and 5.1/5.4 when the component has something to put in them; keep the six chapter headings regardless. **2.4 and 4.2 are never optional** when the archetype is not `none` and has interaction states: they are where every platform's element and every valid state are answered, and Phase 6 fails the parse without them.
 
 ### Bindings template
 

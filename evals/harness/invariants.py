@@ -168,7 +168,8 @@ def inv_platform_neutral_statement(text):
         m = PLATFORM_VOCAB.search(st)
         if m:
             v.append(Violation("platform-neutral statement",
-                               "%s names %r — that belongs in the bindings file"
+                               "%s names %r — a platform's element belongs in chapter 2's element "
+                               "table, anything else platform-specific in the bindings file"
                                % (row.get("id", "?"), m.group(0))))
     return v
 

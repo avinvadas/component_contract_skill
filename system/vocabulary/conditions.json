@@ -1,5 +1,5 @@
 {
-  "comment": "What a `required:` clause may name, and what each resolves to as a scenario PREDICATE \u2014 a class of instances, never a reference to one. This file is the single source: resolvers load it rather than restating it. `<zone>_present` is generated per zone the contract declares.",
+  "comment": "What a `required:` clause may name, and what each resolves to as a scenario PREDICATE — a class of instances, never a reference to one. This file is the single source: resolvers load it rather than restating it. `<zone>_present` is generated per zone the contract declares.",
   "format_version": "1.0",
   "conditions": {
     "disabled": {
@@ -17,7 +17,7 @@
         }
       },
       "requires_prop": "disabled",
-      "note": "the complement of `disabled`. A requirement that holds only while the control can be used says so \u2014 an `always` row beside a `when:disabled` row that contradicts it is two claims that cannot both hold for a disabled instance"
+      "note": "the complement of `disabled`. A requirement that holds only while the control can be used says so — an `always` row beside a `when:disabled` row that contradicts it is two claims that cannot both hold for a disabled instance"
     },
     "hardware_keyboard": {
       "scenario": {
@@ -93,6 +93,24 @@
       },
       "verifier_must": "move focus to the element",
       "note": "an appearance-bearing interaction state; distinct from `focus` as an observe type"
+    },
+    "pressed": {
+      "scenario": {
+        "state": {
+          "pressed": true
+        }
+      },
+      "verifier_must": "press and hold the element with the primary pointer",
+      "note": "an appearance-bearing interaction state. Token trees spell it `pressed` or `active`; interaction-states.json lists the spellings"
+    },
+    "focus-visible": {
+      "scenario": {
+        "state": {
+          "focus-visible": true
+        }
+      },
+      "verifier_must": "move focus to the element by keyboard, so the platform shows its focus indicator",
+      "note": "the state in which the focus indicator is drawn — distinct from `focused`, which a pointer press can also produce without an indicator"
     }
   },
   "generated": {
@@ -113,11 +131,21 @@
       "requires_transition": "<transition>",
       "verifier_must": "establish the transition's `from` state, then perform its trigger",
       "note": "an effect of a transition, stated once; the trigger lives in the machine binding"
+    },
+    "<prop>=<value>": {
+      "scenario": {
+        "props": {
+          "<prop>": "<value>"
+        }
+      },
+      "requires_prop": "<prop>, an enum prop in chapter 4.3 or 2.3, with <value> among its values",
+      "note": "one value of a visual axis — `kind=secondary`. A token slot without one applies to every value of the axis, and the resolver expands it per value"
     }
   },
   "lint": [
     "a condition naming `requires_prop` fails if no chapter declares that prop",
-    "a `<zone>_present` condition fails if \u00a73.1 declares no such zone",
-    "a `following:<transition>` condition fails if no machine declares that transition id"
+    "a `<zone>_present` condition fails if §3.1 declares no such zone",
+    "a `following:<transition>` condition fails if no machine declares that transition id",
+    "a `<prop>=<value>` condition fails if no enum prop of that name declares that value"
   ]
 }

@@ -7,13 +7,6 @@
       "web": {
         "expect": {
           "equals": "link"
-        },
-        "also": {
-          "identity": {
-            "one_of": [
-              "a"
-            ]
-          }
         }
       },
       "ios": {

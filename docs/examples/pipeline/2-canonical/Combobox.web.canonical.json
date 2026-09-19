@@ -6,6 +6,22 @@
   "role-archetype": "combobox",
   "requirements": [
     {
+      "id": "STR-01",
+      "statement": "The element carrying the role is <input> or <datalist>.",
+      "observe": "element",
+      "kind": "state",
+      "scenario": {},
+      "expect": {
+        "one_of": [
+          "input",
+          "datalist"
+        ]
+      },
+      "needs": [
+        "identity"
+      ]
+    },
+    {
       "id": "CBX-01",
       "statement": "The control is exposed to assistive technology as a combo box.",
       "observe": "role",

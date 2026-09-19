@@ -13,6 +13,16 @@ set is long enough to need searching but short enough to show.
 
 ## 2. Structure
 
+### Element
+
+Which element carries the role on each platform — checked, not just documented.
+
+| platform | element |
+|---|---|
+| web | custom — an `<input>` carrying the combobox pattern; `<datalist>` cannot be styled |
+| ios | custom — a `TextField` composed with a list; there is no native combobox |
+| android | `ExposedDropdownMenuBox` |
+
 ### Native backing
 
 Where a platform gives you this free, and where you build it by hand.
@@ -42,6 +52,15 @@ Where a platform gives you this free, and where you build it by hand.
 *None.*
 
 ## 3. Appearance
+
+### Interaction states
+
+| state | what changes | driven by | valid because |
+|---|---|---|---|
+| hover | nothing — appearance is out of this fixture's scope | platform | archetype `combobox` |
+| focus-visible | nothing — the focus indicator is system policy (POL-02), drawn the same for every control | platform | archetype `combobox` |
+| disabled | nothing — appearance is out of this fixture's scope | prop | archetype `combobox` |
+| expanded | nothing — the list zone appearing is the change, and it is Listbox's contract | prop | archetype `combobox` |
 
 ### Tokenised properties
 
@@ -112,4 +131,4 @@ Reviewable as an aspect: everything governing how the component is exposed, name
 
 ---
 
-10 requirements — 0 local, 9 inherited, 1 policy · 2 zones · 0 token slots — 0 bound, 0 gaps, 0 n/a · 3 props
+10 requirements — 0 local, 9 inherited, 1 policy · 2 zones · 0 token cases — 0 bound, 0 gaps, 0 n/a · 3 props

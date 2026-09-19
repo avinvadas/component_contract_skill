@@ -7,14 +7,6 @@
       "web": {
         "expect": {
           "equals": "button"
-        },
-        "also": {
-          "identity": {
-            "one_of": [
-              "button",
-              "input"
-            ]
-          }
         }
       },
       "ios": {

@@ -17,7 +17,18 @@ set is long enough to need searching but short enough to show.
 
 ## 2. Structure
 
-*Inherited in full from `role-archetype: combobox`. Nothing component-specific.*
+*Requirements inherited in full from `role-archetype: combobox`.*
+
+### 2.4 Element
+
+Which element carries the role, per platform. Chapter 2's only platform-vocabulary table:
+the statement is the archetype's; this is where each platform's answer to it lives.
+
+| platform | element | id |
+|---|---|---|
+| web | custom — an `<input>` carrying the combobox pattern; `<datalist>` cannot be styled | id-STR-01 |
+| ios | custom — a `TextField` composed with a list; there is no native combobox | id-STR-02 |
+| android | `ExposedDropdownMenuBox` | id-STR-03 |
 
 ## 3. Composition
 
@@ -30,7 +41,18 @@ set is long enough to need searching but short enough to show.
 
 ## 4. Appearance
 
-*No component-specific requirements.*
+No token slots: this fixture exercises the machine, not appearance.
+
+### 4.2 Interaction states
+
+Every state the archetype makes valid is answered — what changes, or `nothing` and why.
+
+| state | what changes | driven by |
+|---|---|---|
+| hover | nothing — appearance is out of this fixture's scope | platform |
+| focus-visible | nothing — the focus indicator is system policy (POL-02), drawn the same for every control | platform |
+| disabled | nothing — appearance is out of this fixture's scope | prop |
+| expanded | nothing — the list zone appearing is the change, and it is Listbox's contract | prop |
 
 ## 5. Behavior
 

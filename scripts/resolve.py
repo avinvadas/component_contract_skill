@@ -35,6 +35,7 @@ LIB = SKILL / "system"
 # explicit n/a. Everything else falls out of the closed observe vocabulary.
 NEEDS_BY_OBSERVE = {
     "role":         ["a11y-tree"],
+    "element":      ["identity"],
     "name":         ["a11y-tree"],
     "state":        ["a11y-tree"],
     "containment":  ["a11y-tree"],
@@ -57,6 +58,14 @@ ZONE_PRESENT = re.compile(r"^(\w+)_present$")
 # Not `after:`, which the spec already uses for a zone's position; one token, one meaning.
 FOLLOWING = re.compile(r"^following:([A-Za-z0-9][\w-]*)$")
 TRANSITION_IDS: set = set()
+# `<prop>=<value>` — one value of a visual axis, `kind=secondary`. Checked against the enum props
+# the contract declares, so a misspelt variant is a finding, not a scenario no witness matches.
+PROP_VALUE = re.compile(r"^([A-Za-z][\w-]*)=([\w-]+)$")
+ENUM_PROPS: dict = {}
+# The interaction states a component can be in. An archetype names the valid ones; chapter 4.2
+# must answer each. Also where a state's spellings in token trees live: `pressed` is `active`
+# in Carbon, and a resolver that only looked for `pressed` would call the token absent.
+STATES = json.loads((LIB / "vocabulary/interaction-states.json").read_text())["states"]
 
 lint: list[str] = []
 
@@ -132,6 +141,14 @@ def scenario_for(required, rid):
                 scen.setdefault(bucket, {}).update(kv)
         elif (m := ZONE_PRESENT.match(cond)):
             scen.setdefault("zones", {})[m.group(1)] = "present"
+        elif (m := PROP_VALUE.match(cond)):
+            prop, val = m.groups()
+            if prop not in ENUM_PROPS:
+                lint.append(f"{rid}: `{cond}` names no enum prop — declare `{prop}` in chapter 4.3 or 2.3")
+            elif val not in ENUM_PROPS[prop]:
+                lint.append(f"{rid}: `{cond}` — {val!r} is not a value of `{prop}` "
+                            f"({', '.join(ENUM_PROPS[prop])})")
+            scen.setdefault("props", {})[prop] = val
         elif (m := FOLLOWING.match(cond)):
             if m.group(1) not in TRANSITION_IDS:
                 lint.append(f"{rid}: `following:{m.group(1)}` names no declared transition")
@@ -164,37 +181,120 @@ def slot_rows(text):
     return []
 
 AXIS_PROPS = ("variant", "size", "tone", "emphasis")
+# Which axes a property varies along. Colour, opacity and elevation vary by emphasis; dimensions
+# vary by size. A slot is expanded along its property's axes only — never size x colour.
+APPEARANCE_AXES = {"variant", "tone", "emphasis"}
 
-def default_dims(text, prop_axes=None):
-    """A variant prop's DEFAULT supplies the dimension a slot resolves against.
+def enum_props(text):
+    """{prop: [values]} for every enum prop the contract declares, from any props table."""
+    out = {}
+    for headers, rows in parse_tables(text):
+        if {"prop", "type"} <= set(headers):
+            for r in rows:
+                if r["type"].startswith("enum:"):
+                    out[r["prop"].strip("`")] = [v.strip() for v in r["type"][5:].split(",") if v.strip()]
+    return out
+
+def axis_props(text, prop_axes=None):
+    """{prop: (axis, default)} for enum props that feed a token axis.
 
     Which prop feeds which token axis is the design system's naming, not a rule: Carbon calls its
     variant prop `kind`. `tokens.prop_axes` in the context says so — `{kind: variant}` — and a
     prop literally named after an axis needs no declaration."""
     axes = {a: a for a in AXIS_PROPS}
     axes.update(prop_axes or {})
-    dims = {}
+    out = {}
     for headers, rows in parse_tables(text):
         if {"prop", "type", "default"} <= set(headers):
             for r in rows:
                 name = r["prop"].strip("`")
                 if r["type"].startswith("enum:") and name in axes:
-                    dims[axes[name]] = r["default"].strip("`")
-    return dims
+                    out[name] = (axes[name], r["default"].strip("`"))
+    return out
+
+def default_dims(text, prop_axes=None):
+    """A variant prop's DEFAULT supplies the dimension a slot resolves against."""
+    return {axis: default for axis, default in axis_props(text, prop_axes).values()}
+
+def parse_when(when):
+    """(interaction state or None, {prop: value}, [other conditions]) of a `when` cell."""
+    state, values, other = None, {}, []
+    if when.startswith("when:"):
+        for c in when[len("when:"):].split(","):
+            c = c.strip()
+            if (m := PROP_VALUE.match(c)):
+                values[m.group(1)] = m.group(2)
+            elif state is None and (c in STATES or c == "focused"):
+                state = c
+            elif c:
+                other.append(c)
+    return state, values, other
 
 def state_of(when):
-    if when.startswith("when:"):
-        first = when[len("when:"):].split(",")[0].strip()
-        if first in ("hover", "disabled", "focused", "pressed", "selected"):
-            return "focus" if first == "focused" else first
-    return None
+    return parse_when(when)[0]
+
+def tree_spellings(state):
+    if state is None:
+        return [None]
+    if state == "focused":
+        return ["focus"]
+    return STATES.get(state, {}).get("tree_spellings") or [state]
 
 def kebab(name):
     """`IconButton` -> `icon-button`: how a component's name appears as a token scope."""
     return re.sub(r"(?<=[a-z0-9])([A-Z])", r"-\1", name).lower()
 
+def _resolve_one(tree, prop, scope, dims, state):
+    """Try each spelling a token tree may use for the state; the first that binds wins."""
+    results = [tree.resolve(prop, scope, dims=dims, state=sp) for sp in tree_spellings(state)]
+    for res in results:
+        if res[1] == "bound":
+            return res
+    return next((r for r in results if r[1] != "absent-from-tree"), results[0])
+
+def expand_slots(rows, axes):
+    """Each authored slot row, expanded to one case per value of its property's visual axes.
+
+    A slot row without a `<prop>=<value>` condition applies to EVERY value of the axis — that is
+    what lets a contract say `when:hover | background | —` once instead of seven times. The
+    resolver does the multiplying, so every variant x state x property is addressed in the
+    canonical document, and a more specific row (`when:hover,kind=ghost`) overrides the general
+    one for its own value only. A value no row covers is a finding: the case was never answered.
+    """
+    out, groups = [], {}
+    for r in rows:
+        state, values, _ = parse_when(r.get("when", "always"))
+        groups.setdefault((r["property"], state), []).append((r, values))
+    for (prop, state), members in groups.items():
+        kind = PROPERTIES.get(prop, {}).get("type")
+        relevant = [p for p, (axis, _) in axes.items()
+                    if (axis == "size") == (kind == "dimension")]
+        combos = [{}]
+        for p in relevant:
+            combos = [dict(c, **{p: v}) for c in combos for v in ENUM_PROPS.get(p, [])]
+        uncovered = []
+        for combo in combos:
+            fits = [(r, v) for r, v in members if all(combo.get(k) == x for k, x in v.items())]
+            if not fits:
+                uncovered.append(",".join("%s=%s" % kv for kv in combo.items()))
+                continue
+            r, v = max(fits, key=lambda rv: len(rv[1]))
+            if r["token"].strip().strip("`").lower().startswith("n/a"):
+                # "not tokenised" is true of every value at once; one case says it
+                if not any(o is r for o, _, _ in out):
+                    out.append((r, v, {}))
+                continue
+            extra = {k: x for k, x in combo.items() if k not in v}
+            out.append((r, combo, extra))
+        if uncovered:
+            ids = ", ".join(r["id"] for r, _ in members)
+            lint.append("%s: %s%s is not addressed for %s — add a row without a value condition, "
+                        "or one per value (`n/a — reason` counts as an answer)"
+                        % (ids, prop, "@" + state if state else "", "; ".join(uncovered)))
+    return out
+
 def resolve_slots(body, fm, tree):
-    """Each declared property -> a bound token, or a NAMED reason it is not bound."""
+    """Each declared property, per state and per variant -> a bound token, or a NAMED reason."""
     rows = slot_rows(body)
     if not rows:
         return []
@@ -202,20 +302,31 @@ def resolve_slots(body, fm, tree):
         lint.append("%d token slot(s) declared but no token tree — set `tokens:` in the "
                     "frontmatter or `tokens.source` in the design-system context" % len(rows))
         return []
-    scope, dims = kebab(fm["component"]), default_dims(body, (tree.facts or {}).get("prop_axes"))
-    out = []
+    ENUM_PROPS.update(enum_props(body))
+    facts = tree.facts or {}
+    axes = axis_props(body, facts.get("prop_axes"))
+    scope, defaults = kebab(fm["component"]), default_dims(body, facts.get("prop_axes"))
     for r in rows:
+        # Every authored condition is checked, including on a row that expands to no case —
+        # `kind=tertiary` where kind has no tertiary would otherwise vanish without a word.
+        scenario_for(r.get("when", "always"), r["id"])
+    out = []
+    for r, combo, extra in expand_slots(rows, axes):
         when = r.get("when", "always")
+        if extra:
+            conds = [] if when in ("always", "") else [when[len("when:"):]]
+            when = "when:" + ",".join(conds + ["%s=%s" % kv for kv in extra.items()])
+        rid = r["id"] + ("[%s]" % ",".join("%s=%s" % kv for kv in extra.items()) if extra else "")
+        dims = dict(defaults, **{axes[p][0]: v for p, v in combo.items()})
         cell = r["token"].strip().strip("`")
-        slot = {"id": r["id"], "when": when, "property": r["property"],
-                "state": state_of(when), "dims": dims,
+        slot = {"id": rid, "base_id": r["id"], "when": when, "property": r["property"],
+                "state": state_of(when), "variant": combo, "dims": dims,
                 "transform": parse_transform(r.get("transform"), r["id"])}
         if cell.lower().startswith("n/a"):
             reason = cell[3:].lstrip(" —-:").strip() or "declared not applicable"
             slot.update(token=None, status="not-applicable", detail=reason)
         elif cell in ("—", "-", ""):
-            tok, status, detail = tree.resolve(slot["property"], scope,
-                                               dims=dims, state=slot["state"])
+            tok, status, detail = _resolve_one(tree, slot["property"], scope, dims, slot["state"])
             slot.update(token=tok, status=status, detail=detail)
         elif cell in tree.tokens:
             slot.update(token=cell, status="bound", detail="pinned")
@@ -227,6 +338,130 @@ def resolve_slots(body, fm, tree):
         if slot["status"] not in ("bound", "not-applicable"):
             gaps.append(slot)
         out.append(slot)
+    return out
+
+# ---- interaction states: every valid one is answered -------------------------------------
+STATE_HEADERS = {"state", "what changes"}
+DRIVERS = {"prop", "platform", "both"}
+
+def state_rows(text):
+    for headers, rows in parse_tables(text):
+        if STATE_HEADERS <= set(headers):
+            return rows
+    return []
+
+def check_states(body, fm, arch_fm, slot_rows_):
+    """Chapter 4.2 answers every interaction state valid for this component, and 4.1 agrees.
+
+    Valid = the archetype's `interaction-states`, plus any the contract's frontmatter adds. A
+    contract cannot drop one: a pressed state nobody styled is still a pressed state, and the
+    answer `nothing — <reason>` is what makes that a decision instead of an omission.
+    Returns {state: [properties it changes]} for the report and the view."""
+    valid = list(dict.fromkeys(list(arch_fm.get("interaction-states") or [])
+                               + list(fm.get("interaction-states") or [])))
+    for st in valid:
+        if st not in STATES:
+            lint.append("interaction state %r is not in the closed vocabulary (%s)"
+                        % (st, ", ".join(STATES)))
+    answered = {}
+    for r in state_rows(body):
+        st = r["state"].strip("`")
+        if st not in valid:
+            lint.append("§4.2 row %r: not an interaction state of this component (valid: %s) — "
+                        "add it to `interaction-states:` in the frontmatter if it is one"
+                        % (st, ", ".join(valid) or "none"))
+            continue
+        cell = r["what changes"].strip()
+        if cell.lower().startswith("nothing"):
+            if not cell[len("nothing"):].lstrip(" —-:").strip():
+                lint.append("§4.2 %s: `nothing` needs a reason — `nothing — <why>`" % st)
+            answered[st] = []
+        else:
+            props = [x.strip().strip("`") for x in cell.split(",") if x.strip()]
+            for p in props:
+                if p not in PROPERTIES:
+                    lint.append("§4.2 %s: %r is not a property (%s)" % (st, p, ", ".join(PROPERTIES)))
+            answered[st] = props
+        drv = r.get("driven by", "").strip()
+        if drv and drv not in DRIVERS:
+            lint.append("§4.2 %s: driven by %r — expected prop, platform or both" % (st, drv))
+    for st in valid:
+        if st not in answered:
+            lint.append("§4.2: interaction state %r is valid for this component and not "
+                        "addressed — say what changes, or `nothing — <reason>`" % st)
+
+    slotted = {}
+    for r in slot_rows_:
+        st = state_of(r.get("when", "always"))
+        slotted.setdefault(st, set()).add(r["property"])
+    for st, props in answered.items():
+        for p in props:
+            if p not in slotted.get(st, set()):
+                lint.append("§4.2 says %s changes %s, and §4.1 has no slot for %s@%s" % (st, p, p, st))
+            if p not in slotted.get(None, set()):
+                lint.append("§4.2 says %s changes %s, and §4.1 has no rest (`always`) slot for %s"
+                            % (st, p, p))
+    for st, props in slotted.items():
+        if st is None or st not in answered:
+            if st is not None and st in valid:
+                continue                        # already reported as unaddressed
+            if st is not None:
+                lint.append("§4.1 tokenises state %r, which is not an interaction state of this "
+                            "component" % st)
+            continue
+        for p in props - set(answered[st]):
+            lint.append("§4.1 has a slot for %s@%s, and §4.2 does not list %s as changing in %s"
+                        % (p, st, p, st))
+    return {"valid": valid, "answered": answered}
+
+# ---- structure: which platform element carries the role ----------------------------------
+ELEMENT_HEADERS = {"platform", "element", "id"}
+NAME = re.compile(r"`<?([A-Za-z][\w.:-]*)[^`>]*>?`")
+
+def element_names(cell):
+    """`<button>` · `<input type=submit>` -> [button, input]; `<h1>`–`<h6>` -> h1..h6."""
+    names = [m.group(1) for m in NAME.finditer(cell)]
+    rng = re.search(r"`<h([1-6])>`\s*[–-]\s*`<h([1-6])>`", cell)
+    if rng:
+        names += ["h%d" % i for i in range(int(rng.group(1)), int(rng.group(2)) + 1)]
+    return list(dict.fromkeys(names))
+
+def native_backing(arch_body):
+    """{platform: [names]} from the archetype's Native backing table."""
+    for headers, rows in parse_tables(arch_body):
+        if headers[:2] == ["Platform", "Native backing"]:
+            return {r["Platform"].lower(): element_names(r["Native backing"]) for r in rows}
+    return {}
+
+def element_requirements(body, fm, archetype, arch_body):
+    """{platform: requirement} — the semantic element, as chapter 2 states it per platform."""
+    rows = []
+    for headers, trs in parse_tables(body):
+        if ELEMENT_HEADERS <= set(headers) and "statement" not in headers:
+            rows = trs
+    backing = native_backing(arch_body)
+    out = {}
+    for r in rows:
+        plat, cell = r["platform"].strip().lower(), r["element"]
+        names = element_names(cell)
+        if not names:
+            lint.append("%s: element %r names nothing — write it in backticks, `<button>`" % (r["id"], cell))
+            continue
+        allowed = backing.get(plat) or []
+        custom = cell.lower().lstrip("`").startswith("custom")
+        if allowed and not custom and not set(names) <= set(allowed):
+            lint.append("%s: %s element %s is not a native backing of `%s` (%s) — if it is "
+                        "deliberate, write `custom — <reason>` and the archetype's requirements "
+                        "still bind" % (r["id"], plat, ", ".join(names), archetype, ", ".join(allowed)))
+        shown = " or ".join("<%s>" % n if plat == "web" else n for n in names)
+        out[plat] = {"id": r["id"], "statement": "The element carrying the role is %s." % shown,
+                     "observe": "element", "kind": "state", "scenario": {},
+                     "expect": {"one_of": names}, "needs": ["identity"]}
+    if archetype != "none":
+        for plat in fm.get("platforms", []):
+            if plat not in out:
+                lint.append("§2: no element row for %s — which %s element carries the `%s` role "
+                            "is not addressed" % (plat, plat, archetype))
     return out
 
 def platform_name(canonical, conv):
@@ -261,7 +496,7 @@ def parse_transform(cell, rid):
         return None
     return {"alpha": float(m.group(1))}
 
-INTERACTION = ("hover", "focused", "active")
+INTERACTION = ("hover", "focused", "focus-visible", "pressed")
 
 def slot_scenario(slot, slots):
     """The cases a property's slots cover do not overlap, and the scenario says so.
@@ -276,25 +511,31 @@ def slot_scenario(slot, slots):
     """
     scen = scenario_for(slot["when"], slot["id"])
     siblings = [o for o in slots if o is not slot and o["property"] == slot["property"]]
-    has_disabled = any(o["when"] == "when:disabled" for o in slots)
-    if slot["when"] in ("always", ""):
+    has_disabled = any(o["state"] == "disabled" for o in slots)
+    if slot["state"] is None:
         for o in siblings:
-            cond = o["when"][len("when:"):] if o["when"].startswith("when:") else None
-            if cond == "disabled":
+            if o["state"] == "disabled":
                 scen.setdefault("props", {})["disabled"] = False
-            elif cond in INTERACTION:
-                scen.setdefault("state", {})[cond] = False
-    elif slot["state"] in ("hover", "focus", "active") and has_disabled:
+            elif o["state"] in INTERACTION:
+                scen.setdefault("state", {})[o["state"]] = False
+    elif slot["state"] in INTERACTION and has_disabled:
         scen.setdefault("props", {})["disabled"] = False
     return scen
 
+def slot_label(slot):
+    """`background@hover [kind=secondary]` — property, state, and the variant it is for."""
+    label = slot["property"] + ("@" + slot["state"] if slot["state"] else "")
+    if slot.get("variant"):
+        label += " [%s]" % ", ".join("%s=%s" % kv for kv in slot["variant"].items())
+    return label
+
 def slot_requirement(slot, platform=None, conv=None, slots=()):
     """A slot becomes a real requirement, bound or explicitly pending — never absent."""
-    label = slot["property"] + ("@" + slot["state"] if slot["state"] else "")
-    base = {"id": slot["id"], "observe": "token", "kind": "state",
+    label = slot_label(slot)
+    base = {"id": slot["id"], "property": slot["property"], "observe": "token", "kind": "state",
             "scenario": slot_scenario(slot, list(slots) or [slot]), "needs": ["applied-styles"]}
     if slot["status"] == "not-applicable":
-        return {"id": slot["id"],
+        return {"id": slot["id"], "property": slot["property"],
                 "statement": "%s is not tokenised." % label,
                 "binds": False, "reason": slot["detail"]}
     if slot["status"] == "bound":
@@ -452,11 +693,14 @@ def main():
     TRANSITION_IDS.update(t["id"] for t in machine["transitions"])
     machine_bindings = sm.merge_bindings(S["binding_layers"])
 
+    ENUM_PROPS.update(enum_props(body))
     policy_rows = requirement_rows(policy_text)
     decided_policy = [r for r in policy_rows if policy_status(r) == "decided"]
     inherited = requirement_rows(arch_body) + decided_policy
     local = requirement_rows(body)
     slots = resolve_slots(body, fm, S["tree"])
+    states = check_states(body, fm, S["arch_fm"], slot_rows(body))
+    elements = element_requirements(body, fm, S["archetype"], arch_body)
 
     for headers, rows in parse_tables(body):
         if "cardinality" in headers:
@@ -491,7 +735,8 @@ def main():
     # ---- emit --------------------------------------------------------------------
     OUT.mkdir(parents=True, exist_ok=True)
     for platform in fm.get("platforms", []):
-        reqs = []
+        # Structure first: what the component IS on this platform, before what it does.
+        reqs = [elements[platform]] if platform in elements else []
         for r in inherited + local:
             rid = r["id"]
             b = bindings.get(rid, {}).get(platform)
@@ -544,13 +789,16 @@ def main():
     # Gaps and lint are different animals. A lint finding means the DOCUMENT is malformed.
     # A gap means the document is fine and the TOKEN TREE cannot express something yet —
     # a task for whoever owns the tree, not a reason to fail the parse.
-    print(f"\ntoken slots: {len(slots)} declared, "
+    if states["valid"]:
+        print("\ninteraction states: " + " · ".join(
+            "%s (%s)" % (st, ", ".join(states["answered"][st]) or "nothing")
+            if st in states["answered"] else "%s (NOT ADDRESSED)" % st for st in states["valid"]))
+    print(f"\ntoken slots: {len(slots)} cases from {len(slot_rows(body))} row(s), "
           f"{sum(1 for s_ in slots if s_['status'] == 'bound')} bound, "
           f"{sum(1 for s_ in slots if s_['status'] == 'not-applicable')} n/a, "
           f"{len(gaps)} gap(s)")
     for g in gaps:
-        label = g["property"] + ("@" + g["state"] if g["state"] else "")
-        print("  - %-8s %-17s %s" % (g["id"], g["status"], label))
+        print("  - %-22s %-17s %s" % (g["id"], g["status"], slot_label(g)))
 
     if machine["transitions"]:
         grid = len(machine["states"]) * len(machine["events"])
@@ -580,7 +828,9 @@ def main():
             "component": COMPONENT,
             "lint": lint,
             "token_gaps": [{"id": g["id"], "property": g["property"], "state": g["state"],
+                            "variant": g.get("variant") or {},
                             "status": g["status"], "detail": g["detail"]} for g in gaps],
+            "interaction_states": states,
             "policy_to_ask": policy_to_ask,
             "policy_deferred": policy_deferred,
             "closure": [c["id"] for c in machine["closure"]],
