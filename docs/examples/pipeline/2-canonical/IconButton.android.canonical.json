@@ -270,6 +270,7 @@
     {
       "id": "APP-01",
       "property": "background",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -297,6 +298,7 @@
     {
       "id": "APP-07",
       "property": "background",
+      "scope": "semantic",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -318,6 +320,7 @@
     {
       "id": "APP-06",
       "property": "background",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -337,6 +340,7 @@
     {
       "id": "APP-01@focus-visible",
       "property": "background",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -363,6 +367,7 @@
     {
       "id": "APP-01@pressed",
       "property": "background",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {

@@ -293,6 +293,15 @@ def expand_slots(rows, axes):
                         % (ids, prop, "@" + state if state else "", "; ".join(uncovered)))
     return out
 
+def specificity_counts(slots):
+    """{component: n, shared:<g>: n, semantic: n} over the bound cases the contract WROTE —
+    rest-token aliases repeat a rest case and would inflate every count."""
+    out = {}
+    for s_ in slots:
+        if s_["status"] == "bound" and not s_.get("alias_of"):
+            out[s_["scope"]] = out.get(s_["scope"], 0) + 1
+    return dict(sorted(out.items(), key=lambda kv: (kv[0] != "component", kv[0] != "semantic", kv[0])))
+
 def valid_states(fm, arch_fm):
     """The archetype's interaction states, plus any the contract's frontmatter adds."""
     return list(dict.fromkeys(list((arch_fm or {}).get("interaction-states") or [])
@@ -315,6 +324,7 @@ def resolve_slots(body, fm, tree, arch_fm=None):
         # Every authored condition is checked, including on a row that expands to no case —
         # `kind=tertiary` where kind has no tertiary would otherwise vanish without a word.
         scenario_for(r.get("when", "always"), r["id"])
+    defaults_by_prop = {p: d for p, (_, d) in axes.items()}
     out = []
     for r, combo, extra in expand_slots(rows, axes):
         when = r.get("when", "always")
@@ -327,6 +337,9 @@ def resolve_slots(body, fm, tree, arch_fm=None):
         slot = {"id": rid, "base_id": r["id"], "when": when, "property": r["property"],
                 "state": state_of(when), "variant": combo, "dims": dims,
                 "transform": parse_transform(r.get("transform"), r["id"])}
+        pattern = None
+        if TOKEN_PLACEHOLDER.search(cell):
+            pattern, cell = cell, fill_pattern(cell, combo, r["id"], defaults_by_prop)
         if cell.lower().startswith("n/a"):
             reason = cell[3:].lstrip(" —-:").strip() or "declared not applicable"
             slot.update(token=None, status="not-applicable", detail=reason)
@@ -335,15 +348,73 @@ def resolve_slots(body, fm, tree, arch_fm=None):
             slot.update(token=tok, status=status, detail=detail)
         elif cell in tree.tokens:
             slot.update(token=cell, status="bound", detail="pinned")
+        elif pattern:
+            slot.update(token=None, status="absent-from-tree", detail=cell)
+            lint.append("%s: pattern %r gives %r for %s, which is not in the token tree — add an "
+                        "override row for that value" % (r["id"], pattern, cell,
+                        ", ".join("%s=%s" % kv for kv in combo.items()) or "the default"))
         else:
             # A pinned name absent from the tree is the one failure that must never be
             # quietly accepted: it is how an invented token name enters a design system.
             slot.update(token=None, status="absent-from-tree", detail=cell)
             lint.append("%s: pinned token %r is not in the token tree" % (r["id"], cell))
+        slot["scope"] = tree.specificity(slot["token"], scope) if slot["token"] else None
+        slot["row_scope"] = (r.get("scope") or "").strip().strip("`")
+        if slot["status"] != "bound" and cell in ("—", "-", ""):
+            note_shared_candidate(tree, slot, scope)
         if slot["status"] not in ("bound", "not-applicable"):
             gaps.append(slot)
         out.append(slot)
+    check_row_scopes(out)
     return out + alias_states(out, valid_states(fm, arch_fm), tree, scope)
+
+# ---- specificity: how specific each token is to this component ----------------------------
+# Component tokens are not always 1:1 with a component: `control.border-radius` serves a button
+# and a segmented-control tab alike. So every slot row states its `scope` — `component`,
+# `shared:<group>` or `semantic` — computed from the tree, never typed, and checked here.
+TOKEN_PLACEHOLDER = re.compile(r"\{([A-Za-z][\w-]*)\}")
+shared_notes: list[dict] = []
+
+def fill_pattern(cell, combo, rid, defaults):
+    """`component.button.{kind}-hover` with kind=secondary -> `component.button.secondary-hover`."""
+    def sub(m):
+        prop = m.group(1)
+        if prop in combo:
+            return combo[prop]
+        if prop in defaults:
+            return defaults[prop]
+        lint.append("%s: `{%s}` in a token pattern names no visual-variant prop" % (rid, prop))
+        return m.group(0)
+    return TOKEN_PLACEHOLDER.sub(sub, cell)
+
+def check_row_scopes(cases):
+    """A row's `scope` cell must say what the tree says of every token the row binds."""
+    by_row = {}
+    for c in cases:
+        if c["status"] == "bound":
+            by_row.setdefault(c["base_id"], (c["row_scope"], set()))[1].add(c["scope"])
+    for rid, (written, found) in by_row.items():
+        if len(found) > 1:
+            lint.append("%s: binds tokens of different scope (%s) — one row, one scope; split it "
+                        "with an override row per value" % (rid, ", ".join(sorted(found))))
+        elif written and written not in ("—", "-") and written not in found:
+            lint.append("%s: scope says %r, the tree says %r — run scripts/writeback.py"
+                        % (rid, written, next(iter(found))))
+
+def note_shared_candidate(tree, slot, scope):
+    """A shared group has a token for this case, and this component is not declared a member.
+    Membership is rarely in the tree, so it is asked, never assumed."""
+    for group, members in tree.shared.items():
+        if scope in members or group == scope:
+            continue
+        for sp in tree_spellings(slot["state"]):
+            cands = tree.candidates(slot["property"], sp, "component", group)
+            cands = [c for c in cands if all(tree.dims_of(c).get(k) == v
+                                             for k, v in slot["dims"].items() if k in tree.dims_of(c))]
+            if len(cands) == 1:
+                shared_notes.append({"id": slot["id"], "group": group, "token": cands[0],
+                                     "members": members})
+                return
 
 # A state in which a property does not change is not "nothing": the property keeps its REST
 # token, and saying so is a claim a verifier can check — force the state, and the rest token
@@ -585,10 +656,14 @@ def slot_requirement(slot, platform=None, conv=None, slots=()):
 def _slot_requirement(slot, platform=None, conv=None, slots=()):
     """A slot becomes a real requirement, bound or explicitly pending — never absent."""
     label = slot_label(slot)
-    base = {"id": slot["id"], "property": slot["property"], "observe": "token", "kind": "state",
+    base = {"id": slot["id"], "property": slot["property"], "scope": slot.get("scope"),
+            "observe": "token", "kind": "state",
             "scenario": slot_scenario(slot, list(slots) or [slot]), "needs": ["applied-styles"]}
     if slot["status"] == "not-applicable":
-        return {"id": slot["id"], "property": slot["property"],
+        # The scenario travels with an n/a case too: it binds nothing, but a verifier can still
+        # OBSERVE what the implementation does there — evidence, for a person to judge.
+        return {"id": slot["id"], "property": slot["property"], "observe": "token",
+                "scenario": base["scenario"],
                 "statement": "%s is not tokenised." % label,
                 "binds": False, "reason": slot["detail"]}
     if slot["status"] == "bound":
@@ -874,6 +949,15 @@ def main():
         for e in policy_deferred:
             print("  - %-7s %s" % (e["id"], e["decision"]))
 
+    counts = specificity_counts(slots)
+    if counts:
+        print("specificity: " + " · ".join("%d %s" % (n, k) for k, n in counts.items()))
+    if shared_notes:
+        print(f"\nshared groups: {len(shared_notes)} case(s) a shared group could fill, and "
+              f"{kebab(fm['component'])} is not declared a member — ask:")
+        for n in shared_notes:
+            print("  - %-28s `%s` (group %s: %s)" % (n["id"], n["token"], n["group"], ", ".join(n["members"])))
+
     if state_notes:
         print(f"\nstates: {len(state_notes)} case(s) keep their rest token, while the tree has "
               f"this component's own token for that state — confirm which is intended:")
@@ -893,6 +977,8 @@ def main():
                             "status": g["status"], "detail": g["detail"]} for g in gaps],
             "interaction_states": states,
             "state_token_unused": state_notes,
+            "shared_unconfirmed": shared_notes,
+            "specificity": specificity_counts(slots),
             "policy_to_ask": policy_to_ask,
             "policy_deferred": policy_deferred,
             "closure": [c["id"] for c in machine["closure"]],

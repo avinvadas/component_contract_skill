@@ -306,6 +306,7 @@
     {
       "id": "APP-01[variant=primary]",
       "property": "background",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -330,6 +331,7 @@
     {
       "id": "APP-01[variant=secondary]",
       "property": "background",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -354,6 +356,7 @@
     {
       "id": "APP-01[variant=ghost]",
       "property": "background",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -378,6 +381,7 @@
     {
       "id": "APP-02[variant=primary]",
       "property": "foreground",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -402,6 +406,7 @@
     {
       "id": "APP-02[variant=secondary]",
       "property": "foreground",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -426,6 +431,7 @@
     {
       "id": "APP-02[variant=ghost]",
       "property": "foreground",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -450,6 +456,7 @@
     {
       "id": "APP-03[variant=primary]",
       "property": "border-color",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -474,6 +481,7 @@
     {
       "id": "APP-03[variant=secondary]",
       "property": "border-color",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -498,6 +506,7 @@
     {
       "id": "APP-03[variant=ghost]",
       "property": "border-color",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -522,6 +531,7 @@
     {
       "id": "APP-04",
       "property": "border-width",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -546,6 +556,7 @@
     {
       "id": "APP-05",
       "property": "radius",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -569,6 +580,7 @@
     {
       "id": "APP-06",
       "property": "padding-inline",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -597,6 +609,7 @@
     {
       "id": "APP-07[variant=primary]",
       "property": "background",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -619,6 +632,7 @@
     {
       "id": "APP-07[variant=secondary]",
       "property": "background",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -641,6 +655,7 @@
     {
       "id": "APP-07[variant=ghost]",
       "property": "background",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -663,6 +678,7 @@
     {
       "id": "APP-10[variant=primary]",
       "property": "background",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -686,6 +702,7 @@
     {
       "id": "APP-10[variant=secondary]",
       "property": "background",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -709,6 +726,7 @@
     {
       "id": "APP-10[variant=ghost]",
       "property": "background",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -732,6 +750,7 @@
     {
       "id": "APP-08[variant=primary]",
       "property": "background",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -752,6 +771,7 @@
     {
       "id": "APP-08[variant=secondary]",
       "property": "background",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -772,6 +792,7 @@
     {
       "id": "APP-08[variant=ghost]",
       "property": "background",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -792,6 +813,17 @@
     {
       "id": "APP-09",
       "property": "elevation",
+      "observe": "token",
+      "scenario": {
+        "state": {
+          "hover": false,
+          "focus-visible": false,
+          "pressed": false
+        },
+        "props": {
+          "disabled": false
+        }
+      },
       "statement": "elevation is not tokenised.",
       "binds": false,
       "reason": "a Button sits in the content plane"
@@ -799,6 +831,7 @@
     {
       "id": "APP-01@focus-visible[variant=primary]",
       "property": "background",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -822,6 +855,7 @@
     {
       "id": "APP-01@focus-visible[variant=secondary]",
       "property": "background",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -845,6 +879,7 @@
     {
       "id": "APP-01@focus-visible[variant=ghost]",
       "property": "background",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -868,6 +903,7 @@
     {
       "id": "APP-02@hover[variant=primary]",
       "property": "foreground",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -891,6 +927,7 @@
     {
       "id": "APP-02@focus-visible[variant=primary]",
       "property": "foreground",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -914,6 +951,7 @@
     {
       "id": "APP-02@pressed[variant=primary]",
       "property": "foreground",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -937,6 +975,7 @@
     {
       "id": "APP-02@disabled[variant=primary]",
       "property": "foreground",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -957,6 +996,7 @@
     {
       "id": "APP-02@hover[variant=secondary]",
       "property": "foreground",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -980,6 +1020,7 @@
     {
       "id": "APP-02@focus-visible[variant=secondary]",
       "property": "foreground",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1003,6 +1044,7 @@
     {
       "id": "APP-02@pressed[variant=secondary]",
       "property": "foreground",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1026,6 +1068,7 @@
     {
       "id": "APP-02@disabled[variant=secondary]",
       "property": "foreground",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1046,6 +1089,7 @@
     {
       "id": "APP-02@hover[variant=ghost]",
       "property": "foreground",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1069,6 +1113,7 @@
     {
       "id": "APP-02@focus-visible[variant=ghost]",
       "property": "foreground",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1092,6 +1137,7 @@
     {
       "id": "APP-02@pressed[variant=ghost]",
       "property": "foreground",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1115,6 +1161,7 @@
     {
       "id": "APP-02@disabled[variant=ghost]",
       "property": "foreground",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1135,6 +1182,7 @@
     {
       "id": "APP-03@hover[variant=primary]",
       "property": "border-color",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1158,6 +1206,7 @@
     {
       "id": "APP-03@focus-visible[variant=primary]",
       "property": "border-color",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1181,6 +1230,7 @@
     {
       "id": "APP-03@pressed[variant=primary]",
       "property": "border-color",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1204,6 +1254,7 @@
     {
       "id": "APP-03@disabled[variant=primary]",
       "property": "border-color",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1224,6 +1275,7 @@
     {
       "id": "APP-03@hover[variant=secondary]",
       "property": "border-color",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1247,6 +1299,7 @@
     {
       "id": "APP-03@focus-visible[variant=secondary]",
       "property": "border-color",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1270,6 +1323,7 @@
     {
       "id": "APP-03@pressed[variant=secondary]",
       "property": "border-color",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1293,6 +1347,7 @@
     {
       "id": "APP-03@disabled[variant=secondary]",
       "property": "border-color",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1313,6 +1368,7 @@
     {
       "id": "APP-03@hover[variant=ghost]",
       "property": "border-color",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1336,6 +1392,7 @@
     {
       "id": "APP-03@focus-visible[variant=ghost]",
       "property": "border-color",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1359,6 +1416,7 @@
     {
       "id": "APP-03@pressed[variant=ghost]",
       "property": "border-color",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1382,6 +1440,7 @@
     {
       "id": "APP-03@disabled[variant=ghost]",
       "property": "border-color",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1402,6 +1461,7 @@
     {
       "id": "APP-04@hover",
       "property": "border-width",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1425,6 +1485,7 @@
     {
       "id": "APP-04@focus-visible",
       "property": "border-width",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1448,6 +1509,7 @@
     {
       "id": "APP-04@pressed",
       "property": "border-width",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1471,6 +1533,7 @@
     {
       "id": "APP-04@disabled",
       "property": "border-width",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1491,6 +1554,7 @@
     {
       "id": "APP-05@hover",
       "property": "radius",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1513,6 +1577,7 @@
     {
       "id": "APP-05@focus-visible",
       "property": "radius",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1535,6 +1600,7 @@
     {
       "id": "APP-05@pressed",
       "property": "radius",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1557,6 +1623,7 @@
     {
       "id": "APP-05@disabled",
       "property": "radius",
+      "scope": "component",
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1576,6 +1643,7 @@
     {
       "id": "APP-06@hover",
       "property": "padding-inline",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1603,6 +1671,7 @@
     {
       "id": "APP-06@focus-visible",
       "property": "padding-inline",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1630,6 +1699,7 @@
     {
       "id": "APP-06@pressed",
       "property": "padding-inline",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1657,6 +1727,7 @@
     {
       "id": "APP-06@disabled",
       "property": "padding-inline",
+      "scope": null,
       "observe": "token",
       "kind": "state",
       "scenario": {
@@ -1681,6 +1752,15 @@
     {
       "id": "APP-09@hover",
       "property": "elevation",
+      "observe": "token",
+      "scenario": {
+        "state": {
+          "hover": true
+        },
+        "props": {
+          "disabled": false
+        }
+      },
       "statement": "elevation@hover is not tokenised.",
       "binds": false,
       "reason": "a Button sits in the content plane",
@@ -1689,6 +1769,15 @@
     {
       "id": "APP-09@focus-visible",
       "property": "elevation",
+      "observe": "token",
+      "scenario": {
+        "state": {
+          "focus-visible": true
+        },
+        "props": {
+          "disabled": false
+        }
+      },
       "statement": "elevation@focus-visible is not tokenised.",
       "binds": false,
       "reason": "a Button sits in the content plane",
@@ -1697,6 +1786,15 @@
     {
       "id": "APP-09@pressed",
       "property": "elevation",
+      "observe": "token",
+      "scenario": {
+        "state": {
+          "pressed": true
+        },
+        "props": {
+          "disabled": false
+        }
+      },
       "statement": "elevation@pressed is not tokenised.",
       "binds": false,
       "reason": "a Button sits in the content plane",
@@ -1705,6 +1803,12 @@
     {
       "id": "APP-09@disabled",
       "property": "elevation",
+      "observe": "token",
+      "scenario": {
+        "props": {
+          "disabled": true
+        }
+      },
       "statement": "elevation@disabled is not tokenised.",
       "binds": false,
       "reason": "a Button sits in the content plane",

@@ -320,6 +320,19 @@ def detect(tree_path, context=None):
         else:
             q["components"] = None
 
+    # Shared groups. A component-tier group is not always one component — `control.*` can serve
+    # a button and a segmented-control tab alike. The tree shows the groups; it rarely says who
+    # uses them, so that is asked once, system-wide. A later component that could draw from a
+    # declared group it is not a member of is asked by the resolver, when it needs the token.
+    groups = sorted({s for s in (tree.scope_of(p) for p in tree.tokens) if s})
+    if len(groups) > 1 and not facts.get("shared"):
+        questions.append({
+            "about": "shared",
+            "question": "Which of these component-token groups are SHARED patterns — used by more "
+                        "than one component — and which components use each? %s"
+                        % ", ".join("`%s`" % g for g in groups),
+            "options": groups, "components": None})
+
     return {
         "tree": str(tree_path),
         "tiers": {"proposed": roles, "evidence": evidence},

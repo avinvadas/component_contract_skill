@@ -12,7 +12,7 @@ and the canonical documents can never be built from different inputs.
 """
 import argparse, pathlib, re, sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from resolve import (parse_frontmatter, requirement_rows,  # noqa: E402
+from resolve import (specificity_counts, parse_frontmatter, requirement_rows,  # noqa: E402
                      parse_tables, resolve_slots, load_sources, check_states,
                      slot_rows, state_rows, enum_props, ENUM_PROPS, ELEMENT_HEADERS)
 import machine as sm  # noqa: E402
@@ -67,11 +67,15 @@ def token_table():
         if s_.get("alias_of"):
             status += " · rest token"
         variant = ", ".join("%s=%s" % kv for kv in (s_.get("variant") or {}).items()) or "—"
-        body_rows.append("| %s | %s | %s | %s | %s |" % (s_["property"], s_["state"] or "rest",
-                                                         variant, tok, status))
+        body_rows.append("| %s | %s | %s | %s | %s | %s |" % (s_["property"], s_["state"] or "rest",
+                                                              variant, tok, s_.get("scope") or "—", status))
     # One row per case the canonical document checks: the contract states a slot once, and
     # the resolver expands it per variant — so this table is where a reader sees every case.
-    return md_table(["property", "state", "variant", "token", "status"], body_rows)
+    counts = specificity_counts(SLOTS)
+    head = ("**Specificity:** " + " · ".join("%d %s" % (n, k) for k, n in counts.items())
+            + " — how much this component relies on tokens made for it, shared patterns, or "
+              "system-wide meanings. Rest-token aliases are not counted." + NL + NL) if counts else ""
+    return head + md_table(["property", "state", "variant", "token", "scope", "status"], body_rows)
 
 def state_table():
     """Every interaction state valid for this component, and the contract's answer to it."""

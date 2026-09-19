@@ -57,10 +57,12 @@ Four ideas carry the whole thing:
 | `scripts/tokens.py` — token resolution; reads a design system's own naming from its context file | **works** |
 | `scripts/detect_tokens.py` — Phase 0B: proposes tiers, naming patterns and questions from a real tree | **works, wired into SKILL.md** |
 | `scripts/machine.py` — state-machine tables; closure checks generated, never written | **works** |
-| `scripts/test_scripts.py` — 23 regression tests, each naming a failure that once shipped | **passing** |
+| `scripts/test_scripts.py` — 27 regression tests, each naming a failure that once shipped | **passing** |
 | Interaction states — every state the archetype makes valid is answered in chapter 4.2, or the parse fails | **works** |
 | Variants — a token slot expands to one case per variant value; an unanswered value fails the parse | **works** |
 | Element — which element carries the role, per platform, is a checked Structure requirement | **works** |
+| Tokens in the contract — `scripts/writeback.py` writes what the tree answers (token or `{variant}` pattern) with its `scope`: component · shared:<group> · semantic | **works** |
+| Implementation evidence — `scripts/evidence.py` turns what a verifier observed into questions (contradicts / adds); never edits | **works** |
 | Web verifier — stdlib, deliberately weak, declares its own gaps | **runs** |
 | 5 closed vocabularies (observe, conditions, capabilities, expect, interaction states) | **complete** |
 | Role-archetypes: button 12, link 9, combobox 9, heading 3, text 2 | **tier 1 only** |

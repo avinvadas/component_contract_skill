@@ -64,18 +64,18 @@ The contract declares which properties are tokenised. `—` means resolve it fro
 explicit path pins a token, which is then validated rather than re-resolved. A property that
 does not apply says so, with a reason — it is never simply left out.
 
-| when | property | token | id |
-|---|---|---|---|
-| always | background | — | id-APP-01 |
-| always | foreground | — | id-APP-02 |
-| always | border-color | — | id-APP-03 |
-| always | border-width | — | id-APP-04 |
-| always | radius | `component.button.radius` | id-APP-05 |
-| always | padding-inline | — | id-APP-06 |
-| when:hover | background | — | id-APP-07 |
-| when:pressed | background | — | id-APP-10 |
-| when:disabled | background | — | id-APP-08 |
-| always | elevation | n/a — a Button sits in the content plane | id-APP-09 |
+| when | property | token | scope | id |
+|---|---|---|---|---|
+| always | background | `component.button.variant.{variant}.background` | component | id-APP-01 |
+| always | foreground | `component.button.variant.{variant}.text` | component | id-APP-02 |
+| always | border-color | `component.button.variant.{variant}.border` | component | id-APP-03 |
+| always | border-width | — | — | id-APP-04 |
+| always | radius | `component.button.radius` | component | id-APP-05 |
+| always | padding-inline | — | — | id-APP-06 |
+| when:hover | background | `component.button.variant.{variant}.background-hover` | component | id-APP-07 |
+| when:pressed | background | — | — | id-APP-10 |
+| when:disabled | background | — | — | id-APP-08 |
+| always | elevation | n/a — a Button sits in the content plane | — | id-APP-09 |
 
 ### 4.2 Interaction states
 

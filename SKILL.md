@@ -48,7 +48,9 @@ Both are revisited once the four supported platforms are stable, tested, and val
 |---|---|
 | `scripts/detect_tokens.py <tree> [--json]` | Phase 0B — a token tree has been found. Proposes tiers and naming patterns with evidence, and lists questions. Writes nothing. |
 | `scripts/resolve.py <Component>.md [--out DIR]` | A contract in the format of `docs/contract-md-format-spec.md` is to be resolved against its role-archetype, policy and token tree into one canonical document per platform. |
+| `scripts/writeback.py <Component>.md` | Phase 6, after the first resolve — writes every token the tree answers into the contract's own slots, as a token or a `{variant}` pattern, with its `scope`. Asks nothing, decides nothing the tree did not. |
 | `scripts/resolve_view.py <Component>.md [--out FILE]` | The same contract needs its human-readable resolved view. |
+| `scripts/evidence.py <Component>.md <results.json>` | An implementation has been observed (a verifier's results). Turns what it contradicts or adds to the tree into questions. Never edits the contract. |
 | `scripts/learned.py snapshot` / `diff` | At the start of a run, and at the end — reports what this run added to the design system's own layer. |
 | `scripts/test_scripts.py` | After changing any script. |
 
@@ -169,6 +171,8 @@ tokens:
     component:
       - [e.g. "component.{component}.variant.{variant}.{property}"]
       - [e.g. "component.{component}.{property}"]
+  shared:  # component-tier groups that are PATTERNS, not one component — and which components draw from each. Asked once in Phase 0B (detect_tokens.py lists the groups); a component is added to a group when the resolver reports `shared_unconfirmed` and the person says yes
+    [group, e.g. control]: [components, e.g. button, segmented-control]
   leaf_map:  # ONLY spellings the resolver cannot read, each from a confirmed answer, asked lazily per component — never a suggestion written unconfirmed
     [spelling]: background | foreground | border-color | border-width | radius | padding-inline | padding-block | font-size | elevation | opacity | duration
   generated_downstream: true | false  # confirms/denies hand-typed values as accepted practice — gates Phase 6's token-name validation entirely; see references/token-naming-validation.md
@@ -824,12 +828,25 @@ This is the one table in the contract that names platform vocabulary, and it is 
 Declare **which properties are tokenised**, not which token fills them:
 
 ```
-| when | property | token | id |
-| always | background | — | id-APP-01 |
-| always | elevation | n/a — this component sits in the content plane | id-APP-03 |
+| when | property | token | scope | id |
+| always | background | `component.button.{kind}` | component | id-APP-01 |
+| always | radius | `component.control.radius` | shared:control | id-APP-02 |
+| always | elevation | n/a — this component sits in the content plane | — | id-APP-03 |
 ```
 
-`—` means *resolve it from the tree* — Phase 6 does that against the design system's own naming, and reports one of six outcomes per slot. Write an explicit token path only to pin one deliberately; **a pinned name that is not in the tree fails the parse**, which is how an invented token name is kept out of a design system. A property that does not apply says so with a reason; it is never simply left out.
+**`scope` — how specific a token is to this component**, one of three, computed from the tree and checked on every resolve:
+
+| scope | means | e.g. |
+|---|---|---|
+| `component` | named for this component alone | `button.secondary-hover` |
+| `shared:<group>` | a component-tier pattern several components use | `control.radius` — button and segmented-control tab |
+| `semantic` | a system-wide meaning, tied to no component | `primary`, `focus` |
+
+The lookup goes in that order: this component's own tokens, then the shared groups it is a member of (`tokens.shared` in the context), then semantic. One row, one scope — a row whose variants resolve to different scopes is split by write-back. The resolved view counts them (*14 component · 3 shared · 6 semantic*), which says at a glance how much a component leans on general tokens.
+
+**A token cell may be a pattern.** `{kind}` stands for each value of that visual-variant prop the row covers; every value it produces must exist in the tree, and a value it cannot produce needs its own row.
+
+While writing, `—` means *resolve it from the tree* — Phase 6 does that against the design system's own naming, writes back what the tree answers,, and reports one of six outcomes per slot. Write an explicit token path only to pin one deliberately; **a pinned name that is not in the tree fails the parse**, which is how an invented token name is kept out of a design system. A property that does not apply says so with a reason; it is never simply left out.
 
 Declare a slot for every property in the design system's declared property set that this component actually has. Never invent a token name for a value you could not find — that rule is unchanged and now enforced.
 
@@ -1010,12 +1027,16 @@ Every requirement needs a binding for every platform in `platforms`, or an expli
 
 ### Resolve the contract
 
-Run the resolver on the contract just written, once per component:
+Run the resolver on the contract just written, write back what the tree answered, and resolve again — once per component:
 
 ```bash
 python3 <skill>/scripts/resolve.py      [ComponentName]/[ComponentName].md --out [ComponentName]/canonical
+python3 <skill>/scripts/writeback.py    [ComponentName]/[ComponentName].md
+python3 <skill>/scripts/resolve.py      [ComponentName]/[ComponentName].md --out [ComponentName]/canonical
 python3 <skill>/scripts/resolve_view.py [ComponentName]/[ComponentName].md
 ```
+
+**The token tree is the authority, so what it answers goes into the contract without asking.** `writeback.py` replaces each `—` the tree answers uniquely with the token — or, where each variant has its own, with the pattern they share (`component.button.{kind}-hover`) and an override row for every value that breaks it — and fills each row's `scope`. It never replaces a pinned token, never touches `n/a`, and leaves `—` wherever the tree did not answer: those stay gaps, and are asked about below. A finished contract shows its real tokens; `—` in one is always a gap.
 
 The first emits one canonical document per platform in `platforms` — the interchange format a verifier reads. The second emits `[ComponentName].resolved.md`, the artifact a **person** reads: the contract's own chapters with the role-archetype's and the policy's inherited requirements resolved in, origin as a column.
 
@@ -1029,11 +1050,23 @@ Three kinds of output come back, and they are not the same kind of thing:
 
 **A gap is never a reason to edit the contract into silence.** `absent-from-tree` and `dimension-unmet` are tasks for whoever owns the token tree; `ambiguous` is one question for the author; `unmapped-leaf` means the tree has tokens this design system has not taught the skill to read, and the fix is a `leaf_map` entry in `.claude/design-system-context.yml` — **never a new token**, since one may already exist under a spelling nobody mapped.
 
+### Implementation evidence: questions, never edits
+
+When an implementation has been observed — a verifier run against the real component, a coded reference or Storybook link from Phase 2 checked against the canonical document — run:
+
+```bash
+python3 <skill>/scripts/evidence.py [ComponentName]/[ComponentName].md results.json
+```
+
+It lists where the implementation **contradicts** the tree (a different token, a literal) and where it **adds** to it (a token where the tree had no answer, or where the contract says `n/a`), in the tree's own token names. **Change nothing on the strength of it.** Ask each one, grouped as it prints, with three answers: the **contract** is wrong (edit it), the **component** is defective (report it), or the **tree**'s own statement is wrong (a description or a reading — fix it there). An implementation is evidence; only the tree and the person are authority.
+
 ### Act on what the report says the design system does not know yet
 
 Run the resolver with `--report [ComponentName]/.resolve-report.json` and act on it before
 finishing. This is where the design system's own layer grows — one component at a time, and
 only from confirmed answers.
+
+**A shared group could fill a case (`shared_unconfirmed`).** A group declared in `tokens.shared` has a token for a case this component left unresolved, and this component is not a member. Ask: *"Does [Component] draw its [property] from the shared `[group]` tokens (used by …)?"* On yes, add the component to that group in the context and re-run from the first resolve — write-back then states the token, with `scope: shared:[group]`. Membership is never assumed: the tree shows a group exists, not who uses it.
 
 **Policy rows this component engages (`policy_to_ask`).** A policy row is asked the first time a
 component *engages* it — its `engaged-by` column says when — so a Button raises token discipline,

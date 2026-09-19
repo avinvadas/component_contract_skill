@@ -67,73 +67,75 @@ Where a platform gives you this free, and where you build it by hand.
 
 ### Tokenised properties
 
-| property | state | variant | token | status |
-|---|---|---|---|---|
-| background | rest | variant=primary | `component.button.variant.primary.background` | bound |
-| background | rest | variant=secondary | `component.button.variant.secondary.background` | bound |
-| background | rest | variant=ghost | `component.button.variant.ghost.background` | bound |
-| foreground | rest | variant=primary | `component.button.variant.primary.text` | bound |
-| foreground | rest | variant=secondary | `component.button.variant.secondary.text` | bound |
-| foreground | rest | variant=ghost | `component.button.variant.ghost.text` | bound |
-| border-color | rest | variant=primary | `component.button.variant.primary.border` | bound |
-| border-color | rest | variant=secondary | `component.button.variant.secondary.border` | bound |
-| border-color | rest | variant=ghost | `component.button.variant.ghost.border` | bound |
-| border-width | rest | — | — | **absent from tree** |
-| radius | rest | — | `component.button.radius` | bound |
-| padding-inline | rest | — | — | **ambiguous** |
-| background | hover | variant=primary | `component.button.variant.primary.background-hover` | bound |
-| background | hover | variant=secondary | `component.button.variant.secondary.background-hover` | bound |
-| background | hover | variant=ghost | `component.button.variant.ghost.background-hover` | bound |
-| background | pressed | variant=primary | — | **state unexpressed** |
-| background | pressed | variant=secondary | — | **state unexpressed** |
-| background | pressed | variant=ghost | — | **state unexpressed** |
-| background | disabled | variant=primary | — | **state unexpressed** |
-| background | disabled | variant=secondary | — | **state unexpressed** |
-| background | disabled | variant=ghost | — | **state unexpressed** |
-| elevation | rest | — | — | n/a — a Button sits in the content plane |
-| background | focus-visible | variant=primary | `component.button.variant.primary.background` | bound · rest token |
-| background | focus-visible | variant=secondary | `component.button.variant.secondary.background` | bound · rest token |
-| background | focus-visible | variant=ghost | `component.button.variant.ghost.background` | bound · rest token |
-| foreground | hover | variant=primary | `component.button.variant.primary.text` | bound · rest token |
-| foreground | focus-visible | variant=primary | `component.button.variant.primary.text` | bound · rest token |
-| foreground | pressed | variant=primary | `component.button.variant.primary.text` | bound · rest token |
-| foreground | disabled | variant=primary | `component.button.variant.primary.text` | bound · rest token |
-| foreground | hover | variant=secondary | `component.button.variant.secondary.text` | bound · rest token |
-| foreground | focus-visible | variant=secondary | `component.button.variant.secondary.text` | bound · rest token |
-| foreground | pressed | variant=secondary | `component.button.variant.secondary.text` | bound · rest token |
-| foreground | disabled | variant=secondary | `component.button.variant.secondary.text` | bound · rest token |
-| foreground | hover | variant=ghost | `component.button.variant.ghost.text` | bound · rest token |
-| foreground | focus-visible | variant=ghost | `component.button.variant.ghost.text` | bound · rest token |
-| foreground | pressed | variant=ghost | `component.button.variant.ghost.text` | bound · rest token |
-| foreground | disabled | variant=ghost | `component.button.variant.ghost.text` | bound · rest token |
-| border-color | hover | variant=primary | `component.button.variant.primary.border` | bound · rest token |
-| border-color | focus-visible | variant=primary | `component.button.variant.primary.border` | bound · rest token |
-| border-color | pressed | variant=primary | `component.button.variant.primary.border` | bound · rest token |
-| border-color | disabled | variant=primary | `component.button.variant.primary.border` | bound · rest token |
-| border-color | hover | variant=secondary | `component.button.variant.secondary.border` | bound · rest token |
-| border-color | focus-visible | variant=secondary | `component.button.variant.secondary.border` | bound · rest token |
-| border-color | pressed | variant=secondary | `component.button.variant.secondary.border` | bound · rest token |
-| border-color | disabled | variant=secondary | `component.button.variant.secondary.border` | bound · rest token |
-| border-color | hover | variant=ghost | `component.button.variant.ghost.border` | bound · rest token |
-| border-color | focus-visible | variant=ghost | `component.button.variant.ghost.border` | bound · rest token |
-| border-color | pressed | variant=ghost | `component.button.variant.ghost.border` | bound · rest token |
-| border-color | disabled | variant=ghost | `component.button.variant.ghost.border` | bound · rest token |
-| border-width | hover | — | — | **absent from tree** · rest token |
-| border-width | focus-visible | — | — | **absent from tree** · rest token |
-| border-width | pressed | — | — | **absent from tree** · rest token |
-| border-width | disabled | — | — | **absent from tree** · rest token |
-| radius | hover | — | `component.button.radius` | bound · rest token |
-| radius | focus-visible | — | `component.button.radius` | bound · rest token |
-| radius | pressed | — | `component.button.radius` | bound · rest token |
-| radius | disabled | — | `component.button.radius` | bound · rest token |
-| padding-inline | hover | — | — | **ambiguous** · rest token |
-| padding-inline | focus-visible | — | — | **ambiguous** · rest token |
-| padding-inline | pressed | — | — | **ambiguous** · rest token |
-| padding-inline | disabled | — | — | **ambiguous** · rest token |
-| elevation | hover | — | — | n/a — a Button sits in the content plane · rest token |
-| elevation | focus-visible | — | — | n/a — a Button sits in the content plane · rest token |
-| elevation | pressed | — | — | n/a — a Button sits in the content plane · rest token |
-| elevation | disabled | — | — | n/a — a Button sits in the content plane · rest token |
+**Specificity:** 13 component — how much this component relies on tokens made for it, shared patterns, or system-wide meanings. Rest-token aliases are not counted.
+
+| property | state | variant | token | scope | status |
+|---|---|---|---|---|---|
+| background | rest | variant=primary | `component.button.variant.primary.background` | component | bound |
+| background | rest | variant=secondary | `component.button.variant.secondary.background` | component | bound |
+| background | rest | variant=ghost | `component.button.variant.ghost.background` | component | bound |
+| foreground | rest | variant=primary | `component.button.variant.primary.text` | component | bound |
+| foreground | rest | variant=secondary | `component.button.variant.secondary.text` | component | bound |
+| foreground | rest | variant=ghost | `component.button.variant.ghost.text` | component | bound |
+| border-color | rest | variant=primary | `component.button.variant.primary.border` | component | bound |
+| border-color | rest | variant=secondary | `component.button.variant.secondary.border` | component | bound |
+| border-color | rest | variant=ghost | `component.button.variant.ghost.border` | component | bound |
+| border-width | rest | — | — | — | **absent from tree** |
+| radius | rest | — | `component.button.radius` | component | bound |
+| padding-inline | rest | — | — | — | **ambiguous** |
+| background | hover | variant=primary | `component.button.variant.primary.background-hover` | component | bound |
+| background | hover | variant=secondary | `component.button.variant.secondary.background-hover` | component | bound |
+| background | hover | variant=ghost | `component.button.variant.ghost.background-hover` | component | bound |
+| background | pressed | variant=primary | — | — | **state unexpressed** |
+| background | pressed | variant=secondary | — | — | **state unexpressed** |
+| background | pressed | variant=ghost | — | — | **state unexpressed** |
+| background | disabled | variant=primary | — | — | **state unexpressed** |
+| background | disabled | variant=secondary | — | — | **state unexpressed** |
+| background | disabled | variant=ghost | — | — | **state unexpressed** |
+| elevation | rest | — | — | — | n/a — a Button sits in the content plane |
+| background | focus-visible | variant=primary | `component.button.variant.primary.background` | component | bound · rest token |
+| background | focus-visible | variant=secondary | `component.button.variant.secondary.background` | component | bound · rest token |
+| background | focus-visible | variant=ghost | `component.button.variant.ghost.background` | component | bound · rest token |
+| foreground | hover | variant=primary | `component.button.variant.primary.text` | component | bound · rest token |
+| foreground | focus-visible | variant=primary | `component.button.variant.primary.text` | component | bound · rest token |
+| foreground | pressed | variant=primary | `component.button.variant.primary.text` | component | bound · rest token |
+| foreground | disabled | variant=primary | `component.button.variant.primary.text` | component | bound · rest token |
+| foreground | hover | variant=secondary | `component.button.variant.secondary.text` | component | bound · rest token |
+| foreground | focus-visible | variant=secondary | `component.button.variant.secondary.text` | component | bound · rest token |
+| foreground | pressed | variant=secondary | `component.button.variant.secondary.text` | component | bound · rest token |
+| foreground | disabled | variant=secondary | `component.button.variant.secondary.text` | component | bound · rest token |
+| foreground | hover | variant=ghost | `component.button.variant.ghost.text` | component | bound · rest token |
+| foreground | focus-visible | variant=ghost | `component.button.variant.ghost.text` | component | bound · rest token |
+| foreground | pressed | variant=ghost | `component.button.variant.ghost.text` | component | bound · rest token |
+| foreground | disabled | variant=ghost | `component.button.variant.ghost.text` | component | bound · rest token |
+| border-color | hover | variant=primary | `component.button.variant.primary.border` | component | bound · rest token |
+| border-color | focus-visible | variant=primary | `component.button.variant.primary.border` | component | bound · rest token |
+| border-color | pressed | variant=primary | `component.button.variant.primary.border` | component | bound · rest token |
+| border-color | disabled | variant=primary | `component.button.variant.primary.border` | component | bound · rest token |
+| border-color | hover | variant=secondary | `component.button.variant.secondary.border` | component | bound · rest token |
+| border-color | focus-visible | variant=secondary | `component.button.variant.secondary.border` | component | bound · rest token |
+| border-color | pressed | variant=secondary | `component.button.variant.secondary.border` | component | bound · rest token |
+| border-color | disabled | variant=secondary | `component.button.variant.secondary.border` | component | bound · rest token |
+| border-color | hover | variant=ghost | `component.button.variant.ghost.border` | component | bound · rest token |
+| border-color | focus-visible | variant=ghost | `component.button.variant.ghost.border` | component | bound · rest token |
+| border-color | pressed | variant=ghost | `component.button.variant.ghost.border` | component | bound · rest token |
+| border-color | disabled | variant=ghost | `component.button.variant.ghost.border` | component | bound · rest token |
+| border-width | hover | — | — | — | **absent from tree** · rest token |
+| border-width | focus-visible | — | — | — | **absent from tree** · rest token |
+| border-width | pressed | — | — | — | **absent from tree** · rest token |
+| border-width | disabled | — | — | — | **absent from tree** · rest token |
+| radius | hover | — | `component.button.radius` | component | bound · rest token |
+| radius | focus-visible | — | `component.button.radius` | component | bound · rest token |
+| radius | pressed | — | `component.button.radius` | component | bound · rest token |
+| radius | disabled | — | `component.button.radius` | component | bound · rest token |
+| padding-inline | hover | — | — | — | **ambiguous** · rest token |
+| padding-inline | focus-visible | — | — | — | **ambiguous** · rest token |
+| padding-inline | pressed | — | — | — | **ambiguous** · rest token |
+| padding-inline | disabled | — | — | — | **ambiguous** · rest token |
+| elevation | hover | — | — | — | n/a — a Button sits in the content plane · rest token |
+| elevation | focus-visible | — | — | — | n/a — a Button sits in the content plane · rest token |
+| elevation | pressed | — | — | — | n/a — a Button sits in the content plane · rest token |
+| elevation | disabled | — | — | — | n/a — a Button sits in the content plane · rest token |
 
 ### Token gaps
 

@@ -5,7 +5,7 @@
 
 Each test names the failure it guards against. Several of those failures shipped once.
 """
-import contextlib, io, json, pathlib, shutil, subprocess, sys, tempfile
+import re, contextlib, io, json, pathlib, shutil, subprocess, sys, tempfile
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -93,8 +93,9 @@ def alt_design_system(context_text):
     # The tree comes from the context now, and the radius pin names a token only the
     # original fixture has — both must be removed, or the test is not about the context.
     text = "\n".join(l for l in text.splitlines() if not l.startswith("tokens:")) + "\n"
-    text = text.replace("| always | radius | `component.button.radius` | id-APP-05 |",
-                        "| always | radius | — | id-APP-05 |")
+    # The example contract states ITS tree's tokens, written back from it. Moved onto another
+    # tree, it starts over: every cell `—`, as before any write-back — which is what this is about.
+    text = re.sub(r"\| `[^`]+` \| (?:component|semantic|shared:[\w-]+) \|", "| — | — |", text)
     md.write_text(text)
     if context_text is not None:
         (d / ".claude").mkdir()
@@ -662,6 +663,99 @@ def the_element_carrying_the_role_is_structure():
     assert any("not a native backing" in l for l in rep["lint"]), rep["lint"]
     _, rep, _ = states_repo(element=ELEMENT_OK.replace("`<button>`", "custom — `<div>` with the button pattern"))
     assert not rep["lint"], rep["lint"]
+
+
+# ---- specificity, write-back, evidence ----------------------------------------------
+def states_contract_repo(slots=SLOTS_OK, context_extra=""):
+    repo = pathlib.Path(tempfile.mkdtemp())
+    (repo / ".claude").mkdir()
+    tree = json.loads(json.dumps(STATES_TREE))
+    tree["component"]["control"] = {"radius": {"$type": "dimension", "$value": "4px"}}
+    (repo / "tokens.json").write_text(json.dumps(tree))
+    (repo / ".claude/design-system-context.yml").write_text(STATES_CONTEXT + context_extra)
+    (repo / "Button.md").write_text(STATES_CONTRACT % {"element": ELEMENT_OK, "slots": slots,
+                                                       "states": STATES_OK})
+    return repo
+
+
+def resolved(repo):
+    report = repo / "report.json"
+    with tempfile.TemporaryDirectory() as out:
+        r = run(HERE / "resolve.py", repo / "Button.md", "--out", out, "--report", report)
+        assert report.is_file(), r.stderr[-800:]
+        doc = json.loads((pathlib.Path(out) / "Button.web.canonical.json").read_text())
+    return r, json.loads(report.read_text()), {x["id"]: x for x in doc["requirements"]}
+
+
+@test
+def a_shared_group_is_searched_only_for_its_members_and_named_by_scope():
+    """Guards: a pattern token (`control.radius`, used by several components) being either
+    invisible to the lookup or mistaken for this component's own."""
+    radius = SLOTS_OK + "| always | radius | — | id-APP-09 |\n"
+    _, rep, by = resolved(states_contract_repo(radius, "  shared:\n    control: [button, segmented-control]\n"))
+    assert by["APP-09"]["expect"] == {"equals": "component.control.radius"}, by["APP-09"]
+    assert by["APP-09"]["scope"] == "shared:control" and by["APP-01[kind=ghost]"]["scope"] == "component"
+    assert rep["specificity"] == {"component": 8, "shared:control": 1}, rep["specificity"]
+    # button is not a member: the group is not searched, and the resolver asks instead
+    _, rep, by = resolved(states_contract_repo(radius, "  shared:\n    control: [segmented-control]\n"))
+    assert "expect" not in by["APP-09"], by["APP-09"]
+    assert [(n["id"], n["group"]) for n in rep["shared_unconfirmed"]] == [("APP-09", "control")], rep
+
+
+@test
+def writeback_states_what_the_tree_answers_as_patterns_and_nothing_else():
+    """Guards: contracts that show no tokens at all when the tree answered every one of them —
+    and a write-back that decides anything the tree did not."""
+    slots = SLOTS_OK.replace("| always | background | — | id-APP-01 |",
+                             "| always | background | `component.button.primary` | id-APP-01 |") \
+        + "| always | foreground | — | id-APP-09 |\n"
+    repo = states_contract_repo(slots)
+    r = run(HERE / "writeback.py", repo / "Button.md")
+    assert r.returncode == 0, r.stderr
+    text = (repo / "Button.md").read_text()
+    assert "| when:hover | background | `component.button.{kind}-hover` | component | id-APP-02 |" in text, text
+    assert "| when:pressed | background | `component.button.{kind}-active` | component | id-APP-03 |" in text
+    assert "| when:disabled | background | `component.button.disabled` | component | id-APP-04 |" in text
+    # a pin is never replaced — only its scope is filled
+    assert "| always | background | `component.button.primary` | component | id-APP-01 |" in text
+    # the tree has no foreground: the cell stays a gap
+    assert "| always | foreground | — | — | id-APP-09 |" in text
+    again = run(HERE / "writeback.py", repo / "Button.md")
+    assert "nothing to write" in again.stdout, "write-back is not idempotent: " + again.stdout
+    _, rep, by = resolved(repo)
+    assert by["APP-02[kind=ghost]"]["expect"] == {"equals": "component.button.ghost-hover"}
+    # a pattern the tree cannot fill for some value is a finding, naming the value
+    bad = text.replace("`component.button.{kind}-hover`", "`component.button.{kind}-over`")
+    (repo / "Button.md").write_text(bad)
+    _, rep, _ = resolved(repo)
+    assert any("gives 'component.button.primary-over' for kind=primary" in l for l in rep["lint"]), rep["lint"]
+    # a scope the tree contradicts is a finding
+    (repo / "Button.md").write_text(text.replace("`component.button.disabled` | component",
+                                                 "`component.button.disabled` | semantic"))
+    _, rep, _ = resolved(repo)
+    assert any("scope says 'semantic', the tree says 'component'" in l for l in rep["lint"]), rep["lint"]
+
+
+@test
+def implementation_evidence_becomes_questions_never_edits():
+    """Guards: an implementation's choice silently becoming the contract's."""
+    repo = states_contract_repo()
+    before = (repo / "Button.md").read_text()
+    results = {"platform": "web", "results": [
+        {"id": "APP-02[kind=ghost]", "status": "FAIL", "observed": {"witness": "ghost", "css": [
+            {"css": "background-color", "value": "var(--x)", "references": ["--other"]}]}},
+        {"id": "APP-01[kind=ghost]", "status": "FAIL", "observed": {"witness": "ghost", "css": [
+            {"css": "background-color", "value": "transparent", "references": []}]}},
+        {"id": "APP-01@focus-visible[kind=ghost]", "status": "FAIL", "observed": {"witness": "ghost", "css": [
+            {"css": "background-color", "value": "transparent", "references": []}]}}]}
+    (repo / "results.json").write_text(json.dumps(results))
+    r = run(HERE / "evidence.py", repo / "Button.md", repo / "results.json", "--json")
+    found = {f["id"]: f for f in json.loads(r.stdout)}
+    assert found["APP-02[kind=ghost]"]["kind"] == "contradicts" and \
+        found["APP-02[kind=ghost]"]["tree"] == "component.button.ghost-hover", found
+    assert found["APP-01[kind=ghost]"]["implementation"] == ["transparent"], found
+    assert "APP-01@focus-visible[kind=ghost]" not in found, "an alias repeating its rest case is one question"
+    assert (repo / "Button.md").read_text() == before, "evidence must never edit the contract"
 
 
 # ---- detection ----------------------------------------------------------------------

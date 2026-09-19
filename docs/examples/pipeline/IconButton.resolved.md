@@ -64,13 +64,15 @@ Where a platform gives you this free, and where you build it by hand.
 
 ### Tokenised properties
 
-| property | state | variant | token | status |
-|---|---|---|---|---|
-| background | rest | — | — | **ambiguous** |
-| background | hover | — | `semantic.color.action.primary-hover` | bound |
-| background | disabled | — | — | **state unexpressed** |
-| background | focus-visible | — | — | **ambiguous** · rest token |
-| background | pressed | — | — | **ambiguous** · rest token |
+**Specificity:** 1 semantic — how much this component relies on tokens made for it, shared patterns, or system-wide meanings. Rest-token aliases are not counted.
+
+| property | state | variant | token | scope | status |
+|---|---|---|---|---|---|
+| background | rest | — | — | — | **ambiguous** |
+| background | hover | — | `semantic.color.action.primary-hover` | semantic | bound |
+| background | disabled | — | — | — | **state unexpressed** |
+| background | focus-visible | — | — | — | **ambiguous** · rest token |
+| background | pressed | — | — | — | **ambiguous** · rest token |
 
 ### Token gaps
 

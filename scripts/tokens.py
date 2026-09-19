@@ -288,6 +288,15 @@ class Tree:
                 continue
             self.readings[str(tok)] = {"property": tuple(props), "variant": r.get("variant"),
                                        "state": r.get("state")}
+        # Shared groups: component-tier tokens that belong to a PATTERN, not one component —
+        # `control.border-radius` serving button and segmented-control tab alike. Which
+        # components a group serves is rarely in the tree itself, so it is a confirmed fact.
+        self.shared = {}
+        for group, comps in (self.facts.get("shared") or {}).items():
+            if not isinstance(comps, list) or not comps:
+                self.problems.append("tokens.shared.%s: expected a list of components" % group)
+                continue
+            self.shared[str(group)] = [str(c) for c in comps]
         self.patterns = {}
         for role, templates in (self.facts.get("patterns") or {}).items():
             if role not in TIER_ROLES:
@@ -425,6 +434,19 @@ class Tree:
     def in_scope(self, path, scope):
         return self.scope_of(path) == scope
 
+    def groups_for(self, scope):
+        """The shared groups this component draws from, in declared order."""
+        return [g for g, comps in self.shared.items() if scope in comps and g != scope]
+
+    def specificity(self, path, scope):
+        """How specific a token is to this component: `component` (named for it alone),
+        `shared:<group>` (a pattern several components use), `semantic` (a system-wide meaning)."""
+        role = self.role_of(path)
+        if role == "component":
+            owner = self.scope_of(path)
+            return "component" if owner == scope else "shared:%s" % owner
+        return role or "unknown"
+
     def base_state(self, path):
         """(property spelling, state) — from the pattern when one matches, else the heuristic."""
         slots = self.parse(path)
@@ -499,7 +521,11 @@ class Tree:
         if prop not in PROPERTIES:
             return None, "unmapped-leaf", "%r is not a declared property" % prop
 
-        for role, sc in (("component", scope), ("semantic", None)):
+        # This component's own tokens, then the shared groups it belongs to, then semantic.
+        order = ([("component", scope, "component")]
+                 + [("component", g, "shared:%s" % g) for g in self.groups_for(scope)]
+                 + [("semantic", None, "semantic")])
+        for role, sc, where in order:
             cands = self.candidates(prop, state, role, sc)
             if dims and role == "component":
                 # A candidate whose variant CONTRADICTS the one asked for is never eligible —
@@ -511,13 +537,13 @@ class Tree:
                          if all(self.dims_of(c).get(k) == v for k, v in dims.items()
                                 if k in self.dims_of(c))]
             if len(cands) == 1:
-                return cands[0], "bound", role
+                return cands[0], "bound", where
             if len(cands) > 1:
                 return None, "ambiguous", cands
 
         # Nothing carried the state. Does the property exist at all, stateless?
         if state:
-            for role, sc in (("component", scope), ("semantic", None)):
+            for role, sc, _ in order:
                 base = self.candidates(prop, None, role, sc)
                 if base:
                     return None, "dimension-unmet", base[0]

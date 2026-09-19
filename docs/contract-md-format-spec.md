@@ -170,8 +170,15 @@ here and nowhere else — not again under Appearance, Behavior, or Accessibility
 
 ### 4.1 Token slots
 
-| when | property | token | id |
-|---|---|---|---|
+| when | property | token | scope | id |
+|---|---|---|---|---|
+
+`token` is a token path, a pattern over a visual-variant prop (`component.button.{kind}-hover`),
+`n/a — <reason>`, or `—` for a case the tree has not answered — a gap. What the tree answers is
+written back into the contract (`scripts/writeback.py`), so a finished contract shows its tokens.
+`scope` is how specific the token is to this component — `component`, `shared:<group>` or
+`semantic` — computed from the tree and checked; one row, one scope. An optional `transform`
+column states `alpha N%`.
 
 ### 4.2 Interaction states
 

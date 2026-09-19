@@ -47,11 +47,11 @@ the statement is the archetype's; this is where each platform's answer to it liv
 
 ### 4.1 Token slots
 
-| when | property | token | id |
-|---|---|---|---|
-| always | background | — | id-APP-01 |
-| when:hover | background | — | id-APP-07 |
-| when:disabled | background | — | id-APP-06 |
+| when | property | token | scope | id |
+|---|---|---|---|---|
+| always | background | — | — | id-APP-01 |
+| when:hover | background | `semantic.color.action.primary-hover` | semantic | id-APP-07 |
+| when:disabled | background | — | — | id-APP-06 |
 
 ### 4.2 Interaction states
 
