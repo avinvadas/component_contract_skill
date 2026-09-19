@@ -183,11 +183,25 @@ def check_cardinality(rows):
 # one outcome the design exists to prevent: a contract that states a fact, and a resolver
 # that reports clean without checking it.
 SLOT_HEADERS = {"property", "token", "id"}
+PLATFORM_SLOT_HEADERS = {"platform", "property", "token", "id"}
 gaps: list[dict] = []
 
 def slot_rows(text):
     for headers, rows in parse_tables(text):
-        if SLOT_HEADERS <= set(headers) and "statement" not in headers:
+        if SLOT_HEADERS <= set(headers) and "platform" not in headers and "statement" not in headers:
+            return rows
+    return []
+
+def platform_slot_rows(text):
+    """Chapter 4.4 — where a platform uses a DIFFERENT TOKEN, not merely a different spelling.
+
+    The tree is one cross-platform DTCG tree and the canonical name is the same everywhere;
+    how each platform spells it is `tokens.naming_convention.<platform>`, applied in the
+    canonical document. That covers `--color-bg` against `colorBg`. What it cannot cover is a
+    platform whose design genuinely reaches for another token — an iOS control tier that the web
+    does not have. That is stated here, per platform, and nowhere else."""
+    for headers, rows in parse_tables(text):
+        if PLATFORM_SLOT_HEADERS <= set(headers) and "statement" not in headers:
             return rows
     return []
 
@@ -263,7 +277,7 @@ def _resolve_one(tree, prop, scope, dims, state):
             return res
     return next((r for r in results if r[1] != "absent-from-tree"), results[0])
 
-def expand_slots(rows, axes):
+def expand_slots(rows, axes, coverage=True):
     """Each authored slot row, expanded to one case per value of its property's visual axes.
 
     A slot row without a `<prop>=<value>` condition applies to EVERY value of the axis — that is
@@ -297,7 +311,7 @@ def expand_slots(rows, axes):
                 continue
             extra = {k: x for k, x in combo.items() if k not in v}
             out.append((r, combo, extra))
-        if uncovered:
+        if uncovered and coverage:
             ids = ", ".join(r["id"] for r, _ in members)
             lint.append("%s: %s%s is not addressed for %s — add a row without a value condition, "
                         "or one per value (`n/a — reason` counts as an answer)"
@@ -318,9 +332,31 @@ def valid_states(fm, arch_fm):
     return list(dict.fromkeys(list((arch_fm or {}).get("interaction-states") or [])
                               + list(fm.get("interaction-states") or [])))
 
-def resolve_slots(body, fm, tree, arch_fm=None):
+def resolve_platform_slots(body, fm, tree, arch_fm=None):
+    """{platform: [cases]} from chapter 4.4, resolved exactly as the neutral slots are."""
+    rows = platform_slot_rows(body)
+    if not rows or tree is None:
+        return {}
+    known = set(fm.get("platforms", []))
+    by_platform = {}
+    for r in rows:
+        plat = r["platform"].strip().lower()
+        if plat not in known:
+            lint.append("%s: §4.4 names platform %r, which this contract does not target (%s)"
+                        % (r["id"], plat, ", ".join(sorted(known)) or "none"))
+            continue
+        by_platform.setdefault(plat, []).append(r)
+    out = {}
+    for plat, prows in by_platform.items():
+        out[plat] = resolve_slots(body, fm, tree, arch_fm, rows=prows)
+    return out
+
+def resolve_slots(body, fm, tree, arch_fm=None, rows=None, coverage=True):
     """Each declared property, per state and per variant -> a bound token, or a NAMED reason."""
-    rows = slot_rows(body)
+    # §4.4's rows OVERRIDE named cases; they answer what they name and nothing else, so the
+    # every-value rule belongs to the cross-platform table that states the component's design.
+    coverage = coverage and rows is None
+    rows = slot_rows(body) if rows is None else rows
     if not rows:
         return []
     if tree is None:
@@ -337,7 +373,7 @@ def resolve_slots(body, fm, tree, arch_fm=None):
         scenario_for(r.get("when", "always"), r["id"])
     defaults_by_prop = {p: d for p, (_, d) in axes.items()}
     out = []
-    for r, combo, extra in expand_slots(rows, axes):
+    for r, combo, extra in expand_slots(rows, axes, coverage):
         when = r.get("when", "always")
         if extra:
             conds = [] if when in ("always", "") else [when[len("when:"):]]
@@ -838,7 +874,8 @@ def main():
     inherited = requirement_rows(arch_body) + decided_policy
     local = requirement_rows(body)
     slots = resolve_slots(body, fm, S["tree"], S["arch_fm"])
-    states = check_states(body, fm, S["arch_fm"], slot_rows(body))
+    platform_slots = resolve_platform_slots(body, fm, S["tree"], S["arch_fm"])
+    states = check_states(body, fm, S["arch_fm"], slot_rows(body) + platform_slot_rows(body))
     elements = element_requirements(body, fm, S["archetype"], arch_body)
 
     check_table_headers(body)
@@ -912,8 +949,15 @@ def main():
             reqs.append(entry)
 
         conventions = ((S["tree"].facts if S["tree"] else {}) or {}).get("naming_convention") or {}
-        for slot in slots:
-            reqs.append(slot_requirement(slot, platform, conventions.get(platform), slots))
+        # A platform's own token for a case REPLACES the neutral one; anything it does not
+        # answer stays as stated for every platform. One case per property x state x variant,
+        # never two — a platform document must not contain both answers.
+        own = platform_slots.get(platform, [])
+        answered = {(c["property"], c["state"], tuple(sorted(c["variant"].items()))) for c in own}
+        here = [sl for sl in slots
+                if (sl["property"], sl["state"], tuple(sorted(sl["variant"].items()))) not in answered] + own
+        for slot in here:
+            reqs.append(slot_requirement(slot, platform, conventions.get(platform), here))
 
         doc = {"format_version": "1.0", "contract": fm["component"],
                "contract_version": fm["version"], "platform": platform,
@@ -929,6 +973,12 @@ def main():
     # Gaps and lint are different animals. A lint finding means the DOCUMENT is malformed.
     # A gap means the document is fine and the TOKEN TREE cannot express something yet —
     # a task for whoever owns the tree, not a reason to fail the parse.
+    for plat, cases in sorted(platform_slots.items()):
+        print("\nplatform tokens: %s states %d case(s) of its own, which replace the "
+              "cross-platform token there" % (plat, len(cases)))
+        for c in cases:
+            print("  - %-22s %-17s %s" % (c["id"], c["status"], slot_label(c)))
+
     if states["valid"]:
         print("\ninteraction states: " + " · ".join(
             "%s (%s)" % (st, ", ".join(states["answered"][st]) or "rest tokens")

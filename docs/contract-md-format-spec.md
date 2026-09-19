@@ -207,6 +207,16 @@ overrides the general row for that value only. So every state × property × var
 | prop | type | required | default | description |
 |---|---|---|---|---|
 
+### 4.4 Platform tokens
+
+| platform | when | property | token | id |
+|---|---|---|---|---|
+
+Only where a platform uses a DIFFERENT token. The tree is one cross-platform DTCG tree, and how
+each platform SPELLS a token is `tokens.naming_convention.<platform>`, applied in the canonical
+document — never stated here. A row replaces the 4.1 case it names (property, state, variant) in
+that platform's document alone; a platform the contract does not target fails the parse.
+
 ## 5 · Behavior
 
 ### 5.1 Requirements

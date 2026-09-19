@@ -737,6 +737,43 @@ def resolved(repo):
 
 
 @test
+def a_platform_that_reaches_for_another_token_states_it_in_4_4():
+    """Rules out: one cross-platform tree being unusable because two platforms disagree on a
+    token, and the disagreement having nowhere to live but a second tree. Spelling is the
+    naming convention's job; a DIFFERENT token is a stated row, for that platform only."""
+    repo = states_contract_repo()
+    md = (repo / "Button.md").read_text()
+    md = md.replace("platforms: [web]", "platforms: [web, ios]")
+    md = md.replace("| web | `<button>` | id-STR-01 |",
+                    "| web | `<button>` | id-STR-01 |\n| ios | `UIButton` | id-STR-02 |")
+    md = md.replace("\n### 4.2 Interaction states", """
+### 4.4 Platform tokens
+
+| platform | when | property | token | id |
+|---|---|---|---|---|
+| ios | when:kind=ghost | background | `component.button.disabled` | id-APP-20 |
+
+### 4.2 Interaction states""", 1)
+    (repo / "Button.md").write_text(md)
+    r, rep, by = resolved(repo)
+    assert not rep["lint"], rep["lint"]
+    assert by["APP-01[kind=ghost]"]["expect"] == {"equals": "component.button.ghost"}, by["APP-01[kind=ghost]"]
+    with tempfile.TemporaryDirectory() as out:
+        run(HERE / "resolve.py", repo / "Button.md", "--out", out)
+        ios = {x["id"]: x for x in json.loads(
+            (pathlib.Path(out) / "Button.ios.canonical.json").read_text())["requirements"]}
+    # iOS states its own token for that case, and states it ONCE
+    assert ios["APP-20"]["expect"] == {"equals": "component.button.disabled"}, ios["APP-20"]
+    assert "APP-01[kind=ghost]" not in ios, "the neutral case must not survive beside the platform's own"
+    assert ios["APP-01[kind=primary]"]["expect"] == {"equals": "component.button.primary"}, \
+        "a case the platform does not answer stays as stated for every platform"
+    # a platform the contract does not target is a finding
+    (repo / "Button.md").write_text(md.replace("| ios | when:kind=ghost", "| android | when:kind=ghost"))
+    _, rep, _ = resolved(repo)
+    assert any("does not target" in ln for ln in rep["lint"]), rep["lint"]
+
+
+@test
 def a_shared_group_is_searched_only_for_its_members_and_named_by_scope():
     """Guards: a pattern token (`control.radius`, used by several components) being either
     invisible to the lookup or mistaken for this component's own."""

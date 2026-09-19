@@ -13,7 +13,7 @@ and the canonical documents can never be built from different inputs.
 import argparse, pathlib, re, sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from resolve import (specificity_counts, parse_frontmatter, requirement_rows,  # noqa: E402
-                     parse_tables, resolve_slots, load_sources, check_states,
+                     parse_tables, resolve_slots, resolve_platform_slots, load_sources, check_states,
                      slot_rows, state_rows, enum_props, ENUM_PROPS, ELEMENT_HEADERS)
 import machine as sm  # noqa: E402
 
@@ -43,6 +43,7 @@ for src, label in ((arch_body, "archetype `%s`" % fm["role-archetype"]),
 # a gap table addressed to whoever owns the token tree.
 ENUM_PROPS.update(enum_props(body))
 SLOTS = resolve_slots(body, fm, S["tree"], arch_fm)
+PLATFORM_SLOTS = resolve_platform_slots(body, fm, S["tree"], arch_fm)
 STATES = check_states(body, fm, arch_fm, slot_rows(body))
 
 STATUS_LABEL = {
@@ -76,6 +77,21 @@ def token_table():
             + " — how much this component relies on tokens made for it, shared patterns, or "
               "system-wide meanings. Rest-token aliases are not counted." + NL + NL) if counts else ""
     return head + md_table(["property", "state", "variant", "token", "scope", "status"], body_rows)
+
+def platform_token_table():
+    """Where a platform reaches for a DIFFERENT token — not a different spelling of the same one."""
+    if not PLATFORM_SLOTS:
+        return ("*None. Every platform uses the same token, spelled its own way — see "
+                "`2-canonical/` for each platform's name.*" + NL)
+    rows_ = []
+    for plat, cases in sorted(PLATFORM_SLOTS.items()):
+        for c in cases:
+            if c.get("alias_of"):
+                continue
+            tok = ("`%s`" % c["token"]) if c["token"] else "—"
+            rows_.append("| %s | %s | %s | %s |" % (plat, slot_label(c), tok,
+                                                    STATUS_LABEL.get(c["status"], c["status"])))
+    return md_table(["platform", "case", "token", "status"], rows_)
 
 def state_table():
     """Every interaction state valid for this component, and the contract's answer to it."""
@@ -256,6 +272,9 @@ P.append(state_table())
 P.append("### Tokenised properties")
 P.append("")
 P.append(token_table())
+P.append("### Platform tokens")
+P.append("")
+P.append(platform_token_table())
 P.append("### Token gaps")
 P.append("")
 P.append(gap_table())

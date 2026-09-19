@@ -66,6 +66,10 @@ Where a platform gives you this free, and where you build it by hand.
 
 *None.*
 
+### Platform tokens
+
+*None. Every platform uses the same token, spelled its own way — see `2-canonical/` for each platform's name.*
+
 ### Token gaps
 
 *None. Every declared property resolves.*

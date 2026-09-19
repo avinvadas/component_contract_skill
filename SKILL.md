@@ -787,7 +787,7 @@ So a statement never names a tag, an ARIA attribute, a Compose `Role`, or a key.
 | 1 Intent | one or two sentences: what it is, what need it solves | prose only |
 | 2 Structure | what the thing is and the space it occupies | 2.1 Requirements · 2.2 Adaptive layout · 2.3 Layout props · 2.4 Element |
 | 3 Composition | what it contains, and on what terms | 3.1 Zones · 3.2 Arrangement · 3.3 Delegation |
-| 4 Appearance | which properties are tokenised, in every state and variant | 4.1 Token slots · 4.2 Interaction states · 4.3 Visual variants |
+| 4 Appearance | which properties are tokenised, in every state and variant | 4.1 Token slots · 4.2 Interaction states · 4.3 Visual variants · 4.4 Platform tokens |
 | 5 Behavior | what it does, emits, receives, and how its state moves | 5.1 Requirements · 5.2 Events · 5.3 Behavioral props · 5.4 Machine |
 | 6 Accessibility | semantic exposure — reviewable as an aspect in its own right | requirements |
 
@@ -862,6 +862,29 @@ Declare a slot for every property in the design system's declared property set t
 `<prop>=<value>` is checked against 4.3: a value that prop does not have fails the parse. A value no row covers — possible only when every row for a property and state names values — also fails, naming the uncovered values. Dimensions expand along a `size` axis instead, never along emphasis. `n/a` is one case for every value at once.
 
 **`transform`** — an optional column. When a state is expressed as a token at a stated transform rather than its own token (shadcn's hover is `primary` at 80% alpha), write `alpha 80%` there. It is compared exactly; an unstated transform in the implementation is a mismatch.
+
+### Platform tokens (4.4) — only where the TOKEN differs, never where the spelling does
+
+**One tree, cross-platform.** The design system has a single DTCG token tree and the contract
+names canonical paths from it — `component.button.primary` — for every platform at once.
+
+**Spelling is the canonical document's job.** How each platform writes that token is
+`tokens.naming_convention.<platform>` in the design-system context, applied when the canonical
+document is generated: `--cds-button-primary` on web, `buttonPrimary` on iOS. A contract never
+states a platform's spelling, and a second tree is never needed for it.
+
+**A different TOKEN is a stated row.** Where a platform's design genuinely reaches for another
+token — an iOS control tier the web does not have — chapter 4.4 says so, for that platform only:
+
+```
+| platform | when | property | token | id |
+| ios | when:appearance=primary | background | `component.button.accent.background` | id-APP-30 |
+```
+
+Each row replaces the cross-platform case it names — same property, state and variant — in that
+platform's canonical document only; every other platform keeps what 4.1 states, and a case 4.4
+does not name is unchanged everywhere. A row for a platform the contract does not target fails
+the parse. These rows are overrides, so the every-variant rule of 4.1 does not apply to them.
 
 ### Interaction states (4.2) — every valid state is answered
 
