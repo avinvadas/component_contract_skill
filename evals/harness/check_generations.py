@@ -3,7 +3,7 @@
 Until this existed, the suites only ever examined fixtures written by hand for
 the purpose — which verifies that the checkers work, not that the skill does.
 This closes that: real output the skill produced is checked on every run of the
-harness, so a regression in the skill surfaces the same way a regression in a
+harness, so a flaw in the skill's logic surfaces the same way a flaw in a
 checker would.
 
 Quarantined generations are skipped deliberately. They cannot be attributed to

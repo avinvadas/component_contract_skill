@@ -1,8 +1,8 @@
 """Contract invariants — properties every contract this skill produces must hold.
 
 Derived from SKILL.md and `docs/contract-md-format-spec.md`, component-independent, so they
-are written once and applied to every case. A case's own named regression — the one specific
-mistake it exists to catch — stays with the case; invariants keep corpus growth sublinear.
+are written once and applied to every case. A case's own named mistake — the one specific
+wrong conclusion it exists to catch — stays with the case; invariants keep corpus growth sublinear.
 
 Assertions are property-based, never diff-based: contract prose legitimately varies between
 correct runs, so only structural properties are stable.

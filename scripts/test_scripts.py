@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Regression tests for the skill's scripts. Standard library only.
+"""Logic checks for the skill's own reasoning. Standard library only.
 
     python3 scripts/test_scripts.py
 
-Each test names the failure it guards against. Several of those failures shipped once.
+Each check hands a script a small input — a token tree, a contract — and asserts the CONCLUSION
+it reaches: which tier a token is in, which token a slot binds, which question is asked. Nothing
+is rendered and no value is compared; like everything in this project, it validates logic.
+Each names the wrong conclusion it rules out, several of which the skill once reached.
 """
 import re, contextlib, io, json, pathlib, shutil, subprocess, sys, tempfile
 
