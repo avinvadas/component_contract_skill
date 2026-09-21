@@ -1165,7 +1165,7 @@ Run the algorithm exactly as that reference specifies; never write a per-compone
 
 ### Props schema (only if Q10 asked for one)
 
-**This survives the move to canonical documents, because it checks a different subject.** The canonical document describes outcomes an implementation must produce; a props schema validates a **consumer-supplied props instance** — is this a legal set of props to pass? Neither answers the other's question, and the schema is consumed by ordinary build tooling that will never read a canonical document.
+**This survives the move to canonical documents, because it checks a different subject.** The canonical document describes outcomes an implementation must produce; a props schema validates a **consumer-supplied props instance** — is this a **well-formed** set of props? Well-formed is all it means: the required props are present and the declared ones match their declared types. It says nothing about structure, accessibility or tokens, and it is not a claim that an implementation is compliant Neither answers the other's question, and the schema is consumed by ordinary build tooling that will never read a canonical document.
 
 One file per platform, `[ComponentName].[platform].schema.json`, derived from the contract's prop tables:
 
@@ -1191,7 +1191,7 @@ The mapping above has no judgement in it — it is column-to-keyword translation
 
 **Schema rules**, implemented by the script: Draft 07 (`"$schema": "http://json-schema.org/draft-07/schema#"`); `"$id"` as `[component-name]-[platform]` in kebab-case; `"title"` as display name plus platform; `"description"` on every property, copied from the contract; enums as `"type": "string"` + `"enum"`; numbers with `minimum`/`maximum` **only** where the contract states bounds; child arrays as `"items": { "$ref": "[Child].[SamePlatform].schema.json" }`, always the same platform as the schema being generated.
 
-**A `handler` prop stays in the schema, and stays in `required`, with no type.** A function is not JSON, so its shape cannot be expressed — but *"you must pass `onPress`"* is a legal fact about a props instance, and dropping the prop because its type is unexpressible would let an instance the contract forbids validate clean.
+**A `handler` prop stays in the schema, and stays in `required`, with no type.** A function is not JSON, so its shape cannot be expressed — but *"you must pass `onPress`"* is a requirement on a props instance, and dropping the prop because its type is unexpressible would let an instance the contract forbids validate clean.
 
 **`additionalProperties` is `true`, and is written out rather than left to the default.** The schema says what must hold for an implementation to be considered compliant; the contract is a **floor, not a ceiling**, so an implementation may carry whatever else it needs. Don't close this citing *nothing passes by accident* — that invariant is about a requirement that **exists** going unchecked, never about forbidding what the contract never claimed. It is stated explicitly because its absence reads as an oversight.
 

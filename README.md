@@ -340,6 +340,52 @@ shows exactly which requirements moved — that diff is your review surface.
 
 Don't commit `.resolve-report.json` or `.claude/.context-snapshot.json`. They're tool state.
 
+## Keeping it up to date
+
+You contract a component **once**. After that there is only *update*, and it asks you nothing:
+
+```bash
+python3 ~/.claude/skills/component-contract/scripts/check_generated.py
+```
+
+```
+Card
+  stale         Card.web.json      +1 (POL-07) requirement
+
+1 of 11 contract(s) out of date. Nothing was changed.
+Read the diff before updating — it names what the shared change did.
+```
+
+**Why a contract you never touched can be out of date.** A spec is built from six inputs, and
+four of them are shared with every other contract: the role-archetype, the policy, the token
+tree and your design-system facts. Decide a policy row while contracting Modal, and every
+contract that *engages* that row has moved — with nothing in its own directory to say so.
+
+Most of the time nothing has. Shared changes are front-loaded (your first component records a
+lot, your tenth records none) and a policy row only reaches contracts whose `engaged-by`
+matches it. So this is usually a two-second no-op.
+
+When it isn't, **read the diff before running `--fix`.** It names what the shared decision did
+— *"the button archetype gained a requirement; here are the fourteen components that now
+inherit it"* — and that is the only moment anyone sees it. Expect some verifier runs to go red
+afterwards: that's the new obligation being real, not a regression.
+
+Two findings are never fixed for you. An **orphan** is a generated file nothing produces any
+more — usually a platform dropped from a contract — and deleting it is your call. **CANNOT
+CHECK** means that contract doesn't resolve; fix its lint first, which is a different problem
+from being out of date.
+
+Separately, and on a clock rather than on a run:
+
+```bash
+python3 ~/.claude/skills/component-contract/scripts/check_references.py
+```
+
+The skill's derivations are grounded in external standards, and each records when it was last
+checked. This reports which are due. Nothing else can detect that a standard moved — the
+reasoning it produced was frozen into your contract's text when it was written, so re-running
+reproduces that text unchanged no matter what the standard now says.
+
 ---
 
 # Part 2 — Implementing and checking a component

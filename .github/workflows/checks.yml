@@ -1,0 +1,45 @@
+# The skill's own checks. Python 3, no dependencies, so there is nothing to install.
+#
+# Two jobs, because they answer different questions on different clocks. `logic` asks whether
+# the skill still reaches the right conclusions, and runs on every change. `references` asks
+# whether the external standards it derives from have gone stale, which has nothing to do with
+# anyone pushing — it is the one form of drift no amount of re-running can detect, so it runs
+# on a schedule and reports rather than fixes.
+name: checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 9 * * 1"        # Mondays, 09:00 UTC
+  workflow_dispatch:
+
+jobs:
+  logic:
+    name: logic checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Logic checks
+        run: python3 scripts/test_scripts.py
+      - name: Contract invariants
+        run: python3 evals/harness/invariants.py
+
+  references:
+    name: reference freshness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Exits 1 when a file is due. On a scheduled run that is the point — it should be
+      # visible. It never edits a reference: deciding whether a standard MATERIALLY changed is
+      # a reading task for a person, and an unreviewed rewrite of a curated explanation is
+      # exactly what this must not cause.
+      - name: Reference freshness
+        run: python3 scripts/check_references.py
