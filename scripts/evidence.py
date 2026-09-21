@@ -26,7 +26,9 @@ asked in the tree's vocabulary.
 It also carries `document_digest` when it follows docs/verifier-results-format.md, and that is
 CHECKED: questions are derived from the document the run observed, so if that document has since
 moved, answering them would edit a contract on the strength of a run that no longer applies.
-A results file with no digest predates the format — it warns once and proceeds.
+A results file with no digest predates the format — it warns once and proceeds. Whether a
+results file is a well-formed claim at all is a wider question, answered by
+`scripts/check_results.py`; this asks only whether it applies HERE.
 """
 import argparse, hashlib, json, pathlib, sys
 
@@ -47,6 +49,17 @@ def check_provenance(res, contract_dir, force=False):
     about requirements that no longer exist, and answering them edits a contract on the
     strength of a stale run. See docs/verifier-results-format.md.
     """
+    import check_results
+    later = check_results.unreadable_format(res)
+    if later:
+        # What `format_version` is for. Reading the fields we recognise out of a file written
+        # to a later format is the one failure the field exists to prevent: a field whose
+        # MEANING changed still parses, and the questions below would be wrong without saying so.
+        print("These results are written to format %s; this skill reads %s.x.\n"
+              "Update the skill, or re-run a verifier that writes the format it knows."
+              % (later, check_results.READS), file=sys.stderr)
+        return bool(force)
+
     claimed = res.get("document_digest")
     if not claimed:
         # Pre-format-1.0 results carry no digest. Warn once and proceed: this is a migration,

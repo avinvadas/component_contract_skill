@@ -504,6 +504,44 @@ TREE's own statement wrong?
 
 An implementation is **evidence**. Only the token tree and a person are **authority**.
 
+### If it exits 2 instead
+
+`evidence.py` refuses when the results were observed against a **different document** than the
+one on disk now — someone decided a policy row, or an archetype moved, and the questions would
+be about requirements that no longer exist. Re-run your verifier against the current document.
+`--force` exists for the case where the difference provably cannot affect what was observed.
+
+## Step 5 — Is the results file a claim you can keep?
+
+A results file is how a product records *"this build satisfied Button v1.0"*. That only works
+if it says which build and which version of what. To find out whether yours does:
+
+```bash
+python3 ~/.claude/skills/component-contract/scripts/check_results.py results.json
+```
+
+```
+results.json does not follow docs/verifier-results-format.md (4):
+  - format_version           absent. Without it a consumer cannot tell what it is reading
+  - contract_version         absent or not a string
+  - document_digest          absent
+  - subject                  must be an object; found nothing
+```
+
+Two levels, and they exit differently:
+
+| | Means | Exit |
+|---|---|---|
+| **error** | the file is malformed — a required field absent, a summary that disagrees with the rows it counts | 1 |
+| **note** | the file is fine but says less than it could — a subject with no version, so the claim is about an unidentified build | 0 |
+
+Add `--document Button/generated/Button.web.json` to also confirm the file's digest is of the
+document you hold.
+
+It says **nothing** about whether your component is compliant — that is your verifier's report.
+It says whether the file can still be believed in six months. Findings here are for whoever
+owns the verifier; `docs/verifier-results-format.md` is what they implement.
+
 ## What your platform can actually check
 
 This differs a lot, and it's better to know before you invest:
@@ -533,6 +571,7 @@ python3 $S/scripts/schema.py      Button/Button.md         # props schema, if yo
 python3 $S/scripts/check_generated.py                      # are all contracts still up to date?
 python3 $S/scripts/learned.py     diff                     # what this run taught the system
 python3 $S/scripts/evidence.py    Button/Button.md results.json
+python3 $S/scripts/check_results.py results.json           # is that a claim you can keep?
 ```
 
 Python 3, no dependencies. Everything is written to `Button/generated/`; pass `--out` only if

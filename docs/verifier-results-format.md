@@ -1,6 +1,9 @@
 # Verifier results — the format, and what a verifier must echo
 
-Status: **proposed**. No verifier implements this yet.
+Status: **proposed**. The skill's side is built — `scripts/check_results.py` validates a file
+against this page, and `scripts/evidence.py` enforces the provenance rule below. No verifier
+emits it yet, so those checks run in migration mode: a file without the new fields warns and
+proceeds. This becomes **adopted** when a verifier writes it.
 
 A verifier reads a per-platform document and reports what it observed. This specifies what it
 writes back, so that **compliance becomes a fact about a version rather than a fact about a
@@ -72,6 +75,9 @@ the document that was verified is the document you now hold.
     "cannot_observe": {
       "announcement": "does not capture what a screen reader would speak",
       "name-provenance": "reads the computed name, not which node supplied it"
+    },
+    "cannot_establish": {
+      "touch_input": "headless Chrome reports no touch points"
     }
   },
 
@@ -81,7 +87,7 @@ the document that was verified is the document you now hold.
 
   "results": [
     { "id": "STR-02", "status": "PASS", "statement": "…", "detail": "…" },
-    { "id": "BTN-11", "status": "UNVERIFIED", "statement": "…",
+    { "id": "BTN-11", "status": "UNVER", "statement": "…",
       "detail": "headless Chrome cannot establish touch_input" }
   ]
 }
@@ -99,10 +105,18 @@ the document that was verified is the document you now hold.
 | `subject` | yes | what was observed. `name` required; `version` and `ref` strongly encouraged — a claim about an unidentified build is not much of a claim |
 | `verifier.name`, `.version` | yes | which tool, which revision of it |
 | `verifier.cannot_observe` | yes | copied from its `capability.json`. **A result from a weak verifier and a strong one are not the same claim**, and this is what makes the difference legible |
+| `verifier.cannot_establish` | yes | also from `capability.json`. Distinct from the above and equally load-bearing: *cannot observe* is a verdict it could not read, *cannot establish* is a scenario it could not build (touch input, RTL, reduced motion). A run that skipped touch-target checks because it could not create a touch device means something different from one that checked them |
 | `verifier.strategies` | yes | `witness` / `construct` |
 | `produced_at` | yes | ISO 8601, UTC. A compliance claim with no date ages badly |
 | `summary` | yes | all four counts. See below |
 | `results` | yes | unchanged. `observed` stays as it is — `evidence.py` reads it |
+
+Both capability maps may be `{}`, but no verifier this project has met is in that position, and
+an empty one is reported as a claim worth re-reading rather than accepted quietly.
+
+A row's `status` is one of **`PASS`**, **`FAIL`**, **`UNVER`**, **`N/A`** — the spelling every
+verifier here already writes. `UNVERIFIED` is not a synonym: `evidence.py` matches the status
+string literally, so rows spelled the long way are read as nothing at all.
 
 Everything already present keeps its meaning. This is **additive**: a consumer reading only
 `results` is unaffected.
@@ -134,14 +148,24 @@ Six things, all cheap. Five of the six come from files it already opens.
 
 1. Copy `contract_version` and `generated_from` from the document it is already reading.
 2. Hash the document file's bytes → `document_digest`.
-3. Copy `cannot_observe` and `strategies` from its own `capability.json`.
-4. Name itself and its own version.
+3. Copy `cannot_observe`, `cannot_establish` and `strategies` from its own `capability.json`.
+4. Name itself and its own version. A `capability.json` written before this format has no
+   `version` field; add one, because "which revision of the tool" is not answerable later
+   from a name alone.
 5. Stamp `produced_at`.
 6. **Accept a `subject`** — the one genuinely new input. A verifier cannot discover what it is
    driving; its runner must be told, from a package version, a git ref, a build id.
 
 Nothing here requires reading the contract, the token tree, or anything the verifier does not
-already have.
+already have. Five of the six are fields it has already opened a file to read.
+
+Run `python3 scripts/check_results.py results.json` to find out whether what it wrote is a
+claim. Two levels, the same lint/gap distinction the rest of the project uses: an **error** is
+the file malformed against this spec — a field absent, a digest that is not a digest, a summary
+disagreeing with the rows it counts — and a **note** is the file saying less than it could, such
+as a subject with no version. Errors exit 1; notes exit 0. It reads no contract and no token
+tree, and says nothing whatever about whether the implementation is compliant. That remains the
+verifier's report to make.
 
 ---
 

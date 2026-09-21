@@ -54,6 +54,7 @@ Both are revisited once the four supported platforms are stable, tested, and val
 | `scripts/writeback.py <Component>.md` | Phase 6, after the first resolve — writes every token the tree answers into the contract's own slots, as a token or a `{variant}` pattern, with its `scope`. Asks nothing, decides nothing the tree did not. |
 | `scripts/resolve_view.py <Component>.md [--out FILE]` | The same contract needs its human-readable resolved view. |
 | `scripts/evidence.py <Component>.md <results.json>` | An implementation has been observed (a verifier's results). Turns what it contradicts or adds to the tree into questions. Never edits the contract. |
+| `scripts/check_results.py <results.json> [--document FILE] [--json]` | A verifier's results file has arrived and it is not obvious it is a claim at all. Checks it against `docs/verifier-results-format.md`: an **error** is the file malformed (a field absent, a summary disagreeing with the rows it counts), a **note** is it saying less than it could (a subject with no version). Reads no contract and no token tree, and says nothing about whether the implementation is compliant — that is the verifier's report to make. |
 | `scripts/learned.py snapshot` / `diff` | At the start of a run, and at the end — reports what this run added to the design system's own layer. |
 | `scripts/test_scripts.py` | After changing any script. |
 
@@ -1091,6 +1092,8 @@ When an implementation has been observed — a verifier run against the real com
 ```bash
 python3 <skill>/scripts/evidence.py [ComponentName]/[ComponentName].md results.json
 ```
+
+If it exits **2**, it has refused: the results were observed against a different document, or are written to a results format this skill does not read. Re-run the verifier against the document as it stands; `--force` only when the difference provably cannot affect what was observed. If the results file looks wrong in some other way — no version anywhere, a summary that does not match its rows — run `python3 <skill>/scripts/check_results.py results.json` to find out what is missing, and give the answer to whoever owns the verifier. It is their file to fix.
 
 It lists where the implementation **contradicts** the tree (a different token, a literal) and where it **adds** to it (a token where the tree had no answer, or where the contract says `n/a`), in the tree's own token names. **Change nothing on the strength of it.** Ask each one, grouped as it prints, with three answers: the **contract** is wrong (edit it), the **component** is defective (report it), or the **tree**'s own statement is wrong (a description or a reading — fix it there). An implementation is evidence; only the tree and the person are authority.
 

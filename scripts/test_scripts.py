@@ -1166,6 +1166,133 @@ def evidence_refuses_results_observed_against_a_different_document():
     assert out.getvalue() == "", "stdout must stay clean: %r" % out.getvalue()
 
 
+# ---- a verifier's results as a compliance claim ------------------------------------------
+def _cr():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("cr_results", HERE / "check_results.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+def a_claim(**over):
+    """A results file that follows docs/verifier-results-format.md completely."""
+    res = {"format_version": "1.0",
+           "contract": "Button", "platform": "web", "contract_version": "1.0",
+           "document_digest": "sha256:" + "a" * 64,
+           "generated_from": "Button.md v1.0 + archetype button v1.0 + system policy.",
+           "subject": {"name": "@acme/button", "version": "9.54.0", "ref": "git:4a91c2e"},
+           "verifier": {"name": "web-chrome", "version": "1.0", "strategies": ["witness"],
+                        "cannot_observe": {"announcement": "does not capture speech"},
+                        "cannot_establish": {"touch_input": "no touch points"}},
+           "produced_at": "2026-09-21T14:03:11Z",
+           "summary": {"pass": 1, "fail": 0, "unverified": 1, "n_a": 0},
+           "results": [{"id": "STR-02", "status": "PASS", "statement": "the element is a button"},
+                       {"id": "BTN-11", "status": "UNVER", "statement": "the target is 44pt"}]}
+    res.update(over)
+    return res
+
+
+@test
+def a_complete_claim_is_silent_and_a_summary_that_miscounts_is_not():
+    """Guards: the sentence everyone quotes drifting from the rows beneath it.
+
+    `summary` is derived, so it can disagree with `results` without anything looking wrong —
+    and it is the part that gets pasted into a release note. Recounting is the one field in
+    the file that can be checked against the file's own contents.
+    """
+    cr = _cr()
+    assert cr.check(a_claim()) == [], cr.check(a_claim())
+
+    miscount = a_claim(summary={"pass": 2, "fail": 0, "unverified": 0, "n_a": 0})
+    says = {f: w for _, f, w in cr.check(miscount)}
+    assert "summary.pass" in says and "summary.unverified" in says, says
+    assert "says 2" in says["summary.pass"] and "hold 1" in says["summary.pass"], says
+
+    # An omitted count is worse than a wrong one: a summary with no `unverified` key reads
+    # as a clean run to anything that sums what it finds.
+    short = a_claim(summary={"pass": 1, "fail": 0, "n_a": 0})
+    assert "summary.unverified" in {f for _, f, _ in cr.check(short)}, cr.check(short)
+
+
+@test
+def the_long_spelling_of_unverified_is_rejected_because_it_reads_as_nothing():
+    """Guards: `UNVERIFIED` being treated as a harmless synonym of `UNVER`.
+
+    `evidence.py` matches the status string literally — `r["status"] == "UNVER"` — so a
+    verifier that writes the long spelling has its unverified rows read as nothing at all.
+    That is the accidental pass this project exists to prevent, so it is an error, not a note.
+    """
+    cr = _cr()
+    rows = [{"id": "BTN-11", "status": "UNVERIFIED", "statement": "the target is 44pt"}]
+    bad = a_claim(results=rows, summary={"pass": 0, "fail": 0, "unverified": 1, "n_a": 0})
+    says = {f: w for _, f, w in cr.check(bad)}
+    assert "BTN-11.status" in says, says
+    assert "UNVER" in says["BTN-11.status"], says["BTN-11.status"]
+    assert all(lvl == "error" for lvl, f, _ in cr.check(bad) if f == "BTN-11.status")
+    # And the status the spec names is the one every verifier here already writes.
+    assert cr.STATUSES == ("PASS", "FAIL", "UNVER", "N/A"), cr.STATUSES
+
+
+@test
+def a_claim_about_an_unidentified_build_is_a_note_not_a_failure():
+    """Guards: thin-but-well-formed and malformed sharing one exit code.
+
+    A subject with no version is a weaker claim, not a broken file — the same distinction as
+    lint against gaps everywhere else here. Collapsing the two teaches people to ignore both.
+    """
+    cr = _cr()
+    thin = a_claim(subject={"name": "@acme/button"})
+    levels = {f: lvl for lvl, f, _ in cr.check(thin)}
+    assert levels == {"subject": "note"}, levels
+
+    # A verifier claiming it can observe everything is likewise re-readable, not wrong.
+    boastful = a_claim(verifier=dict(a_claim()["verifier"], cannot_observe={}))
+    assert {f: lvl for lvl, f, _ in cr.check(boastful)} == {"verifier.cannot_observe": "note"}
+
+    # Absent, though, is absent: the map is what makes a weak verifier legible as one.
+    v = dict(a_claim()["verifier"])
+    del v["cannot_establish"]
+    missing = cr.check(a_claim(verifier=v))
+    assert ("error", "verifier.cannot_establish", "absent") in missing, missing
+
+
+@test
+def results_from_a_later_format_are_refused_rather_than_partly_read():
+    """Guards: reading the fields we recognise out of a file we do not understand.
+
+    This is the only thing `format_version` is for. A later format can change what an existing
+    field MEANS while it still parses, so half-reading one produces confident questions from
+    a misread file — which is the same failure the digest check prevents, one level up.
+    """
+    cr, ev = _cr(), None
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("ev", HERE / "evidence.py")
+    ev = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ev)
+
+    assert cr.unreadable_format(a_claim()) is None
+    assert cr.unreadable_format(a_claim(format_version="2.0")) == "2.0"
+    # A file that declares nothing predates the format; that is a migration, not a later one.
+    assert cr.unreadable_format({"contract": "Button"}) is None
+
+    later = cr.check(a_claim(format_version="2.0"))
+    assert [f for _, f, _ in later] == ["format_version"], later
+
+    _, home = one_contract_repo()
+    doc = home / "generated/Button.web.json"
+    res = {"contract": "Button", "platform": "web", "format_version": "2.0",
+           "document_digest": ev.digest(doc)}
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()) as out:
+        # Refused although the digest MATCHES: the document is right and the file still
+        # cannot be read.
+        assert ev.check_provenance(res, home) is False, "a later format must refuse"
+        assert ev.check_provenance(res, home, force=True) is True, "--force must override"
+    assert "2.0" in err.getvalue(), err.getvalue()
+    assert out.getvalue() == "", "stdout must stay clean: %r" % out.getvalue()
+
+
 # ---- reference freshness ---------------------------------------------------------------
 @test
 def a_reference_with_no_date_can_never_come_due_so_it_is_a_finding():
