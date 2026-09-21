@@ -1113,6 +1113,27 @@ def a_required_handler_stays_in_the_schema_with_no_type():
                                              "default": False}, doc["properties"]["disabled"]
 
 
+@test
+def a_schema_permits_props_the_contract_never_spoke_to():
+    """Guards: `additionalProperties: false`, argued for from "nothing passes by accident".
+
+    The contract is a floor, not a ceiling — it says what must hold for an implementation to
+    be compliant, and an implementation may carry whatever else it needs. That invariant is
+    about requirements that EXIST going unchecked, never about forbidding what was never
+    claimed. The two get conflated, which is why this is asserted rather than left implicit.
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("sch", HERE / "schema.py")
+    sch = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(sch)
+
+    fm, body = sch.parse_frontmatter((PIPE / "1-contract/Button.md").read_text())
+    doc = sch.build(fm, body, "web")
+    assert doc.get("additionalProperties") is True, doc.get("additionalProperties")
+    # And it is stated, not merely left to the default, so its absence cannot read as an oversight.
+    assert "additionalProperties" in doc, sorted(doc)
+
+
 # ---- reference freshness ---------------------------------------------------------------
 @test
 def a_reference_with_no_date_can_never_come_due_so_it_is_a_finding():

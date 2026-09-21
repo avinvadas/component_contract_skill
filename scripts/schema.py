@@ -140,7 +140,14 @@ def build(fm, body, platform):
            "$id": "%s-%s" % (kebab(name), platform),
            "title": "%s props (%s)" % (name, platform),
            "$comment": "%s.md v%s. Do not edit." % (name, fm.get("version", "?")),
-           "type": "object"}
+           "type": "object",
+           # Written out although `true` is the default, because its absence reads as an
+           # oversight and invites someone to close it. The contract is a FLOOR, not a
+           # ceiling: it says what must hold for an implementation to be compliant, and an
+           # implementation may carry whatever else it needs. "Nothing passes by accident"
+           # governs requirements that EXIST going unchecked — a missing required handler
+           # fails — never props the contract never spoke to.
+           "additionalProperties": True}
     if required:
         # A name can be both a zone and a prop — `label` is the content in 3.1 and the API
         # surface in 5.3 — so the later table wins the schema and the name is required once.

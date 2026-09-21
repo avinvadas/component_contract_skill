@@ -1193,6 +1193,8 @@ The mapping above has no judgement in it — it is column-to-keyword translation
 
 **A `handler` prop stays in the schema, and stays in `required`, with no type.** A function is not JSON, so its shape cannot be expressed — but *"you must pass `onPress`"* is a legal fact about a props instance, and dropping the prop because its type is unexpressible would let an instance the contract forbids validate clean.
 
+**`additionalProperties` is `true`, and is written out rather than left to the default.** The schema says what must hold for an implementation to be considered compliant; the contract is a **floor, not a ceiling**, so an implementation may carry whatever else it needs. Don't close this citing *nothing passes by accident* — that invariant is about a requirement that **exists** going unchecked, never about forbidding what the contract never claimed. It is stated explicitly because its absence reads as an oversight.
+
 ---
 
 ## Output
