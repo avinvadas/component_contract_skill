@@ -1229,6 +1229,44 @@ def the_freshness_notice_is_carried_by_the_scripts_a_run_actually_executes():
 
 
 @test
+def a_render_timestamp_is_not_mistaken_for_a_publication_date():
+    """Guards: a check that fires every run, for ever, and so is tuned out.
+
+    Apple's accessibility page is rendered per request and sends `Last-Modified` = now. Trust
+    the header over the document's own date and that file is "changed" every single run —
+    which is worse than no check, because it teaches everyone to ignore the output. So the
+    document's own date wins, and a header dated today is not believed at all.
+    """
+    import importlib.util, datetime
+    spec = importlib.util.spec_from_file_location("cr", HERE / "check_references.py")
+    cr = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cr)
+    today = datetime.date(2026, 9, 21)
+    hdr = {"Last-Modified": "Mon, 21 Sep 2026 08:00:00 GMT"}
+
+    # The document's own date wins over a header, even a plausible one.
+    when, how = cr.extract_date('<time class="dt-published" datetime="2024-12-12">',
+                                {"Last-Modified": "Wed, 02 Sep 2026 08:00:00 GMT"}, today)
+    assert (when, how) == (datetime.date(2024, 12, 12), "w3c <time>"), (when, how)
+
+    # A header dated today is a render timestamp, not a change. Never believed.
+    assert cr.extract_date("<html>nothing dated here</html>", hdr, today) == (None, None)
+
+    # An older header is believed, when the document says nothing itself.
+    when, how = cr.extract_date("<html/>", {"Last-Modified": "Wed, 26 Aug 2026 08:00:00 GMT"},
+                                today)
+    assert (when, how) == (datetime.date(2026, 8, 26), "Last-Modified header"), (when, how)
+
+    # The shapes that carry the accessibility standards.
+    assert cr.extract_date("W3C Recommendation, 05 October 2023", {}, today)[0] \
+        == datetime.date(2023, 10, 5)
+    assert cr.extract_date("Living Standard — Last Updated 3 March 2026", {}, today)[0] \
+        == datetime.date(2026, 3, 3)
+    # A date that does not exist must not crash the run.
+    assert cr.extract_date('datetime="2026-02-31"', {}, today) == (None, None)
+
+
+@test
 def a_reference_citing_no_url_is_checked_differently_not_skipped():
     """Guards: `platform-differences.md` reported as citing nothing, or quietly dropped.
 

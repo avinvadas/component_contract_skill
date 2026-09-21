@@ -42,4 +42,4 @@ jobs:
       # a reading task for a person, and an unreviewed rewrite of a curated explanation is
       # exactly what this must not cause.
       - name: Reference freshness
-        run: python3 scripts/check_references.py
+        run: python3 scripts/check_references.py --online
