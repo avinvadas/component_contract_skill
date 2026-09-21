@@ -1191,6 +1191,44 @@ def a_reference_with_no_date_can_never_come_due_so_it_is_a_finding():
 
 
 @test
+def the_freshness_notice_is_carried_by_the_scripts_a_run_actually_executes():
+    """Guards: Phase 0A being an instruction and nothing more.
+
+    A run that skipped the check would produce an identical contract, and nothing anywhere
+    would say so. The scripts that run early carry the notice themselves, so the check
+    happens whether or not it was asked for — and it stays on stderr and stays silent when
+    nothing is due, or it would be tuned out.
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("cr", HERE / "check_references.py")
+    cr = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cr)
+
+    out, err = io.StringIO(), io.StringIO()
+    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+        cr.notice(days=90)
+    assert out.getvalue() == "", "the notice must never touch stdout: %r" % out.getvalue()
+    assert err.getvalue() == "", "nothing is due, so it must say nothing"
+
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err):
+        cr.notice(days=0)
+    assert "check_references" in err.getvalue(), err.getvalue()
+
+    for script in ("learned.py", "detect_tokens.py", "resolve.py"):
+        t = (HERE / script).read_text()
+        assert "check_references.notice()" in t, "%s does not carry the notice" % script
+
+    # A broken references directory must never be the reason a contract cannot be resolved.
+    real, cr.REFS = cr.REFS, pathlib.Path("/nonexistent")
+    try:
+        with contextlib.redirect_stderr(io.StringIO()):
+            cr.notice()                                    # must not raise
+    finally:
+        cr.REFS = real
+
+
+@test
 def a_reference_citing_no_url_is_checked_differently_not_skipped():
     """Guards: `platform-differences.md` reported as citing nothing, or quietly dropped.
 

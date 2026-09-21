@@ -67,6 +67,32 @@ def survey(days, today=None):
     return due, fresh, broken
 
 
+def notice(days=90):
+    """One line to stderr when a reference is overdue. Silent otherwise. Never raises.
+
+    Phase 0A tells the skill to check at every start, but an instruction is not a mechanism:
+    a run that skipped it would produce an identical contract and nothing would say so. So
+    every script that runs early in a run calls this, and the check happens whether or not
+    anyone remembered to ask for it.
+
+    stderr, so nothing that parses a script's stdout is affected. Silent on any failure — a
+    freshness notice must never be the reason a contract cannot be resolved, which is the
+    same rule Phase 0A states for itself.
+    """
+    try:
+        due, _, broken = survey(days)
+        if not due and not broken:
+            return
+        names = [pathlib.Path(r["file"]).stem for r in due + broken]
+        shown = ", ".join(names[:3]) + (", +%d" % (len(names) - 3) if len(names) > 3 else "")
+        print("note: %d reference file(s) due to be re-checked (%s).\n"
+              "      Run scripts/check_references.py. A stale reference is invisible to every\n"
+              "      other check here — the date is the only signal there is.\n"
+              % (len(names), shown), file=sys.stderr)
+    except Exception:                                      # noqa: BLE001
+        return
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--days", type=int, default=90,

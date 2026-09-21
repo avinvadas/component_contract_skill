@@ -466,4 +466,8 @@ def main():
 
 
 if __name__ == "__main__":
+    # Phase 0A is an instruction; this is the mechanism. Every script that runs early in a
+    # run carries it, so the freshness check happens whether or not anyone asked for it.
+    import check_references
+    check_references.notice()
     main()

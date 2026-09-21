@@ -1061,4 +1061,9 @@ def main():
 
 
 if __name__ == "__main__":
+    # Phase 0A is an instruction; this is the mechanism. resolve.py runs on every run, so the
+    # freshness check happens whether or not anyone asked for it. stderr, and silent unless
+    # something is due — a notice that fires every time is a notice nobody reads.
+    import check_references
+    check_references.notice()
     main()
