@@ -155,6 +155,10 @@ against the document the run actually observed, so it gains a provenance check:
   exists, and answering them would edit a contract on the strength of a stale run.
 - **no digest** (a pre-format-1.0 file) → warn once, proceed. Migration, not a wall.
 
+**Implemented.** Exit 2 on a refusal — not 1, so a caller cannot mistake a refused run for a
+report it can act on. `--force` overrides, for when the difference provably cannot affect what
+was observed.
+
 That check is the reason to adopt this at all: without it, nothing stops an old results file
 producing confident, wrong questions.
 

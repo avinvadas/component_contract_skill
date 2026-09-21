@@ -1134,6 +1134,38 @@ def a_schema_permits_props_the_contract_never_spoke_to():
     assert "additionalProperties" in doc, sorted(doc)
 
 
+@test
+def evidence_refuses_results_observed_against_a_different_document():
+    """Guards: a stale run producing confident, wrong questions.
+
+    Questions are derived from the document the run observed. If a policy row was decided or
+    an archetype moved since, the questions concern requirements that may no longer exist —
+    and answering one edits a contract on the strength of a run that no longer applies.
+    A results file with no digest predates the format: it warns and proceeds, so adopting
+    this does not break every verifier that exists today.
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("ev", HERE / "evidence.py")
+    ev = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ev)
+
+    _, home = one_contract_repo()
+    doc = home / "generated/Button.web.json"
+    good = {"contract": "Button", "platform": "web", "document_digest": ev.digest(doc)}
+    legacy = {"contract": "Button", "platform": "web"}
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()) as out:
+        assert ev.check_provenance(good, home) is True, "a matching digest must proceed"
+        stale = dict(good, document_digest="sha256:" + "0" * 64)
+        assert ev.check_provenance(stale, home) is False, "a stale digest must refuse"
+        assert ev.check_provenance(stale, home, force=True) is True, "--force must override"
+        assert ev.check_provenance(legacy, home) is True, "no digest must warn, not block"
+    assert "document_digest" in err.getvalue(), "the warning must name what is missing"
+    # Every diagnostic goes to stderr. One printed to stdout corrupted `--json`, which is
+    # parsed by whatever called it — the check above caught exactly that.
+    assert out.getvalue() == "", "stdout must stay clean: %r" % out.getvalue()
+
+
 # ---- reference freshness ---------------------------------------------------------------
 @test
 def a_reference_with_no_date_can_never_come_due_so_it_is_a_finding():
