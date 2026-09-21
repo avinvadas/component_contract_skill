@@ -6,7 +6,9 @@ You answer questions about a component in plain language. It writes a **contract
 document saying what that component *is*, for every platform at once. Then each platform can
 check its own build against it.
 
-You never need to know HTML, ARIA, or any platform's accessibility API. That part is derived.
+You don't have to author the HTML, ARIA or platform accessibility details yourself — the skill
+derives them from the standards in `references/`. It is not an accessibility audit; see
+[Scope](#scope).
 
 ---
 
@@ -514,6 +516,30 @@ real rendered tree on either, so a contract targeting them could be written but 
 - **The interview path is written but unproven.** The format and the resolver are exercised
   heavily against real design systems; the full run from interview to contract has not been
   done end to end since the format changed.
+
+## Scope
+
+**"Compliant" here means one thing: matches this design system's own contract.** It does not
+mean conformant with WCAG, the ADA, EN 301 549, Section 508, or any other standard or law.
+A component can satisfy every requirement in its contract and still be inaccessible, because a
+contract only ever checks what someone wrote into it.
+
+A few things follow from that, and they are worth knowing before you rely on any of this:
+
+- **This is not an accessibility audit and does not replace one.** It checks that an
+  implementation matches a specification. Whether that specification is any good is a separate
+  question, and not one this tool asks.
+- **A passing run is not a clean bill of health.** `unverified` means *nobody checked* — on a
+  compiled native app that is most of the contract. Read the counts, not the colour.
+- **The derivations are grounded in external standards, not certified against them.** Standards
+  move; `references/` records when each was last checked, and `check_references.py` reports what
+  is overdue — which is an honest admission that a derivation can age out of date.
+- **Determining and meeting your legal obligations remains yours.** Accessibility requirements
+  differ by jurisdiction and by sector, and nothing here assesses them.
+
+This is free, open-source software provided as-is under the [MIT licence](LICENSE), with no
+warranty and no liability, and that applies to everything it generates as much as to the code
+that generates it.
 
 ## More
 
