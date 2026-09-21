@@ -1068,15 +1068,49 @@ def a_contract_that_does_not_resolve_is_never_reported_up_to_date():
 
 
 @test
-def a_schema_is_named_unverifiable_never_orphan_and_never_passed():
-    """Guards: `*.schema.json` — written by the skill, not by any script — being called an
-    orphan and deleted, or quietly counted as up to date."""
+def a_props_schema_is_checked_like_everything_else_in_generated():
+    """Guards: the one file in generated/ that nothing could reproduce.
+
+    While the schema was written by the skill rather than by a script, it had to be excused
+    from the check — which put an exception in the one rule generated/ rests on, so a diff
+    there had two possible meanings. It is generated now, so it is checked now.
+    """
     cg = _cg()
     _, home = one_contract_repo()
-    (home / "generated/Button.web.schema.json").write_text("{}\n")
+    run(HERE / "schema.py", home / "Button.md", "--out", home / "generated")
+    assert (home / "generated/Button.web.schema.json").is_file(), "schema.py wrote nothing"
+    assert not [f for f in cg.check_one(home / "Button.md")["findings"]
+                if f["kind"] in cg.ACTIONABLE], "a freshly generated schema must be silent"
+
+    (home / "generated/Button.web.schema.json").write_text('{"$id": "edited"}\n')
     kinds = {f["file"]: f["kind"] for f in cg.check_one(home / "Button.md")["findings"]}
-    assert kinds.get("Button.web.schema.json") == "unverifiable", kinds
-    assert "unverifiable" not in cg.ACTIONABLE, "unverifiable must not fail the check"
+    assert kinds.get("Button.web.schema.json") == "stale", kinds
+
+
+@test
+def a_required_handler_stays_in_the_schema_with_no_type():
+    """Guards: a props instance missing a required handler validating clean.
+
+    A function is not JSON, so its shape cannot be checked — but "you must pass onPress" is a
+    legal fact about a props instance. Dropping the prop because its type is unexpressible
+    would let the schema pass something the contract forbids.
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("sch", HERE / "schema.py")
+    sch = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(sch)
+
+    fm, body = sch.parse_frontmatter((PIPE / "1-contract/Button.md").read_text())
+    doc = sch.build(fm, body, "web")
+    assert "onPress" in doc["properties"], doc["properties"].keys()
+    assert "onPress" in doc["required"], doc["required"]
+    assert "type" not in doc["properties"]["onPress"], doc["properties"]["onPress"]
+    # A name that is both a zone (3.1) and a prop (5.3) is required once, not twice.
+    assert len(doc["required"]) == len(set(doc["required"])), doc["required"]
+    # Bounds are never invented: a plain `boolean` carries no minimum/maximum.
+    assert doc["properties"]["disabled"] == {"type": "boolean",
+                                             "description": "blocks activation",
+                                             "default": False}, doc["properties"]["disabled"]
 
 
 # ---- reference freshness ---------------------------------------------------------------

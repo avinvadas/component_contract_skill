@@ -18,8 +18,6 @@ Five outcomes, and only one of them means nothing is wrong:
     orphan         in generated/, and nothing produces it any more — a platform dropped from
                    the contract, whose document a consumer may still be reading
     unresolvable   the contract lint-fails, so there is nothing to compare. Never "ok"
-    unverifiable   *.schema.json — written by the skill from the contract's prop tables, not
-                   by any script, so regeneration cannot speak to it. Named, never passed
 
 Nothing is rewritten without `--fix`, and `--fix` never deletes: an orphan is reported for a
 person to remove, because deciding a file is genuinely dead is not a thing to infer.
@@ -114,6 +112,18 @@ def check_one(contract, fix=False):
                                                if v.stderr.strip() else "resolve_view failed"]})
             return out
 
+        # The props schema is optional — only a contract that asked for one has any. Its
+        # PRESENCE is the signal, since nothing else records that Q10 said yes.
+        if committed.is_dir() and any(p.name.endswith(".schema.json")
+                                      for p in committed.iterdir() if p.is_file()):
+            s = subprocess.run([sys.executable, str(HERE / "schema.py"), str(contract),
+                                "--out", str(tmp)], capture_output=True, text=True)
+            if s.returncode != 0:
+                out["findings"].append({"kind": "unresolvable", "file": "schema",
+                                        "detail": (s.stdout + s.stderr).strip().splitlines()[-1:]
+                                        or ["schema.py exited %d" % s.returncode]})
+                return out
+
         produced = {p.name: p.read_text() for p in sorted(tmp.iterdir()) if p.is_file()}
         for name, text in produced.items():
             here = committed / name
@@ -126,8 +136,7 @@ def check_one(contract, fix=False):
             for p in sorted(committed.iterdir()):
                 if not p.is_file() or p.name in produced:
                     continue
-                kind = "unverifiable" if p.name.endswith(".schema.json") else "orphan"
-                out["findings"].append({"kind": kind, "file": p.name})
+                out["findings"].append({"kind": "orphan", "file": p.name})
         if fix:
             committed.mkdir(parents=True, exist_ok=True)
             for name, text in produced.items():
@@ -175,7 +184,7 @@ def main():
         print("no contracts found under %s" % root)
         return 0
     label = {"stale": "stale", "missing": "missing", "orphan": "orphan",
-             "unresolvable": "CANNOT CHECK", "unverifiable": "unverifiable"}
+             "unresolvable": "CANNOT CHECK"}
     for r in reports:
         actionable = [f for f in r["findings"] if f["kind"] in ACTIONABLE]
         if not actionable:
@@ -186,8 +195,6 @@ def main():
             print("  %-13s %-28s %s" % (label[f["kind"]], f["file"],
                                         detail if isinstance(detail, str) else
                                         " ".join(detail or [])))
-    unver = [(r["contract"], f["file"]) for r in reports for f in r["findings"]
-             if f["kind"] == "unverifiable"]
     if outdated:
         print("\n%d of %d contract(s) out of date." % (len(outdated), len(reports)),
               "Fixed." if args.fix else "Nothing was changed.")
@@ -199,11 +206,6 @@ def main():
               % len(blocked))
     if not moved:
         print("%d contract(s) checked, all up to date." % len(reports))
-    if unver:
-        print("\nnot checkable by regeneration (%d) — written by the skill, not by a script:"
-              % len(unver))
-        for c, f in unver:
-            print("  - %s/generated/%s" % (c, f))
     return 1 if bad else 0
 
 

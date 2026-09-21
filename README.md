@@ -481,6 +481,8 @@ python3 $S/scripts/resolve.py     Button/Button.md         # → Button/generate
 python3 $S/scripts/writeback.py   Button/Button.md         # fill in what the tree answered
 python3 $S/scripts/resolve.py     Button/Button.md         # again, to pick up the write-back
 python3 $S/scripts/resolve_view.py Button/Button.md        # → Button/generated/Button.spec.md
+python3 $S/scripts/schema.py      Button/Button.md         # props schema, if you asked for one
+python3 $S/scripts/check_generated.py                      # are all contracts still up to date?
 python3 $S/scripts/learned.py     diff                     # what this run taught the system
 python3 $S/scripts/evidence.py    Button/Button.md results.json
 ```

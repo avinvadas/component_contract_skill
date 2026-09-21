@@ -47,7 +47,8 @@ Both are revisited once the four supported platforms are stable, tested, and val
 | Script | Run it when |
 |---|---|
 | `scripts/check_references.py [--days N] [--json]` | Phase 0A, and on a schedule independent of any run. Reports which reference files are due to be re-checked against the standard they cite, and how each is checked. Reads dates only: no network, no judgement, no edit. Exits 1 when anything is due. |
-| `scripts/check_generated.py [--exclude NAME] [--json] [--fix]` | Phase 6, only when the run decided a policy row or changed a token-reading fact — and any time someone wants to know whether the committed documents still match their inputs. Reports stale, missing, orphan, unresolvable and unverifiable, per contract. Rewrites nothing without `--fix`, and never deletes. |
+| `scripts/schema.py <Component>.md [--out DIR]` | Phase 6, only if Q10 asked for a props schema. One file per platform, derived from the contract's own prop and zone tables. Replaces writing the schema by hand: the mapping has no judgement in it, and an authored file in `generated/` is one nothing can reproduce. |
+| `scripts/check_generated.py [--exclude NAME] [--json] [--fix]` | Phase 6, only when the run decided a policy row or changed a token-reading fact — and any time someone wants to know whether the committed documents still match their inputs. Reports stale, missing, orphan and unresolvable, per contract. Rewrites nothing without `--fix`, and never deletes. |
 | `scripts/detect_tokens.py <tree> [--json]` | Phase 0B — a token tree has been found. Proposes tiers and naming patterns with evidence, and lists questions. Writes nothing. |
 | `scripts/resolve.py <Component>.md [--out DIR]` | A contract in the format of `docs/contract-md-format-spec.md` is to be resolved against its role-archetype, policy and token tree into one canonical document per platform. |
 | `scripts/writeback.py <Component>.md` | Phase 6, after the first resolve — writes every token the tree answers into the contract's own slots, as a token or a `{variant}` pattern, with its `scope`. Asks nothing, decides nothing the tree did not. |
@@ -1180,7 +1181,17 @@ One file per platform, `[ComponentName].[platform].schema.json`, derived from th
 
 Every row comes from a platform-neutral table, so don't introduce platform-to-platform variation here; if a design system genuinely needs different props per platform, flag it rather than silently encoding it.
 
-**Schema rules** — unchanged: Draft 07 (`"$schema": "http://json-schema.org/draft-07/schema#"`); `"$id"` as `[component-name]-[platform]` in kebab-case; `"title"` as display name plus platform; `"description"` on every property, copied from the contract; enums as `"type": "string"` + `"enum"`; numbers with `minimum`/`maximum` only where the contract states bounds; child arrays as `"items": { "$ref": "[Child].[SamePlatform].schema.json" }`, always the same platform as the schema being generated.
+**Don't write this file. Run it:**
+
+```bash
+python3 <skill>/scripts/schema.py [ComponentName]/[ComponentName].md
+```
+
+The mapping above has no judgement in it — it is column-to-keyword translation from tables with fixed columns — so writing it per run cost consistency (two components shaping the same situation differently) and put a file in `generated/` that nothing could reproduce, which left `check_generated.py` with an exception and made a diff there mean two things. The script implements exactly the table above, plus the rules below, and its lint names any prop type it does not know rather than guessing one.
+
+**Schema rules**, implemented by the script: Draft 07 (`"$schema": "http://json-schema.org/draft-07/schema#"`); `"$id"` as `[component-name]-[platform]` in kebab-case; `"title"` as display name plus platform; `"description"` on every property, copied from the contract; enums as `"type": "string"` + `"enum"`; numbers with `minimum`/`maximum` **only** where the contract states bounds; child arrays as `"items": { "$ref": "[Child].[SamePlatform].schema.json" }`, always the same platform as the schema being generated.
+
+**A `handler` prop stays in the schema, and stays in `required`, with no type.** A function is not JSON, so its shape cannot be expressed — but *"you must pass `onPress`"* is a legal fact about a props instance, and dropping the prop because its type is unexpressible would let an instance the contract forbids validate clean.
 
 ---
 
