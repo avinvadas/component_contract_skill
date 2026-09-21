@@ -4,6 +4,8 @@ Sources of authority: [Android Accessibility developer documentation](https://de
 
 **Last verified:** 2026-09-04
 
+**Recheck:** 30 days — this source publishes no usable date and renders its guidance in JavaScript, so nothing automated can tell whether it moved. Shorter window, human review.
+
 Consulted by SKILL.md's Phase 3 ("Component / structure resolution" section) and Phase 4 ("Accessibility API" section) whenever Q2 (Platform) includes Android.
 
 ---

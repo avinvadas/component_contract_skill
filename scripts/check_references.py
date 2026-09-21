@@ -35,6 +35,12 @@ DATE = re.compile(r"^\*\*Last verified:\*\*\s*(\d{4}-\d{2}-\d{2})\s*$", re.M)
 # silently reported half the platform files as citing nothing.
 SOURCE = re.compile(r"^Sources? of authority:\s*(.+)$", re.M)
 URL = re.compile(r"https?://[^\s)\]]+")
+# A file may set its own re-check window. The rule it encodes: the less a source tells us about
+# itself, the more often a person has to look. Apple's and Google's developer docs publish no
+# usable date, render their guidance in JavaScript so there is nothing to hash, and ship HIG
+# changes with an OS release — so nothing automated can say whether they moved, and the only
+# safe answer is to review them oftener. A source that dates itself needs no such help.
+RECHECK = re.compile(r"^\*\*Recheck:\*\*\s*(\d+)\s*days?\b", re.M)
 
 
 def read(path):
@@ -53,9 +59,11 @@ def read(path):
         name = str(path.relative_to(ROOT))
     except ValueError:      # a file outside the skill — reported by the path given
         name = str(path)
+    rc = RECHECK.search(text)
     return {"file": name,
             "verified": m.group(1) if m else None,
             "sources": urls,
+            "recheck": int(rc.group(1)) if rc else None,
             "how": "fetch" if urls else "read" if s else "agrees-with-others"}
 
 
@@ -70,7 +78,8 @@ def survey(days, today=None):
             broken.append(dict(r, problem="no `Last verified:` line"))
             continue
         age = (today - datetime.date.fromisoformat(r["verified"])).days
-        (due if age >= days else fresh).append(dict(r, age=age))
+        window = r["recheck"] or days
+        (due if age >= window else fresh).append(dict(r, age=age, window=window))
     due.sort(key=lambda r: -r["age"])
     fresh.sort(key=lambda r: -r["age"])
     return due, fresh, broken
@@ -243,16 +252,20 @@ def main():
                "agrees-with-others": "confirm it still agrees with the others"}
         print("due for re-checking (%d), oldest first:" % len(due))
         for r in due:
-            print("  - %-52s %3d days  %s" % (r["file"], r["age"],
-                                               r.get("source") or how[r["how"]]))
+            print("  - %-52s %3d/%-3d days  %s"
+                  % (r["file"], r["age"], r["window"],
+                     r.get("source") or how[r["how"]]))
             if r["sources"]:
                 print("      %s" % r["sources"][0])
         print("\nCheck each against the source it cites. If the standard has materially changed,"
               "\nsay so and ask before editing — a reference is a curated explanation, not a"
               "\nscrape, and an unreviewed rewrite is the thing this check exists to avoid.")
     else:
-        print("nothing due — %d reference file(s), none older than %d days"
-              % (len(fresh), args.days))
+        short = sorted({r["window"] for r in fresh if r["window"] != args.days})
+        print("nothing due — %d reference file(s)%s"
+              % (len(fresh),
+                 ", on windows of %s days" % "/".join(str(w) for w in short + [args.days])
+                 if short else ", none older than %d days" % args.days))
     if undatable:
         print("\n%d source(s) publish no date, so these fell back to age alone:" % len(undatable))
         for r in undatable:

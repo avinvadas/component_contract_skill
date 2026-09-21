@@ -6,6 +6,8 @@ Source of authority: Apple's Human Interface Guidelines, the behavioral/composit
 
 **Last verified:** 2026-09-04
 
+**Recheck:** 30 days — this source publishes no usable date and renders its guidance in JavaScript, so nothing automated can tell whether it moved. Shorter window, human review.
+
 ## Ephemeral surface lifecycle (feeds Q3's dismissal follow-up, §3.3, §5.2)
 
 - **iOS has no HIG-defined native "toast/snackbar" pattern.** Unlike Android, Apple's guidelines don't specify a transient, auto-dismissing banner control — apps that want one are building a custom pattern, not following a documented platform convention. Worth surfacing explicitly rather than assuming iOS "has one the same way Android does": if the interview describes a Toast/Snackbar-shaped component targeting iOS, there's no platform default to depart from, only the design system's own choice.

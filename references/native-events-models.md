@@ -4,6 +4,8 @@ Sources of authority: Apple's [Swift](https://developer.apple.com/documentation/
 
 **Last verified:** 2026-08-26
 
+**Recheck:** 30 days — this source publishes no usable date and renders its guidance in JavaScript, so nothing automated can tell whether it moved. Shorter window, human review.
+
 This is the native-platform counterpart to `references/web/dom-events-model.md` — how §5.3 Events Emitted / §5.4 Events Received are grounded for iOS, Android, macOS, Windows, and Linux. It differs from that file in one important way: the DOM has exactly one event model. Every platform below has **more than one live idiom**, and none of them has a single canonical spec the way `CustomEvent` does — these are documented language/framework conventions, not one standard. Don't pick a favorite and present it as *the* answer; name the idiom actually in use, or document the fork explicitly, the same way `references/linux/linux-atspi-accessibility.md` refuses to pick GTK or Qt as canonical.
 
 Consult this file from **Phase 5** whenever a §5.3/§5.4 row is for a platform other than Web.

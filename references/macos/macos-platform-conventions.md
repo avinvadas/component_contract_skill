@@ -6,6 +6,8 @@ Source of authority: Apple's Human Interface Guidelines' macOS-specific sections
 
 **Last verified:** 2026-09-03
 
+**Recheck:** 30 days — this source publishes no usable date and renders its guidance in JavaScript, so nothing automated can tell whether it moved. Shorter window, human review.
+
 ## Ephemeral surface lifecycle (feeds Q3's dismissal follow-up, §3.3, §5.2)
 
 - **No HIG-defined in-app toast/snackbar pattern**, same situation as iOS — macOS apps that want one are building a custom convention, not following a documented default. System-level Notification Center banners exist but are OS-owned, not something an in-app component contract can assume access to or model itself on.

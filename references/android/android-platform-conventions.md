@@ -6,6 +6,8 @@ Source of authority: Material Design's own component specifications (material.io
 
 **Last verified:** 2026-09-03
 
+**Recheck:** 30 days — this source publishes no usable date and renders its guidance in JavaScript, so nothing automated can tell whether it moved. Shorter window, human review.
+
 ## Ephemeral surface lifecycle (feeds Q3's dismissal follow-up, §3.3, §5.2)
 
 - **Snackbars queue — they don't stack or get silently replaced.** If a new Snackbar is triggered while one is showing, Material's convention is a FIFO queue: the current one finishes its lifecycle (shown, then dismissed) before the next one appears. Never simultaneously visible, and a newly-triggered one doesn't cut the current one short by default.

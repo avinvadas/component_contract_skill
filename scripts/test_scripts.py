@@ -1229,6 +1229,33 @@ def the_freshness_notice_is_carried_by_the_scripts_a_run_actually_executes():
 
 
 @test
+def a_source_that_says_nothing_about_itself_is_looked_at_more_often():
+    """Guards: a flat window leaving the least knowable sources the least often checked.
+
+    Apple's and Google's docs publish no usable date, render their guidance in JavaScript so
+    there is nothing to hash, and ship HIG changes with an OS release. Nothing automated can
+    say whether they moved — so the only honest policy is a shorter window and a person, and
+    the file declares it rather than the script hardcoding a vendor.
+    """
+    import importlib.util, datetime
+    spec = importlib.util.spec_from_file_location("cr", HERE / "check_references.py")
+    cr = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cr)
+
+    windows = {r["file"]: r["window"]
+               for r in sum(cr.survey(90, datetime.date(2026, 9, 21))[:2], [])}
+    assert windows["references/ios/ios-hig-accessibility.md"] == 30, windows
+    assert windows["references/android/android-material-accessibility.md"] == 30, windows
+    # A source that dates itself needs no help and keeps the default.
+    assert windows["references/web/wcag-mapping.md"] == 90, windows
+
+    # The short window must actually fire earlier, or declaring it achieves nothing.
+    due = {r["file"] for r in cr.survey(90, datetime.date(2026, 9, 28))[0]}
+    assert "references/ios/ios-hig-accessibility.md" in due, due
+    assert "references/web/wcag-mapping.md" not in due, due
+
+
+@test
 def a_render_timestamp_is_not_mistaken_for_a_publication_date():
     """Guards: a check that fires every run, for ever, and so is tuned out.
 
