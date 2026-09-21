@@ -522,4 +522,5 @@ real rendered tree on either, so a contract targeting them could be written but 
 | [ARCHITECTURE.md](ARCHITECTURE.md) | why it's built this way — the six layers, and what each one owns |
 | [STATUS.md](STATUS.md) | what works today, with measured numbers |
 | [docs/contract-md-format-spec.md](docs/contract-md-format-spec.md) | the contract format, in full |
+| [docs/verifier-results-format.md](docs/verifier-results-format.md) | what a verifier writes back, so compliance is a fact about a version (proposed) |
 | `references/` | the external standards every derivation is grounded in — WAI-ARIA, WCAG, four HIGs, DTCG |
