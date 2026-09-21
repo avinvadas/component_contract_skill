@@ -1,7 +1,9 @@
 {
+  "name": "web-stdlib-static",
+  "version": "1.0",
   "verifier": "web-stdlib-static",
-  "format_version": "1.0",
-  "strategy": [
+  "capability_version": "1.0",
+  "strategies": [
     "witness"
   ],
   "can_observe": [
@@ -15,6 +17,10 @@
     "announcement": "no assistive technology attached",
     "name-provenance": "computing which node supplied the accessible name needs the browser's own name computation",
     "applied-styles": "parses HTML; it has no cascade, so it cannot see which declaration applies or what it references"
+  },
+  "cannot_establish": {
+    "interaction": "no browser, so no input can be driven",
+    "touch_input": "no device to emulate one on"
   },
   "caveats": [
     "reads AUTHORED attributes, not computed values \u2014 a `role` attribute is checked, the browser's computed role is not"

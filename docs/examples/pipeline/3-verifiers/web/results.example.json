@@ -1,0 +1,64 @@
+{
+  "format_version": "1.0",
+  "contract": "Button",
+  "platform": "web",
+  "contract_version": "1.0",
+  "document_digest": "sha256:c19925e663914f2b3c5689dec86e3ea207c24a3ff83996e0a22ab99afc2f3429",
+  "generated_from": "Button.md v1.0 + archetype button v1.0 + system policy. Do not edit.",
+  "subject": {
+    "name": "@acme/web-components",
+    "version": "3.2.0",
+    "ref": "git:4a91c2e"
+  },
+  "verifier": {
+    "name": "web-stdlib-static",
+    "version": "1.0",
+    "strategies": [
+      "witness"
+    ],
+    "cannot_observe": {
+      "geometry": "no layout engine \u2014 this verifier parses HTML, it does not render it",
+      "interaction": "cannot drive input without a browser",
+      "announcement": "no assistive technology attached",
+      "name-provenance": "computing which node supplied the accessible name needs the browser's own name computation",
+      "applied-styles": "parses HTML; it has no cascade, so it cannot see which declaration applies or what it references"
+    },
+    "cannot_establish": {
+      "interaction": "no browser, so no input can be driven",
+      "touch_input": "no device to emulate one on"
+    }
+  },
+  "produced_at": "2026-09-21T14:03:11Z",
+  "summary": {
+    "pass": 1,
+    "fail": 1,
+    "unverified": 1,
+    "n_a": 1
+  },
+  "results": [
+    {
+      "id": "STR-01",
+      "status": "PASS",
+      "statement": "The control is a <button> element.",
+      "detail": "witness `primary`: button"
+    },
+    {
+      "id": "STR-02",
+      "status": "FAIL",
+      "statement": "The label is the element's own text content.",
+      "detail": "witness `icon-only`: the accessible name comes from aria-label, not from a child"
+    },
+    {
+      "id": "APP-04",
+      "status": "UNVER",
+      "statement": "border-width resolves through a design token.",
+      "detail": "parses HTML; it has no cascade, so it cannot see which declaration applies or what it references"
+    },
+    {
+      "id": "APP-09@pressed",
+      "status": "N/A",
+      "statement": "elevation@pressed is not tokenised.",
+      "detail": "a Button sits in the content plane"
+    }
+  ]
+}

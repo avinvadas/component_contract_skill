@@ -107,6 +107,13 @@ xcresult, Cucumber JSON, SARIF. Every CI system already consumes these.
 If a cross-platform view is wanted later, define a *mapping* from those into one report —
 not a new format that everyone must emit.
 
+**Amended.** That held for per-test results and still does. What none of those formats carries
+is the *claim*: which document was checked, which build was observed, by which verifier, and
+what that verifier could not see. Without it a green run records that something called Button
+passed, once — which is not a fact about a version, and so cannot answer "which products does
+this change break". `docs/verifier-results-format.md` is that envelope, and it is additive: a
+verifier keeps emitting JUnit for CI and writes this alongside.
+
 ### 5. A conformance suite for verifiers
 
 **Who adjudicates the checklist:** the verifier does. It observes, compares against `expect`,
@@ -143,6 +150,12 @@ a second job.
 
 A verifier's published conformance result, alongside its capability declaration, is what
 makes a third-party implementation trustworthy without anyone here having read its code.
+
+**Started.** `scripts/check_results.py` is the first piece of this and the cheapest: it does
+not adjudicate a verdict, it checks that what a verifier wrote is a claim at all — every part
+present, a digest that is a digest, a summary that counts the rows beneath it. That catches a
+whole class of divergence before any fixture corpus exists, and it is the shape the comparison
+half would extend: fixture in, expected finding out.
 
 ## What lives outside the skill
 

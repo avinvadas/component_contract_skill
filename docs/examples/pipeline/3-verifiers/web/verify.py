@@ -148,7 +148,7 @@ for req in DOC["requirements"]:
         rows.append(("FAIL", rid, stmt, "; ".join(d for ok, d in verdicts if not ok)))
 
 c = {k: sum(1 for r in rows if r[0] == k) for k in ("PASS", "FAIL", "UNVER", "N/A")}
-print(f"\n{CAP['verifier']}  —  strategy: {'+'.join(CAP['strategy'])}")
+print(f"\n{CAP['verifier']}  —  strategy: {'+'.join(CAP['strategies'])}")
 print(f"{c['PASS']} pass / {c['FAIL']} fail / {c['UNVER']} unverified / {c['N/A']} n-a\n" + "="*76)
 for status, rid, stmt, detail in rows:
     print(f"  {status:<6} {rid:<8} {stmt}")

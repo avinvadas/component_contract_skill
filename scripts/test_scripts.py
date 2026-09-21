@@ -1216,6 +1216,29 @@ def a_complete_claim_is_silent_and_a_summary_that_miscounts_is_not():
 
 
 @test
+def the_worked_example_of_a_results_file_follows_the_page_that_specifies_it():
+    """Guards: the example a verifier author copies drifting from the spec it illustrates.
+
+    A format learned by copying is a format defined by its example. This one is also the
+    fixture that proves the checker agrees with the prose beside it — if either moves, this
+    is what says so, rather than the first verifier author to be misled by it.
+    """
+    cr = _cr()
+    ex = ROOT / "docs/examples/pipeline/3-verifiers/web/results.example.json"
+    res = json.loads(ex.read_text())
+    doc = ROOT / "docs/examples/pipeline/2-generated/Button.web.json"
+    assert cr.check(res, cr.digest(doc)) == [], cr.check(res, cr.digest(doc))
+    # Including the digest: the example claims a document that is actually in this repo, so a
+    # regenerated document without a regenerated example is caught here and not in the field.
+    assert res["document_digest"] == cr.digest(doc)
+
+    # And the capability file it is derived from carries what a results file has to copy out
+    # of one — the two maps, and a name and revision for the tool itself.
+    cap = json.loads((ROOT / "docs/examples/pipeline/3-verifiers/web/capability.json").read_text())
+    assert {"name", "version", "strategies", "cannot_observe", "cannot_establish"} <= set(cap), sorted(cap)
+
+
+@test
 def the_long_spelling_of_unverified_is_rejected_because_it_reads_as_nothing():
     """Guards: `UNVERIFIED` being treated as a harmless synonym of `UNVER`.
 
