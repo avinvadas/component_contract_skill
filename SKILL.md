@@ -47,6 +47,7 @@ Both are revisited once the four supported platforms are stable, tested, and val
 | Script | Run it when |
 |---|---|
 | `scripts/check_references.py [--days N] [--json]` | Phase 0A, and on a schedule independent of any run. Reports which reference files are due to be re-checked against the standard they cite, and how each is checked. Reads dates only: no network, no judgement, no edit. Exits 1 when anything is due. |
+| `scripts/check_generated.py [--exclude NAME] [--json] [--fix]` | Phase 6, only when the run decided a policy row or changed a token-reading fact — and any time someone wants to know whether the committed documents still match their inputs. Reports stale, missing, orphan, unresolvable and unverifiable, per contract. Rewrites nothing without `--fix`, and never deletes. |
 | `scripts/detect_tokens.py <tree> [--json]` | Phase 0B — a token tree has been found. Proposes tiers and naming patterns with evidence, and lists questions. Writes nothing. |
 | `scripts/resolve.py <Component>.md [--out DIR]` | A contract in the format of `docs/contract-md-format-spec.md` is to be resolved against its role-archetype, policy and token tree into one canonical document per platform. |
 | `scripts/writeback.py <Component>.md` | Phase 6, after the first resolve — writes every token the tree answers into the contract's own slots, as a token or a `{variant}` pattern, with its `scope`. Asks nothing, decides nothing the tree did not. |
@@ -1119,6 +1120,30 @@ person sees exactly what every later component will inherit. On the second compo
 system this list should be short; on the tenth, usually empty. **A run that keeps asking what an
 earlier run already answered is a defect**, and it is tested (`scripts/test_scripts.py`,
 *the second component asks nothing the first settled*).
+
+### If this run changed something shared, ask before touching any other contract
+
+A contract's own files are yours to write. **Every other contract in the design system is not.**
+
+Most runs change nothing shared. But two things this run may have recorded are inputs to *every* contract — a **policy row that was decided**, and a **facts change that affects token reading** (`leaf_map`, `tiers`, `patterns`). When either happened, other contracts may now resolve differently, with nothing in their own directories to say so.
+
+Only then, run:
+
+```bash
+python3 <skill>/scripts/check_generated.py --exclude [ComponentName] --json
+```
+
+`--exclude` drops the component just finished, so what comes back names **only the others**.
+
+- **Nothing out of date** — say nothing. This is the common case, because a policy row joins only the contracts that *engage* it, and a Button never engages a loading-state row.
+- **Something out of date** — **list every affected contract before doing anything**, one line each, naming the files and what moved (`Card — Card.web.json: +1 (POL-07) requirement`). Then ask, in one `AskUserQuestion` call, whether to update them now. Offer updating all, or leaving them.
+
+**Update only on an explicit yes**, with `python3 <skill>/scripts/check_generated.py --exclude [ComponentName] --fix`. On a no, say they stay out of date and that the same command will list them again later. **Never update another component's files without being told to** — the diff is the signal that a shared decision reached further than this component, and silently applying it destroys the only moment anyone would see that.
+
+Two findings are never acted on automatically:
+
+- **`orphan`** — a generated file nothing produces any more, usually a platform dropped from that contract. Report it; deleting a file because nothing regenerates it is a conclusion for a person.
+- **`CANNOT CHECK`** — that contract lint-fails, so it cannot be compared. Report it as a defect in *that* contract, not as something this run caused, and never as up to date.
 
 ### What replaced `structure.json`
 

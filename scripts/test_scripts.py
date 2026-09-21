@@ -986,6 +986,99 @@ def web_verifier_scenario_must_be_established():
     assert v.matches({"zones": {"icon": "present"}}, v.WIT[0])
 
 
+# ---- generated files vs their inputs ----------------------------------------------------
+def _cg():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("cg", HERE / "check_generated.py")
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+def one_contract_repo():
+    """A design system with a single contract, its generated/ written from its own inputs.
+
+    The contract moves into its own directory, so its frontmatter's relative `policy:` path
+    would no longer resolve — the policy's location becomes a recorded fact instead, which is
+    what a real design system does once it has more than one contract.
+    """
+    d = alt_design_system(ALT_CONTEXT + "  \ncontracts:\n  path: contracts\n"
+                          "  policy: contracts/design-system/policy.md\n")
+    # The layout check_generated expects: <Name>/<Name>.md, with generated/ beside it.
+    home = d / "contracts/Button"
+    home.mkdir()
+    (d / "contracts/Button.md").rename(home / "Button.md")
+    (d / "contracts/Button.bindings.json").rename(home / "Button.bindings.json")
+    md = home / "Button.md"
+    md.write_text("\n".join(x for x in md.read_text().splitlines()
+                            if not x.startswith("policy:")) + "\n")
+    r = run(HERE / "resolve.py", md, "--out", home / "generated")
+    assert r.returncode == 0, "fixture does not resolve:\n%s" % (r.stdout + r.stderr)[-500:]
+    run(HERE / "resolve_view.py", md, "--out", home / "generated/Button.spec.md")
+    return d, home
+
+
+@test
+def a_generated_file_matching_its_inputs_is_silent():
+    """Guards: a check that reports drift on a freshly generated tree, and so is ignored."""
+    cg = _cg()
+    _, home = one_contract_repo()
+    rep = cg.check_one(home / "Button.md")
+    assert not [f for f in rep["findings"] if f["kind"] in cg.ACTIONABLE], rep
+
+
+@test
+def an_edited_generated_file_is_stale_and_says_what_moved():
+    """Guards: reporting `differs` with no indication of what a shared change actually did."""
+    cg = _cg()
+    _, home = one_contract_repo()
+    doc = json.loads((home / "generated/Button.web.json").read_text())
+    doc["requirements"] = [r for r in doc["requirements"] if r.get("id") != "BTN-01"]
+    (home / "generated/Button.web.json").write_text(json.dumps(doc, indent=2) + "\n")
+    stale = [f for f in cg.check_one(home / "Button.md")["findings"] if f["kind"] == "stale"]
+    assert stale and "BTN-01" in stale[0]["detail"], stale
+
+
+@test
+def a_document_nothing_produces_is_an_orphan_and_fix_never_deletes_it():
+    """Guards: a dropped platform's document staying committed, read by someone, unnoticed.
+
+    And the other half: `--fix` quietly deleting it. Whether a file is genuinely dead is a
+    conclusion for a person; regeneration not producing it is not the same claim.
+    """
+    cg = _cg()
+    _, home = one_contract_repo()
+    (home / "generated/Button.macos.json").write_text("{}\n")
+    kinds = {f["file"]: f["kind"] for f in cg.check_one(home / "Button.md")["findings"]}
+    assert kinds.get("Button.macos.json") == "orphan", kinds
+    cg.check_one(home / "Button.md", fix=True)
+    assert (home / "generated/Button.macos.json").is_file(), "--fix must never delete"
+
+
+@test
+def a_contract_that_does_not_resolve_is_never_reported_up_to_date():
+    """Guards: the one failure this check exists to rule out — silence over an unreadable
+    contract, which would read as `ok` and let real drift hide behind a lint error."""
+    cg = _cg()
+    _, home = one_contract_repo()
+    md = home / "Button.md"
+    md.write_text(md.read_text().replace("when:hover ", "when:hoverr "))
+    kinds = {f["kind"] for f in cg.check_one(md)["findings"]}
+    assert kinds == {"unresolvable"}, kinds
+
+
+@test
+def a_schema_is_named_unverifiable_never_orphan_and_never_passed():
+    """Guards: `*.schema.json` — written by the skill, not by any script — being called an
+    orphan and deleted, or quietly counted as up to date."""
+    cg = _cg()
+    _, home = one_contract_repo()
+    (home / "generated/Button.web.schema.json").write_text("{}\n")
+    kinds = {f["file"]: f["kind"] for f in cg.check_one(home / "Button.md")["findings"]}
+    assert kinds.get("Button.web.schema.json") == "unverifiable", kinds
+    assert "unverifiable" not in cg.ACTIONABLE, "unverifiable must not fail the check"
+
+
 # ---- reference freshness ---------------------------------------------------------------
 @test
 def a_reference_with_no_date_can_never_come_due_so_it_is_a_finding():
