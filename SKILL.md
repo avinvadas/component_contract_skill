@@ -125,16 +125,20 @@ Three independent checks, all run once, before Phase 1, every time the skill sta
 ### 0A: Reference freshness check
 
 1. Run `python3 <skill>/scripts/check_references.py --json`. It reads every file's `Last verified:` date — local and free, every file unconditionally — and reports which are due, each with **how** it is checked: `fetch` (it cites a URL), `read` (it names a source in prose), or `agrees-with-others` (it cites no external source because it aggregates the other files). Don't re-implement the date arithmetic here, and don't hardcode a file count: both drift every time a file is added, which is the staleness this check exists to catch elsewhere.
-2. Nothing due — no network access, nothing to report. Say nothing.
-
-**This check also runs on a clock, not only here.** A standard moves whether or not anyone is contracting a component, and references feed the *reasoning* in Phases 2–4, never the resolver — so what a standard implied is frozen into a contract's text when it is written, and no later re-run can notice it changed. Phase 0A is the fallback, not the mechanism. See "Keeping references current" below.
-3. If 90 days or more have passed **and** web access is available in the current environment: fetch the URL(s) the file cites in its "Source of authority" line and compare against what the file currently says.
+2. Nothing due — say nothing and move on.
+3. Anything due **and** web access is available in the current environment: fetch the URL(s) the file cites in its "Source of authority" line and compare against what the file currently says.
    - **`platform-differences.md` is the one exception** — it aggregates every other file rather than citing an external URL itself, so "checking" it means confirming it still agrees with whichever of those files were also due this run, not fetching anything.
    - **No material change** (the spec's version/status is the same, nothing the file describes has been renamed, deprecated, or superseded): update that file's `Last verified:` date to today and move on silently — no need to mention this to the user.
    - **Material change found** (a new spec version, a deprecated/renamed API or attribute, a new pattern that supersedes what's documented): stop and tell the user what changed and which file it affects, before proceeding to Phase 1. Ask whether to update the reference file now, defer it, or continue this session with the existing content. Never rewrite a reference file's content on your own initiative — these are curated explanations, not a scrape of the spec, and a drive-by edit from an automated check is exactly the kind of unreviewed change that principle exists to prevent.
 4. If web access isn't available in the current environment, skip step 3 entirely for this run. Only mention the skip if at least one file was actually due (don't report "nothing to check" as if it were a finding) — and never block the interview from starting because a freshness check couldn't run.
 
-This check must never be the reason someone can't generate a contract. A skipped, deferred, or inconclusive check is always a reason to proceed with what's already there, not to stop.
+**Step 1 runs at every start, unconditionally.** It reads dates off local files — no network, no judgement, milliseconds — so there is no condition under which it is skipped, and no "I checked recently" to rely on: a run has no memory of the last one. Only step 3, the fetch, depends on web access.
+
+**This is the only freshness check most installations have.** A scheduled job or a CI cron protects whichever repository holds the skill's source; it does nothing for a copy installed somewhere else, which is nearly everyone. So Phase 0A is not a fallback behind those — it is the mechanism that travels with the skill, and they are the redundancy.
+
+It matters because references feed the *reasoning* in Phases 2–4, never the resolver. What a standard implied is frozen into a contract's text the moment it is written, so re-running reproduces that text byte for byte no matter what the standard now says — `check_generated.py` cannot see it, and neither can anything else. The date is the only signal there is.
+
+This check must never be the reason someone can't generate a contract. A skipped, deferred, or inconclusive **fetch** is always a reason to proceed with what's already there, not to stop.
 
 ### 0B: Design system context
 
