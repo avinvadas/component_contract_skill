@@ -12,7 +12,7 @@ import json, pathlib, sys
 from html.parser import HTMLParser
 
 HERE = pathlib.Path(__file__).parent
-DOC = json.loads((HERE.parent.parent / "2-canonical/Button.web.canonical.json").read_text())
+DOC = json.loads((HERE.parent.parent / "2-generated/Button.web.json").read_text())
 CAP = json.loads((HERE / "capability.json").read_text())
 WIT = json.loads((HERE / "witnesses.json").read_text())["witnesses"]
 

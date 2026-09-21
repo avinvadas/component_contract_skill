@@ -2,19 +2,19 @@
   "format_version": "1.0",
   "contract": "Combobox",
   "contract_version": "1.0",
-  "platform": "web",
+  "platform": "ios",
   "role-archetype": "combobox",
+  "generated_from": "Combobox.md v1.0 + archetype combobox v1.0 + system policy. Do not edit.",
   "requirements": [
     {
-      "id": "STR-01",
-      "statement": "The element carrying the role is <input> or <datalist>.",
+      "id": "STR-02",
+      "statement": "The element carrying the role is TextField.",
       "observe": "element",
       "kind": "state",
       "scenario": {},
       "expect": {
         "one_of": [
-          "input",
-          "datalist"
+          "TextField"
         ]
       },
       "needs": [
@@ -110,10 +110,7 @@
       "needs": [
         "interaction"
       ],
-      "trigger": [
-        "key:ArrowDown",
-        "key:ArrowUp"
-      ]
+      "trigger": "a11y:swipe"
     },
     {
       "id": "CBX-07",
@@ -187,7 +184,7 @@
           "state": "collapsed"
         }
       },
-      "trigger": "key:Alt+ArrowDown",
+      "trigger": "a11y:activate",
       "expect": {
         "contains": "expanded"
       },
@@ -206,7 +203,7 @@
           "state": "expanded"
         }
       },
-      "trigger": "key:Escape",
+      "trigger": "gesture:tap-outside",
       "expect": {
         "contains": "collapsed"
       },
@@ -225,7 +222,7 @@
           "state": "expanded"
         }
       },
-      "trigger": "key:Enter",
+      "trigger": "a11y:activate",
       "expect": {
         "contains": "collapsed"
       },
@@ -244,7 +241,7 @@
           "state": "collapsed"
         }
       },
-      "trigger": "key:character",
+      "trigger": "keyboard:character",
       "expect": {
         "contains": "expanded"
       },
@@ -263,7 +260,7 @@
           "state": "collapsed"
         }
       },
-      "trigger": "key:Escape",
+      "trigger": "gesture:tap-outside",
       "expect": {
         "contains": "collapsed"
       },
@@ -283,7 +280,7 @@
           "state": "expanded"
         }
       },
-      "trigger": "key:Alt+ArrowDown",
+      "trigger": "a11y:activate",
       "expect": {
         "contains": "expanded"
       },
@@ -303,7 +300,7 @@
           "state": "expanded"
         }
       },
-      "trigger": "key:character",
+      "trigger": "keyboard:character",
       "expect": {
         "contains": "expanded"
       },
@@ -328,25 +325,25 @@
         "id": "CBX-T1",
         "from": "collapsed",
         "to": "expanded",
-        "trigger": "key:Alt+ArrowDown"
+        "trigger": "a11y:activate"
       },
       {
         "id": "CBX-T2",
         "from": "expanded",
         "to": "collapsed",
-        "trigger": "key:Escape"
+        "trigger": "gesture:tap-outside"
       },
       {
         "id": "CBX-T3",
         "from": "expanded",
         "to": "collapsed",
-        "trigger": "key:Enter"
+        "trigger": "a11y:activate"
       },
       {
         "id": "MCH-01",
         "from": "collapsed",
         "to": "expanded",
-        "trigger": "key:character"
+        "trigger": "keyboard:character"
       }
     ],
     "unreachable": [

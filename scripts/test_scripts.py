@@ -43,13 +43,14 @@ def pipeline_outputs_match_committed():
         for c in ("Button", "IconButton", "Combobox"):
             r = run(HERE / "resolve.py", PIPE / "1-contract" / (c + ".md"), "--out", out)
             assert r.returncode == 0, "%s resolve failed:\n%s" % (c, r.stdout[-400:] + r.stderr[-400:])
-            for f in pathlib.Path(out).glob(c + ".*.canonical.json"):
-                committed = PIPE / "2-canonical" / f.name
+            for f in pathlib.Path(out).glob(c + ".*.json"):
+                committed = PIPE / "2-generated" / f.name
                 assert f.read_text() == committed.read_text(), "%s differs from committed" % f.name
-            view = pathlib.Path(out) / (c + ".resolved.md")
+            view = pathlib.Path(out) / (c + ".spec.md")
             r = run(HERE / "resolve_view.py", PIPE / "1-contract" / (c + ".md"), "--out", view)
             assert r.returncode == 0, "%s view failed: %s" % (c, r.stderr[-400:])
-            assert view.read_text() == (PIPE / (c + ".resolved.md")).read_text(), "%s view differs" % c
+            assert view.read_text() == (PIPE / "2-generated" / (c + ".spec.md")).read_text(), \
+                "%s view differs" % c
 
 
 @test
@@ -57,7 +58,7 @@ def archetype_comes_from_the_contract():
     """Guards: resolve.py once hardcoded button.md, and Combobox would have inherited Button."""
     with tempfile.TemporaryDirectory() as out:
         run(HERE / "resolve.py", PIPE / "1-contract/Combobox.md", "--out", out)
-        doc = json.loads((pathlib.Path(out) / "Combobox.web.canonical.json").read_text())
+        doc = json.loads((pathlib.Path(out) / "Combobox.web.json").read_text())
         ids = {r["id"] for r in doc["requirements"]}
         assert "CBX-01" in ids and not any(i.startswith("BTN-") for i in ids), sorted(ids)
 
@@ -109,7 +110,7 @@ def alt_design_system(context_text):
 def slots_of(repo):
     with tempfile.TemporaryDirectory() as out:
         r = run(HERE / "resolve.py", repo / "contracts/Button.md", "--out", out)
-        doc = json.loads((pathlib.Path(out) / "Button.web.canonical.json").read_text())
+        doc = json.loads((pathlib.Path(out) / "Button.web.json").read_text())
     # Slots expand per variant now; these tests are about the default variant's resolution.
     reqs = {x["id"].replace("[variant=primary]", ""): x for x in doc["requirements"]
             if x["id"].startswith("APP-") and "[" not in x["id"].replace("[variant=primary]", "")}
@@ -164,7 +165,7 @@ def policy_location_is_a_recorded_fact():
     _, reqs = slots_of(repo)          # resolves at all == the contract parsed
     with tempfile.TemporaryDirectory() as out:
         r = run(HERE / "resolve.py", md, "--out", out)
-        doc = json.loads((pathlib.Path(out) / "Button.web.canonical.json").read_text())
+        doc = json.loads((pathlib.Path(out) / "Button.web.json").read_text())
     assert "lint: 0 finding" in r.stdout, r.stdout[-400:]
     assert "POL-02" in {x["id"] for x in doc["requirements"]}, "policy not inherited from the context"
 
@@ -205,10 +206,10 @@ A surface that groups related content.
     with tempfile.TemporaryDirectory() as out:
         r = run(HERE / "resolve.py", d / "Card.md", "--out", out)
         assert r.returncode == 0, r.stdout[-500:] + r.stderr[-500:]
-        doc = json.loads((pathlib.Path(out) / "Card.web.canonical.json").read_text())
+        doc = json.loads((pathlib.Path(out) / "Card.web.json").read_text())
         assert doc["role-archetype"] == "none", doc["role-archetype"]
         assert {x["id"] for x in doc["requirements"]} == {"STR-01"}, doc["requirements"]
-        v = run(HERE / "resolve_view.py", d / "Card.md", "--out", pathlib.Path(out) / "Card.resolved.md")
+        v = run(HERE / "resolve_view.py", d / "Card.md", "--out", pathlib.Path(out) / "Card.spec.md")
         assert v.returncode == 0, v.stderr[-500:]
 
 
@@ -602,8 +603,8 @@ def states_repo(element=ELEMENT_OK, slots=SLOTS_OK, states=STATES_OK):
     report = repo / "report.json"
     with tempfile.TemporaryDirectory() as out:
         r = run(HERE / "resolve.py", repo / "Button.md", "--out", out, "--report", report)
-        doc = json.loads((pathlib.Path(out) / "Button.web.canonical.json").read_text()) \
-            if (pathlib.Path(out) / "Button.web.canonical.json").is_file() else None
+        doc = json.loads((pathlib.Path(out) / "Button.web.json").read_text()) \
+            if (pathlib.Path(out) / "Button.web.json").is_file() else None
     assert report.is_file(), "resolve.py crashed:\n" + r.stderr[-1200:]
     return r, json.loads(report.read_text()), doc
 
@@ -732,7 +733,7 @@ def resolved(repo):
     with tempfile.TemporaryDirectory() as out:
         r = run(HERE / "resolve.py", repo / "Button.md", "--out", out, "--report", report)
         assert report.is_file(), r.stderr[-800:]
-        doc = json.loads((pathlib.Path(out) / "Button.web.canonical.json").read_text())
+        doc = json.loads((pathlib.Path(out) / "Button.web.json").read_text())
     return r, json.loads(report.read_text()), {x["id"]: x for x in doc["requirements"]}
 
 
@@ -761,7 +762,7 @@ def a_platform_that_reaches_for_another_token_states_it_in_4_4():
     with tempfile.TemporaryDirectory() as out:
         run(HERE / "resolve.py", repo / "Button.md", "--out", out)
         ios = {x["id"]: x for x in json.loads(
-            (pathlib.Path(out) / "Button.ios.canonical.json").read_text())["requirements"]}
+            (pathlib.Path(out) / "Button.ios.json").read_text())["requirements"]}
     # iOS states its own token for that case, and states it ONCE
     assert ios["APP-20"]["expect"] == {"equals": "component.button.disabled"}, ios["APP-20"]
     assert "APP-01[kind=ghost]" not in ios, "the neutral case must not survive beside the platform's own"
@@ -983,6 +984,50 @@ def web_verifier_scenario_must_be_established():
     assert not v.matches({"state": {"hover": True}}, v.WIT[0])
     assert not v.matches({"machine": {"state": "expanded"}}, v.WIT[0])
     assert v.matches({"zones": {"icon": "present"}}, v.WIT[0])
+
+
+# ---- reference freshness ---------------------------------------------------------------
+@test
+def a_reference_with_no_date_can_never_come_due_so_it_is_a_finding():
+    """Guards: a file with no `Last verified:` line silently never being checked again."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("cr", HERE / "check_references.py")
+    cr = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cr)
+
+    import datetime
+    due, fresh, broken = cr.survey(90, today=datetime.date(2026, 9, 21))
+    assert not broken, "every shipped reference must carry a date: %s" % broken
+    assert due or fresh, "no reference files were read at all"
+
+    # The wrong conclusion this rules out: treating a dateless file as fresh. Age is
+    # unknowable without a date, so it can never be older than the threshold, and a check
+    # that only compares dates would pass it forever.
+    with tempfile.TemporaryDirectory() as d:
+        undated = pathlib.Path(d) / "undated.md"
+        undated.write_text("# No date\n\nSource of authority: https://example.org/\n")
+        r = cr.read(undated)
+        assert r["verified"] is None, r
+
+
+@test
+def a_reference_citing_no_url_is_checked_differently_not_skipped():
+    """Guards: `platform-differences.md` reported as citing nothing, or quietly dropped.
+
+    It aggregates the other files rather than citing an external URL, so checking it means
+    confirming it still agrees with them — a different job, not an absent one.
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("cr", HERE / "check_references.py")
+    cr = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cr)
+
+    how = {r["file"]: r["how"] for r in cr.survey(0)[0]}
+    assert how["references/platform-differences.md"] == "agrees-with-others", how
+    assert how["references/web/wcag-mapping.md"] == "fetch", how
+    # A source named in prose is read by a person, never fetched and never called absent.
+    assert how["references/figma-variables-model.md"] == "read", how
+    assert set(how.values()) <= {"fetch", "read", "agrees-with-others"}, how
 
 
 if __name__ == "__main__":

@@ -17,9 +17,10 @@ from resolve import (specificity_counts, parse_frontmatter, requirement_rows,  #
                      slot_rows, state_rows, enum_props, ENUM_PROPS, ELEMENT_HEADERS)
 import machine as sm  # noqa: E402
 
-_ap = argparse.ArgumentParser(description="Generate the resolved view of a contract.")
+_ap = argparse.ArgumentParser(description="Generate the readable spec of a contract.")
 _ap.add_argument("contract", help="path to <Component>.md")
-_ap.add_argument("--out", help="output file (default: <Component>.resolved.md beside the contract)")
+_ap.add_argument("--out", help="output file (default: generated/<Component>.spec.md "
+                               "beside the contract)")
 _ap.add_argument("--context", help="design-system context file (default: nearest .claude/)")
 _args = _ap.parse_args()
 
@@ -81,8 +82,8 @@ def token_table():
 def platform_token_table():
     """Where a platform reaches for a DIFFERENT token — not a different spelling of the same one."""
     if not PLATFORM_SLOTS:
-        return ("*None. Every platform uses the same token, spelled its own way — see "
-                "`2-canonical/` for each platform's name.*" + NL)
+        return ("*None. Every platform uses the same token, spelled its own way — see the "
+                "per-platform JSON beside this file for each platform's name.*" + NL)
     rows_ = []
     for plat, cases in sorted(PLATFORM_SLOTS.items()):
         for c in cases:
@@ -228,12 +229,13 @@ n_arch = sum(1 for r in rows if ORIGIN[r["id"]].startswith("archetype"))
 n_pol = sum(1 for r in rows if ORIGIN[r["id"]] == "policy")
 
 P = []
-P.append("# %s — resolved" % fm["component"])
+P.append("# %s — spec" % fm["component"])
 P.append("")
 P.append("> **Generated. Do not edit.** Source: `%s.md` v%s + archetype `%s` v%s + system policy."
          % (fm["component"], fm["version"], fm["role-archetype"], arch_fm["version"]))
 P.append("> **Platform-neutral** — what the component *is*, before any platform's vocabulary.")
-P.append("> How each requirement is *observed* per platform is in `2-canonical/`.")
+P.append("> How each requirement is *observed* per platform is in the `%s.<platform>.json` "
+         "files beside this one." % fm["component"])
 P.append("")
 P.append("**Origin** marks what is yours to change. *this component* — decided in your interview. "
          "*archetype* — a fact about what platforms provide free; changing it means a platform "
@@ -323,6 +325,8 @@ slot_summary = "%d token cases — %d bound, %d gap%s, %d n/a" % (
 P.append("%d requirements — %d local, %d inherited, %d policy · %d zones · %s · %d props"
          % (len(rows), n_local, n_arch, n_pol, len(zones), slot_summary, len(props)))
 
-out = pathlib.Path(_args.out).resolve() if _args.out else S["src"] / (COMPONENT + ".resolved.md")
+out = (pathlib.Path(_args.out).resolve() if _args.out
+       else S["src"] / "generated" / (COMPONENT + ".spec.md"))
+out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(NL.join(P) + NL)
 print("wrote %s: %d lines, %d requirements" % (out.name, len(P), len(rows)))

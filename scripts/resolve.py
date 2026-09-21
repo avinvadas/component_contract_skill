@@ -847,7 +847,8 @@ def engages(trigger, facts):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("contract", help="path to <Component>.md")
-    ap.add_argument("--out", help="directory for canonical documents (default: beside the contract)")
+    ap.add_argument("--out", help="directory for the generated documents "
+                                  "(default: generated/ beside the contract)")
     ap.add_argument("--context", help="design-system context file (default: nearest .claude/)")
     ap.add_argument("--report", help="also write a JSON report — lint, token gaps, the policy "
                                      "rows this component engages, closure — for the skill to act on")
@@ -856,7 +857,9 @@ def main():
     S = load_sources(args.contract, args.context)
     fm, body, arch_body = S["fm"], S["body"], S["arch_body"]
     policy_text, bindings, COMPONENT = S["policy_text"], S["bindings"], S["component"]
-    OUT = pathlib.Path(args.out).resolve() if args.out else S["src"]
+    # Generated documents live in `generated/` beside the contract, never next to it: the
+    # directory is what tells a reader, with no README, that nothing in here is edited by hand.
+    OUT = pathlib.Path(args.out).resolve() if args.out else S["src"] / "generated"
 
     # The machine is resolved BEFORE any requirement, because `when:following:<transition>`
     # conditions are checked against its transition ids. Closure is computed on the merged
@@ -959,14 +962,21 @@ def main():
         for slot in here:
             reqs.append(slot_requirement(slot, platform, conventions.get(platform), here))
 
+        # `generated_from` is the only thing that survives this file being found alone, with no
+        # directory around it to say it is generated. It names its inputs, so a reader knows
+        # both that editing it is pointless and which file to edit instead.
         doc = {"format_version": "1.0", "contract": fm["component"],
                "contract_version": fm["version"], "platform": platform,
-               "role-archetype": fm["role-archetype"], "requirements": reqs}
+               "role-archetype": fm["role-archetype"],
+               "generated_from": "%s.md v%s + archetype %s v%s + system policy. Do not edit."
+                                 % (fm["component"], fm["version"], fm["role-archetype"],
+                                    S["arch_fm"].get("version", "?")),
+               "requirements": reqs}
         if machine["transitions"]:
             mreqs, block = sm.requirements(machine, machine_bindings, platform, lint)
             reqs.extend(mreqs)
             doc["machine"] = block
-        (OUT / (COMPONENT + f".{platform}.canonical.json")).write_text(json.dumps(doc, indent=2) + "\n")
+        (OUT / (COMPONENT + f".{platform}.json")).write_text(json.dumps(doc, indent=2) + "\n")
         binds = sum(1 for r in reqs if r.get("binds") is not False)
         print(f"  {platform:<8} {len(reqs)} requirements, {binds} binding, {len(reqs)-binds} n/a")
 

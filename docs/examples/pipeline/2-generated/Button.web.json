@@ -2,18 +2,19 @@
   "format_version": "1.0",
   "contract": "Button",
   "contract_version": "1.0",
-  "platform": "android",
+  "platform": "web",
   "role-archetype": "button",
+  "generated_from": "Button.md v1.0 + archetype button v1.0 + system policy. Do not edit.",
   "requirements": [
     {
-      "id": "STR-04",
-      "statement": "The element carrying the role is Button.",
+      "id": "STR-02",
+      "statement": "The element carrying the role is <button>.",
       "observe": "element",
       "kind": "state",
       "scenario": {},
       "expect": {
         "one_of": [
-          "Button"
+          "button"
         ]
       },
       "needs": [
@@ -79,7 +80,7 @@
       "needs": [
         "interaction"
       ],
-      "trigger": "a11y:activate"
+      "trigger": "key:Enter"
     },
     {
       "id": "BTN-05",
@@ -186,12 +187,12 @@
         }
       },
       "expect": {
-        "min": 48
+        "min": 24
       },
       "needs": [
         "geometry"
       ],
-      "unit": "dp"
+      "unit": "css-px"
     },
     {
       "id": "BTN-12",
@@ -210,8 +211,20 @@
     {
       "id": "BTN-13",
       "statement": "The control submits its containing form without scripting.",
-      "binds": false,
-      "reason": "no platform-level form-submission model exists off the web"
+      "observe": "event",
+      "kind": "behavior",
+      "scenario": {
+        "environment": {
+          "inside_form": true
+        }
+      },
+      "expect": {
+        "equals": "submitted"
+      },
+      "needs": [
+        "interaction"
+      ],
+      "trigger": "activate:no-script"
     },
     {
       "id": "POL-02",

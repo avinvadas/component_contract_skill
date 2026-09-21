@@ -22,7 +22,7 @@ The contract is **six chapters**, in this order, so a reader always knows where 
 
 **The contract inherits.** One frontmatter line — `role-archetype: button` — brings in what every platform already guarantees for that role, and the design system's policy brings in its cross-cutting commitments. Neither is restated per component.
 
-**Three things are generated from it, never authored** (Phase 6): a `[Component].resolved.md` for people, with everything inherited resolved in; one `[Component].[platform].canonical.json` per platform — a description an existing test framework can consume, not a test; and, only if asked, a props `[Component].[Platform].schema.json`.
+**Three things are generated from it, never authored** (Phase 6): a `[Component].spec.md` for people, with everything inherited resolved in; one `[Component].[platform].json` per platform — a description an existing test framework can consume, not a test; and, only if asked, a props `[Component].[platform].schema.json`.
 
 The person using this skill does not need to know HTML, ARIA, native accessibility APIs, or any platform's interaction conventions. The skill derives all technical decisions from plain-language answers about the component's purpose and how users interact with it.
 
@@ -46,6 +46,7 @@ Both are revisited once the four supported platforms are stable, tested, and val
 
 | Script | Run it when |
 |---|---|
+| `scripts/check_references.py [--days N] [--json]` | Phase 0A, and on a schedule independent of any run. Reports which reference files are due to be re-checked against the standard they cite, and how each is checked. Reads dates only: no network, no judgement, no edit. Exits 1 when anything is due. |
 | `scripts/detect_tokens.py <tree> [--json]` | Phase 0B — a token tree has been found. Proposes tiers and naming patterns with evidence, and lists questions. Writes nothing. |
 | `scripts/resolve.py <Component>.md [--out DIR]` | A contract in the format of `docs/contract-md-format-spec.md` is to be resolved against its role-archetype, policy and token tree into one canonical document per platform. |
 | `scripts/writeback.py <Component>.md` | Phase 6, after the first resolve — writes every token the tree answers into the contract's own slots, as a token or a `{variant}` pattern, with its `scope`. Asks nothing, decides nothing the tree did not. |
@@ -121,8 +122,10 @@ Three independent checks, all run once, before Phase 1, every time the skill sta
 
 ### 0A: Reference freshness check
 
-1. For every file under `references/`, read its `Last verified:` date. Comparing dates is local and free — do this for every file unconditionally, regardless of count (don't hardcode a number here — it drifts every time a file is added, which is exactly the kind of staleness this check exists to catch elsewhere).
-2. If today is less than **90 days** after that date, the file isn't due. Skip it — no network access, nothing to report.
+1. Run `python3 <skill>/scripts/check_references.py --json`. It reads every file's `Last verified:` date — local and free, every file unconditionally — and reports which are due, each with **how** it is checked: `fetch` (it cites a URL), `read` (it names a source in prose), or `agrees-with-others` (it cites no external source because it aggregates the other files). Don't re-implement the date arithmetic here, and don't hardcode a file count: both drift every time a file is added, which is the staleness this check exists to catch elsewhere.
+2. Nothing due — no network access, nothing to report. Say nothing.
+
+**This check also runs on a clock, not only here.** A standard moves whether or not anyone is contracting a component, and references feed the *reasoning* in Phases 2–4, never the resolver — so what a standard implied is frozen into a contract's text when it is written, and no later re-run can notice it changed. Phase 0A is the fallback, not the mechanism. See "Keeping references current" below.
 3. If 90 days or more have passed **and** web access is available in the current environment: fetch the URL(s) the file cites in its "Source of authority" line and compare against what the file currently says.
    - **`platform-differences.md` is the one exception** — it aggregates every other file rather than citing an external URL itself, so "checking" it means confirming it still agrees with whichever of those files were also due this run, not fetching anything.
    - **No material change** (the spec's version/status is the same, nothing the file describes has been renamed, deprecated, or superseded): update that file's `Last verified:` date to today and move on silently — no need to mention this to the user.
@@ -1063,7 +1066,7 @@ python3 <skill>/scripts/resolve_view.py [ComponentName]/[ComponentName].md
 
 **The token tree is the authority, so what it answers goes into the contract without asking.** `writeback.py` replaces each `—` the tree answers uniquely with the token — or, where each variant has its own, with the pattern they share (`component.button.{kind}-hover`) and an override row for every value that breaks it — and fills each row's `scope`. It never replaces a pinned token, never touches `n/a`, and leaves `—` wherever the tree did not answer: those stay gaps, and are asked about below. A finished contract shows its real tokens; `—` in one is always a gap.
 
-The first emits one canonical document per platform in `platforms` — the interchange format a verifier reads. The second emits `[ComponentName].resolved.md`, the artifact a **person** reads: the contract's own chapters with the role-archetype's and the policy's inherited requirements resolved in, origin as a column.
+The first emits one canonical document per platform in `platforms` — the interchange format a verifier reads. The second emits `[ComponentName].spec.md`, the artifact a **person** reads: the contract's own chapters with the role-archetype's and the policy's inherited requirements resolved in, origin as a column.
 
 Three kinds of output come back, and they are not the same kind of thing:
 
@@ -1138,7 +1141,7 @@ Run the algorithm exactly as that reference specifies; never write a per-compone
 
 **This survives the move to canonical documents, because it checks a different subject.** The canonical document describes outcomes an implementation must produce; a props schema validates a **consumer-supplied props instance** — is this a legal set of props to pass? Neither answers the other's question, and the schema is consumed by ordinary build tooling that will never read a canonical document.
 
-One file per platform, `[ComponentName].[Platform].schema.json`, derived from the contract's prop tables:
+One file per platform, `[ComponentName].[platform].schema.json`, derived from the contract's prop tables:
 
 | Contract | Schema |
 |---|---|
@@ -1163,13 +1166,15 @@ Every row comes from a platform-neutral table, so don't introduce platform-to-pl
 ```
 [ComponentName]/
 ├── [ComponentName].md                          the contract — source, authored in Phase 5
-├── [ComponentName].bindings.json               per-platform expect values
-├── [ComponentName].resolved.md                 generated — the artifact a person reads
-├── canonical/
-│   ├── [ComponentName].web.canonical.json      generated — one per platform in `platforms`
-│   └── [ComponentName].ios.canonical.json
-└── [ComponentName].[Platform].schema.json      only if Q10 asked for one
+├── [ComponentName].bindings.json               per-platform expect values — source
+└── generated/                                  nothing here is authored or edited
+    ├── [ComponentName].spec.md                 the artifact a person reads
+    ├── [ComponentName].web.json                one per platform in `platforms`
+    ├── [ComponentName].ios.json
+    └── [ComponentName].web.schema.json         only if Q10 asked for one
 ```
+
+**Everything generated goes in `generated/`, and nothing else does.** The directory is what tells a reader, with no README in front of them, which files are theirs — so never write a generated file beside the contract, and never write an authored one inside `generated/`.
 
 The first two are authored and belong in version control. The rest are generated: regenerating them must produce identical files, so a diff after a re-run means the contract changed, not the tooling.
 

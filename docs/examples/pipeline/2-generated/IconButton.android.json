@@ -4,6 +4,7 @@
   "contract_version": "1.0",
   "platform": "android",
   "role-archetype": "button",
+  "generated_from": "IconButton.md v1.0 + archetype button v1.0 + system policy. Do not edit.",
   "requirements": [
     {
       "id": "STR-04",

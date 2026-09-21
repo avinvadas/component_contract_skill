@@ -26,9 +26,9 @@ Button.md              THE DESIGN SYSTEM AUTHORS THIS — one per component.
  + bindings            Plus its token tree, resolved through the facts above.
    │                   scripts/resolve.py
    ▼
-Button.web.canonical.json          ← THE SKILL'S OUTPUT ENDS HERE
-Button.ios.canonical.json            one document per platform. An interchange format,
-Button.android.canonical.json        not a test. Describes; does not execute.
+Button.web.json          ← THE SKILL'S OUTPUT ENDS HERE
+Button.ios.json            one document per platform. An interchange format,
+Button.android.json        not a test. Describes; does not execute.
    │
    ▼
 verifier               SOMEONE ELSE'S TOOLCHAIN. Reads the canonical document, drives
@@ -137,8 +137,8 @@ Anyone evaluating this should judge the first and not mistake it for the second.
 
 ```bash
 P=docs/examples/pipeline
-python3 scripts/resolve.py      $P/1-contract/Button.md --out $P/2-canonical   # → 3 canonical documents
-python3 scripts/resolve_view.py $P/1-contract/Button.md --out $P/Button.resolved.md
+python3 scripts/resolve.py      $P/1-contract/Button.md --out $P/2-generated   # → 3 canonical documents
+python3 scripts/resolve_view.py $P/1-contract/Button.md --out $P/Button.spec.md
 python3 $P/3-verifiers/web/verify.py
 python3 scripts/detect_tokens.py evals/fixtures/tokens/alt-naming.tokens.json  # Phase 0B on an unfamiliar tree
 ```

@@ -6,8 +6,8 @@ One contract, three canonical documents, three verifiers. Reproduce with:
 
 ```bash
 P=docs/examples/pipeline
-python3 scripts/resolve.py      $P/1-contract/Button.md --out $P/2-canonical      # level 1 -> 2
-python3 scripts/resolve_view.py $P/1-contract/Button.md --out $P/Button.resolved.md
+python3 scripts/resolve.py      $P/1-contract/Button.md --out $P/2-generated      # level 1 -> 2
+python3 scripts/resolve_view.py $P/1-contract/Button.md --out $P/Button.spec.md
 python3 $P/3-verifiers/web/verify.py                                               # level 3, runnable
 ```
 
@@ -16,7 +16,7 @@ python3 $P/3-verifiers/web/verify.py                                            
 | Level | Artifact | Scope | Who owns it |
 |---|---|---|---|
 | 1 | `Button.md` | platform-neutral — a class of valid implementations | **the skill** |
-| 2 | `Button.<platform>.canonical.json` | one platform's vocabulary, still a description | **the skill** |
+| 2 | `Button.<platform>.json` | one platform's vocabulary, still a description | **the skill** |
 | 3 | verifier + capability declaration | reads the description, drives a tool | whoever owns that toolchain |
 | 4 | witness | one concrete instance — a story, a preview, a mount | the product team |
 
@@ -162,7 +162,7 @@ archetype**, not per contract.
 
 ```bash
 P=docs/examples/pipeline
-python3 scripts/resolve.py $P/1-contract/IconButton.md --out $P/2-canonical && python3 scripts/resolve_view.py $P/1-contract/IconButton.md --out $P/IconButton.resolved.md
+python3 scripts/resolve.py $P/1-contract/IconButton.md --out $P/2-generated && python3 scripts/resolve_view.py $P/1-contract/IconButton.md --out $P/IconButton.spec.md
 ```
 
 | | Button | IconButton |

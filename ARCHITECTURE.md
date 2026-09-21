@@ -9,7 +9,7 @@ references/      external standards           read once, by a human, to author t
 system/          shipped source layer         vocabulary · role-archetypes · templates
 facts + policy   THE DESIGN SYSTEM'S OWN      what it IS  +  what it has DECIDED
 <contract>.md    one component                the design system's own, per component
-*.canonical.json one platform's view          generated — the interchange format
+*.json one platform's view          generated — the interchange format
 3-verifiers/     someone else's toolchain     reads canonical, drives XCUITest/Playwright/Compose
 ```
 

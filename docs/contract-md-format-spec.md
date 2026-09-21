@@ -21,7 +21,7 @@ source is thin, the parent is abstract, and the thing a person wants to read is 
 
 The resolution in all of those is the same, and it is **never merging the sources**:
 
-> **`Button.md` is source. `Button.resolved.md` is the reading artifact** — generated,
+> **`Button.md` is source. `Button.spec.md` is the reading artifact** — generated,
 > platform-neutral, complete, showing every requirement from all three layers with its
 > origin.
 

@@ -2,18 +2,19 @@
   "format_version": "1.0",
   "contract": "Combobox",
   "contract_version": "1.0",
-  "platform": "ios",
+  "platform": "android",
   "role-archetype": "combobox",
+  "generated_from": "Combobox.md v1.0 + archetype combobox v1.0 + system policy. Do not edit.",
   "requirements": [
     {
-      "id": "STR-02",
-      "statement": "The element carrying the role is TextField.",
+      "id": "STR-03",
+      "statement": "The element carrying the role is ExposedDropdownMenuBox.",
       "observe": "element",
       "kind": "state",
       "scenario": {},
       "expect": {
         "one_of": [
-          "TextField"
+          "ExposedDropdownMenuBox"
         ]
       },
       "needs": [
@@ -109,7 +110,10 @@
       "needs": [
         "interaction"
       ],
-      "trigger": "a11y:swipe"
+      "trigger": [
+        "key:ArrowDown",
+        "dpad:down"
+      ]
     },
     {
       "id": "CBX-07",
@@ -183,7 +187,7 @@
           "state": "collapsed"
         }
       },
-      "trigger": "a11y:activate",
+      "trigger": "gesture:tap",
       "expect": {
         "contains": "expanded"
       },
@@ -202,7 +206,7 @@
           "state": "expanded"
         }
       },
-      "trigger": "gesture:tap-outside",
+      "trigger": "system:back",
       "expect": {
         "contains": "collapsed"
       },
@@ -221,7 +225,7 @@
           "state": "expanded"
         }
       },
-      "trigger": "a11y:activate",
+      "trigger": "gesture:tap",
       "expect": {
         "contains": "collapsed"
       },
@@ -240,7 +244,7 @@
           "state": "collapsed"
         }
       },
-      "trigger": "keyboard:character",
+      "trigger": "key:character",
       "expect": {
         "contains": "expanded"
       },
@@ -259,7 +263,7 @@
           "state": "collapsed"
         }
       },
-      "trigger": "gesture:tap-outside",
+      "trigger": "system:back",
       "expect": {
         "contains": "collapsed"
       },
@@ -279,7 +283,7 @@
           "state": "expanded"
         }
       },
-      "trigger": "a11y:activate",
+      "trigger": "gesture:tap",
       "expect": {
         "contains": "expanded"
       },
@@ -299,7 +303,7 @@
           "state": "expanded"
         }
       },
-      "trigger": "keyboard:character",
+      "trigger": "key:character",
       "expect": {
         "contains": "expanded"
       },
@@ -324,25 +328,25 @@
         "id": "CBX-T1",
         "from": "collapsed",
         "to": "expanded",
-        "trigger": "a11y:activate"
+        "trigger": "gesture:tap"
       },
       {
         "id": "CBX-T2",
         "from": "expanded",
         "to": "collapsed",
-        "trigger": "gesture:tap-outside"
+        "trigger": "system:back"
       },
       {
         "id": "CBX-T3",
         "from": "expanded",
         "to": "collapsed",
-        "trigger": "a11y:activate"
+        "trigger": "gesture:tap"
       },
       {
         "id": "MCH-01",
         "from": "collapsed",
         "to": "expanded",
-        "trigger": "keyboard:character"
+        "trigger": "key:character"
       }
     ],
     "unreachable": [

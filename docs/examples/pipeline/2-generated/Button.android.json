@@ -2,11 +2,12 @@
   "format_version": "1.0",
   "contract": "Button",
   "contract_version": "1.0",
-  "platform": "ios",
+  "platform": "android",
   "role-archetype": "button",
+  "generated_from": "Button.md v1.0 + archetype button v1.0 + system policy. Do not edit.",
   "requirements": [
     {
-      "id": "STR-03",
+      "id": "STR-04",
       "statement": "The element carrying the role is Button.",
       "observe": "element",
       "kind": "state",
@@ -101,7 +102,7 @@
         "interaction"
       ],
       "trigger": [
-        "key:Return",
+        "key:Enter",
         "key:Space"
       ]
     },
@@ -186,12 +187,12 @@
         }
       },
       "expect": {
-        "min": 44
+        "min": 48
       },
       "needs": [
         "geometry"
       ],
-      "unit": "pt"
+      "unit": "dp"
     },
     {
       "id": "BTN-12",

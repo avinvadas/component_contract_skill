@@ -1,8 +1,8 @@
-# Combobox — resolved
+# Combobox — spec
 
 > **Generated. Do not edit.** Source: `Combobox.md` v1.0 + archetype `combobox` v1.0 + system policy.
 > **Platform-neutral** — what the component *is*, before any platform's vocabulary.
-> How each requirement is *observed* per platform is in `2-canonical/`.
+> How each requirement is *observed* per platform is in the `Combobox.<platform>.json` files beside this one.
 
 **Origin** marks what is yours to change. *this component* — decided in your interview. *archetype* — a fact about what platforms provide free; changing it means a platform changed. *policy* — your design system's cross-cutting commitment.
 
@@ -68,7 +68,7 @@ Where a platform gives you this free, and where you build it by hand.
 
 ### Platform tokens
 
-*None. Every platform uses the same token, spelled its own way — see `2-canonical/` for each platform's name.*
+*None. Every platform uses the same token, spelled its own way — see the per-platform JSON beside this file for each platform's name.*
 
 ### Token gaps
 
