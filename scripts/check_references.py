@@ -13,7 +13,7 @@ standard now says — a stale reference is invisible to every other check here.
 So this runs on a clock, not on a contract. By default it reads dates and nothing else: no
 network, no judgement, no edit — which is what lets it run at the start of every single run.
 
-`--online` asks each source when IT last changed and compares that against `Last verified:`,
+`--online` asks every source a file cites when IT last changed and compares that against `Last verified:`,
 which is a better question than age: a file whose spec has not moved in two years stops
 nagging, and one whose spec moved last week is due whatever its age. Where a source publishes
 no usable date — Apple's and Google's developer docs, which are rendered per request — it
@@ -184,26 +184,24 @@ def source_date(url, timeout=10):
         return None, "unreachable (%s)" % (("HTTP %s" % code) if code else type(e).__name__)
 
 
-def survey_online(days, today=None):
-    """Age, refined by what each source says about itself.
+def read_sources(r):
+    """Ask EVERY source a file cites when it last changed, as (moved, dated, undated).
 
-    A file is due when its SOURCE has moved since it was verified — regardless of age — and,
-    where no date can be had, when it is older than `days`. The fallback is reported rather
-    than hidden: a source that cannot be dated is a weaker check, and saying so is the same
-    discipline a verifier follows when it cannot observe something.
+    Every one, not just the first. `native-events-models.md` cites nine sources across five
+    platforms, and reading only the head of the list meant its whole freshness verdict came
+    from whichever happened to be listed first — with the other eight never asked. Six of the
+    shipped files cite more than one source, so this was never about a single file.
+
+    `moved` is the sources that published a date after we verified; `dated` those that
+    answered and had not moved; `undated` those that said nothing usable, each with why.
     """
-    today = today or datetime.date.today()
-    due, fresh, broken = survey(days, today)
-    undatable = []
-    for r in list(fresh) + list(due):
-        if not r["sources"]:
-            continue
-        when, how = source_date(r["sources"][0])
+    verified = datetime.date.fromisoformat(r["verified"])
+    moved, dated, undated = [], [], []
+    for url in r["sources"]:
+        when, how = source_date(url)
         if when is None:
-            r["source"] = how or "no date published"
-            undatable.append(r)
-            continue
-        if how == HEADER and when > datetime.date.fromisoformat(r["verified"]):
+            undated.append({"url": url, "why": how or "no date published"})
+        elif how == HEADER and when > verified:
             # The header can CLEAR a source and never accuse one. On a page rendered per
             # request it is a render or cache timestamp, not a publication date, and the two
             # are indistinguishable from one fetch. Rejecting only a header dated today was
@@ -211,24 +209,64 @@ def survey_online(days, today=None):
             # files as changed — a finding that would recur on every run for ever, which is
             # the check nobody reads. Dated BEFORE our own check it still proves something
             # real (nothing re-renders to a 2023 date), so that direction is kept.
-            r["source"] = "no publication date; header says %s but a header newer than our " \
-                          "own check proves nothing" % when
-            undatable.append(r)
+            undated.append({"url": url, "why": "no publication date; header says %s but a "
+                                               "header newer than our own check proves "
+                                               "nothing" % when})
+        else:
+            (moved if when > verified else dated).append(
+                {"url": url, "date": when, "how": how})
+    return moved, dated, undated
+
+
+def survey_online(days, today=None):
+    """Age, refined by what each source says about itself.
+
+    Three outcomes per file, and the middle one is the one worth being strict about:
+
+        any source moved     due, whatever its age — the useful finding
+        all sources answered and none moved     cleared, whatever its age
+        some source could not be dated          nothing is cleared; age decides, and the
+                                               fallback is NAMED
+
+    A file is only cleared when every source it cites answered. One undatable source among
+    five means the file could have moved without anything here knowing, so claiming it is
+    unchanged would be asserting more than was observed — the same rule a verifier follows
+    when it cannot observe something, applied to this check's own evidence.
+    """
+    today = today or datetime.date.today()
+    due, fresh, broken = survey(days, today)
+    undatable = []
+    for r in list(fresh) + list(due):
+        if not r["sources"]:
             continue
-        r["source_date"], r["source_how"] = when.isoformat(), how
-        moved = when > datetime.date.fromisoformat(r["verified"])
+        moved, dated, undated = read_sources(r)
+        n = len(r["sources"])
         if moved:
             # Said whichever list it was already in: "old by the clock" and "the source
             # actually moved" are different reasons to look, and the second is the useful one.
-            r["source"] = "source changed %s, ours verified %s" % (when, r["verified"])
+            newest = max(moved, key=lambda m: m["date"])
+            r["source_date"], r["source_how"] = newest["date"].isoformat(), newest["how"]
+            r["source"] = "source changed %s, ours verified %s%s" % (
+                newest["date"], r["verified"],
+                "" if n == 1 else " (%d of %d cited sources moved)" % (len(moved), n))
             if r in fresh:
                 fresh.remove(r)
                 due.append(r)
-        elif r in due:
-            # Old by the clock, but the source has not moved. Not a finding.
+            continue
+        if undated:
+            r["source"] = undated[0]["why"] if n == 1 else \
+                "%d of %d cited sources publish no date, so this cannot be cleared: %s" % (
+                    len(undated), n, ", ".join(u["url"] for u in undated[:2])
+                    + (", +%d" % (len(undated) - 2) if len(undated) > 2 else ""))
+            undatable.append(r)
+            continue
+        newest = max(dated, key=lambda m: m["date"])
+        r["source_date"], r["source_how"] = newest["date"].isoformat(), newest["how"]
+        r["source"] = "source unchanged since %s" % newest["date"] if n == 1 else \
+            "all %d cited sources unchanged, newest %s" % (n, newest["date"])
+        if r in due:                                       # old by the clock, but not moved
             due.remove(r)
             fresh.append(r)
-            r["source"] = "source unchanged since %s" % when
     due.sort(key=lambda r: -r["age"])
     return due, fresh, broken, undatable
 
@@ -294,9 +332,13 @@ def main():
             print("  - %-52s %3d/%-3d days  %s"
                   % (r["file"], r["age"], r["window"],
                      r.get("source") or how[r["how"]]))
-            if r["sources"]:
-                print("      %s" % r["sources"][0])
-        print("\nCheck each against the source it cites. If the standard has materially changed,"
+            # Every URL, not just the first: the person has to check each of them, and printing
+            # one made a nine-source file look like a one-source file.
+            for url in r["sources"][:4]:
+                print("      %s" % url)
+            if len(r["sources"]) > 4:
+                print("      +%d more cited in the file" % (len(r["sources"]) - 4))
+        print("\nCheck each against every source it cites. If the standard has materially changed,"
               "\nsay so and ask before editing — a reference is a curated explanation, not a"
               "\nscrape, and an unreviewed rewrite is the thing this check exists to avoid.")
     else:

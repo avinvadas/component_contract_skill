@@ -4,7 +4,7 @@ Sources of authority: Apple's [Swift](https://developer.apple.com/documentation/
 
 **Last verified:** 2026-09-29
 
-**Recheck:** 30 days — this source publishes no usable date and renders its guidance in JavaScript, so nothing automated can tell whether it moved. Shorter window, human review.
+**Recheck:** 90 days — the default. This file carried a 30-day window for a reason that turned out not to apply to it: the window was set from Apple's developer docs because they are the **first URL in the list above**, back when the freshness check read only the first source of the files it surveys. What this file actually documents is language and framework event idiom — closures, delegate protocols, lambdas, listener interfaces, routed events, GObject signals, signals and slots — which is durable across releases in a way HIG guidance is not. A 30-day human-review clock on it would come due for ever without finding anything, which is the check nobody reads.
 
 This is the native-platform counterpart to `references/web/dom-events-model.md` — how §5.3 Events Emitted / §5.4 Events Received are grounded for iOS, Android, macOS, Windows, and Linux. It differs from that file in one important way: the DOM has exactly one event model. Every platform below has **more than one live idiom**, and none of them has a single canonical spec the way `CustomEvent` does — these are documented language/framework conventions, not one standard. Don't pick a favorite and present it as *the* answer; name the idiom actually in use, or document the fork explicitly, the same way `references/linux/linux-atspi-accessibility.md` refuses to pick GTK or Qt as canonical.
 

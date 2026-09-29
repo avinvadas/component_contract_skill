@@ -1528,6 +1528,65 @@ def a_last_modified_header_can_clear_a_source_but_never_accuse_one():
 
 
 @test
+def every_source_a_file_cites_is_asked_and_one_silent_source_clears_nothing():
+    """Guards: a file's whole verdict coming from whichever source is listed first.
+
+    Reading only `sources[0]` meant `native-events-models.md` was judged entirely on Apple's
+    developer docs — and given a 30-day window because of them — while the other eight sources
+    it cites went unasked. Six shipped files cite more than one.
+
+    And a file is cleared only when EVERY source answered. One silent source among five means
+    it could have moved with nothing here knowing, so calling it unchanged would assert more
+    than was observed — the rule a verifier follows about itself, applied to this check.
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("cr", HERE / "check_references.py")
+    cr = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cr)
+
+    with tempfile.TemporaryDirectory() as d:
+        (pathlib.Path(d) / "many.md").write_text(
+            "# R\n\n**Last verified:** 2026-08-25\n\nSources of authority: "
+            "https://a.example/ and https://b.example/ and https://c.example/\n")
+        real, cr.REFS = cr.REFS, pathlib.Path(d)
+        asked, answers = [], {}
+
+        def fake(url, timeout=10):
+            asked.append(url)
+            return answers[url]
+        real_fetch, cr.source_date = cr.source_date, fake
+        try:
+            # Nothing moved, but the LAST source says nothing: the file cannot be cleared, and
+            # the fallback names how many were silent rather than reporting a clean survey.
+            answers = {"https://a.example/": (datetime.date(2026, 1, 1), "w3c <time>"),
+                       "https://b.example/": (datetime.date(2026, 2, 1), "w3c <time>"),
+                       "https://c.example/": (None, None)}
+            _, _, _, undatable = cr.survey_online(90, today=datetime.date(2026, 9, 29))
+            assert len(asked) == 3, "every cited source must be asked: %s" % asked
+            assert len(undatable) == 1 and "1 of 3" in undatable[0]["source"], undatable
+
+            # All three answer and none moved: cleared even though 35 days have passed.
+            asked.clear()
+            answers["https://c.example/"] = (datetime.date(2025, 6, 1), "w3c <time>")
+            due, fresh, _, undatable = cr.survey_online(7, today=datetime.date(2026, 9, 29))
+            assert not due and not undatable, (due, undatable)
+            assert "all 3 cited sources unchanged" in fresh[0]["source"], fresh[0]["source"]
+
+            # A source that is NOT the first one moved. Reading only sources[0] missed this.
+            asked.clear()
+            answers["https://c.example/"] = (datetime.date(2026, 9, 20), "w3c <time>")
+            due, _, _, _ = cr.survey_online(90, today=datetime.date(2026, 9, 29))
+            assert len(due) == 1, due
+            assert "1 of 3 cited sources moved" in due[0]["source"], due[0]["source"]
+            assert due[0]["source_date"] == "2026-09-20", due[0]
+        finally:
+            cr.source_date, cr.REFS = real_fetch, real
+
+    # And the file that prompted this keeps the default window now, not a vendor's.
+    assert cr.read(ROOT / "references/native-events-models.md")["recheck"] == 90
+
+
+@test
 def a_reference_citing_no_url_is_checked_differently_not_skipped():
     """Guards: `platform-differences.md` reported as citing nothing, or quietly dropped.
 
