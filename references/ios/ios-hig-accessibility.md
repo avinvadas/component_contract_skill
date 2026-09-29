@@ -2,7 +2,7 @@
 
 Sources of authority: Apple's [Accessibility documentation](https://developer.apple.com/accessibility/) (`UIAccessibility`, SwiftUI accessibility modifiers) and the [Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/) for interaction conventions. This file is the iOS analog of the web's `wai-aria-patterns.md` + `html-semantics.md` + `css-layout-and-interaction.md` combined into one platform's cohesive standard — one concern (how iOS natively expresses structure, accessibility, layout adaptation, and directionality), independent of any specific design system built on top of it.
 
-**Last verified:** 2026-08-25
+**Last verified:** 2026-09-29
 
 **Recheck:** 30 days — this source publishes no usable date and renders its guidance in JavaScript, so nothing automated can tell whether it moved. Shorter window, human review.
 
@@ -19,6 +19,27 @@ Consulted by SKILL.md's Phase 3 ("Component / structure resolution" section) and
 - **`accessibilityValue`** — current state/value for controls that have one (a slider's position, a switch's on/off state).
 - **Dynamic Type**: text must scale with the user's chosen text size; a component contract's typography-bearing zones should note whether they participate in Dynamic Type scaling (almost always yes) rather than fixed pixel sizes.
 - **VoiceOver rotor**: custom rotor actions are the iOS equivalent of exposing extra navigable structure (e.g., "headings," "links") beyond linear swipe navigation — relevant for composite shells with internal navigation.
+
+## The numbers the HIG publishes (feeds §6 Accessibility and §4.2 Layout Policy)
+
+A requirement that says "meets the platform's minimum" is unverifiable until it says which number, so these are recorded here rather than left to whoever writes the contract. **The HIG states a default and a minimum, and they are not the same figure** — a control at 28×28 pt is within guidance while being well under the familiar 44×44.
+
+| | Default | Minimum |
+|---|---|---|
+| Control size (iOS, iPadOS) | 44×44 pt | 28×28 pt |
+| Type size (iOS, iPadOS) | 17 pt | 11 pt |
+
+Which of the two a contract requires is a **policy decision, not a fact** — say which, in the contract, and say it in points. Spacing guidance is separate from size and is worth stating when a zone's padding is contractual: roughly 12 pt around a bezelled element, roughly 24 pt around an unbezelled one.
+
+Contrast, as Accessibility Inspector applies it (WCAG Level AA; the HIG also names APCA as a second standard in use, without adopting it):
+
+| Text size | Weight | Minimum ratio |
+|---|---|---|
+| up to 17 pt | any | 4.5:1 |
+| 18 pt | any | 3:1 |
+| any | bold | 3:1 |
+
+Dynamic Type's own target is separate from all of the above: text should be enlargeable by **at least 200%** (140% on watchOS).
 
 ## Component / structure resolution
 

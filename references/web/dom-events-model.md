@@ -2,7 +2,7 @@
 
 Source of authority: the [WHATWG DOM Standard](https://dom.spec.whatwg.org/) — specifically `CustomEvent` and event dispatch/bubbling — plus the accessibility-tree model already documented in `references/web/wai-aria-patterns.md`. This file covers one concern: how a contract's behavioral claims (§5.3 Events Emitted, §5.4 Events Received, §5.2 State Machine, §6 Accessibility) are expressed and verified as **rendered DOM output**, independent of whatever framework produced it. It is kept separate from CSS concerns (`references/web/css-layout-and-interaction.md`) and token formats (`references/design-tokens-format.md`) — a contract's event contract, layout mechanism, and token bindings are three independent things and should be editable independently.
 
-**Last verified:** 2026-08-25
+**Last verified:** 2026-09-29
 
 Consult this file from **Phase 5** when writing §5.3/§5.4, and whenever the target team asks how a contract can be checked automatically at build time.
 

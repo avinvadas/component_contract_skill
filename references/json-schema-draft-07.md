@@ -1,8 +1,8 @@
 # JSON Schema Draft 07 — keyword reference
 
-Source of authority: [JSON Schema Draft 07 specification](https://json-schema.org/specification-links.html#draft-7). SKILL.md's Phase 6 is deliberately pinned to Draft 07 rather than the current Draft 2020-12 — this is a stated compatibility choice (Draft 07 has the widest tool support across validators, IDEs, and CI linters as of this writing), not an oversight. If a target team needs 2020-12 instead, see "Upgrading" below before changing the schema rules in SKILL.md.
+Source of authority: [JSON Schema Draft 07 specification](https://json-schema.org/specification-links). SKILL.md's Phase 6 is deliberately pinned to Draft 07 rather than the current Draft 2020-12 — this is a stated compatibility choice (Draft 07 has the widest tool support across validators, IDEs, and CI linters as of this writing), not an oversight. If a target team needs 2020-12 instead, see "Upgrading" below before changing the schema rules in SKILL.md.
 
-**Last verified:** 2026-08-25
+**Last verified:** 2026-09-29
 
 ## Keywords used by this skill's schema generation
 

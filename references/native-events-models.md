@@ -2,7 +2,7 @@
 
 Sources of authority: Apple's [Swift](https://developer.apple.com/documentation/swift/) and [Combine](https://developer.apple.com/documentation/combine) documentation (iOS/macOS), Android's [Kotlin](https://kotlinlang.org/docs/lambdas.html) and [Jetpack Compose](https://developer.android.com/jetpack/compose) documentation plus [Kotlin Flow](https://kotlinlang.org/docs/flow.html), Microsoft's [.NET events](https://learn.microsoft.com/en-us/dotnet/standard/events/) and [WinUI routed events](https://learn.microsoft.com/en-us/windows/apps/develop/base-controls/events) documentation, and GNOME's [GObject Signals](https://docs.gtk.org/gobject/concepts.html#signals) alongside Qt's [Signals & Slots](https://doc.qt.io/qt-6/signalsandslots.html) documentation.
 
-**Last verified:** 2026-08-26
+**Last verified:** 2026-09-29
 
 **Recheck:** 30 days — this source publishes no usable date and renders its guidance in JavaScript, so nothing automated can tell whether it moved. Shorter window, human review.
 

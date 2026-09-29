@@ -2,7 +2,7 @@
 
 Sources of authority: Apple's [Accessibility documentation](https://developer.apple.com/accessibility/) (`NSAccessibility` protocol for AppKit; shared SwiftUI accessibility modifiers) and the macOS-specific sections of the [Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/). Kept separate from `references/ios/ios-hig-accessibility.md` even though both are Apple platforms and SwiftUI's accessibility API is shared between them — macOS has interaction conventions that genuinely differ from iOS (a pointer, hover states, right-click, window chrome, a menu bar), and someone fixing an iOS-only detail shouldn't need to touch this file or vice versa.
 
-**Last verified:** 2026-08-25
+**Last verified:** 2026-09-29
 
 **Recheck:** 30 days — this source publishes no usable date and renders its guidance in JavaScript, so nothing automated can tell whether it moved. Shorter window, human review.
 
@@ -13,6 +13,15 @@ Consulted by SKILL.md's Phase 3 ("Component / structure resolution" section) and
 ## Accessibility API
 
 - **SwiftUI apps**: the same accessibility modifiers as iOS (`.accessibilityLabel`, `.accessibilityValue`, `.accessibilityHint`, `.accessibilityAddTraits`) — see `references/ios/ios-hig-accessibility.md` for the trait vocabulary, which is shared.
+**The numbers differ from iOS and that is the point of keeping this file separate.** A pointer is more precise than a fingertip, so macOS's figures are smaller — a contract that reuses iOS's 44×44 on macOS is over-specifying, and one that reuses macOS's on iOS is under-specifying.
+
+| | Default | Minimum |
+|---|---|---|
+| Control size (macOS) | 28×28 pt | 20×20 pt |
+| Type size (macOS) | 13 pt | 10 pt |
+
+Contrast thresholds and the Dynamic Type enlargement target are shared with iOS — see the table in `references/ios/ios-hig-accessibility.md` rather than restating them here.
+
 - **AppKit apps**: the `NSAccessibility` protocol — accessibility roles (`NSAccessibilityButtonRole`, `NSAccessibilityCheckBoxRole`, `NSAccessibilityPopUpButtonRole`, etc.), `accessibilityLabel`, `accessibilityValue`, and `accessibilityChildren` for composite structures. This is AppKit's own role/attribute model, distinct from UIKit's trait-based one even though both ultimately serve VoiceOver.
 
 ## Component / structure resolution — where macOS genuinely diverges from iOS
