@@ -8,7 +8,7 @@ it reaches: which tier a token is in, which token a slot binds, which question i
 is rendered and no value is compared; like everything in this project, it validates logic.
 Each names the wrong conclusion it rules out, several of which the skill once reached.
 """
-import re, contextlib, io, json, pathlib, shutil, subprocess, sys, tempfile
+import re, contextlib, datetime, io, json, pathlib, shutil, subprocess, sys, tempfile
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -1348,22 +1348,37 @@ def the_freshness_notice_is_carried_by_the_scripts_a_run_actually_executes():
     would say so. The scripts that run early carry the notice themselves, so the check
     happens whether or not it was asked for — and it stays on stderr and stays silent when
     nothing is due, or it would be tuned out.
+
+    Against a fixture, not against `references/`. Asserting that the shipped tree is silent
+    made this check a function of today's date: it passed while the project's own references
+    happened to be fresh and failed the moment three of them came due — which is the
+    mechanism working, reported as a broken check. A check that fires for the right reason
+    at the wrong level is one nobody reads, which is the failure `notice()` itself warns about.
     """
     import importlib.util
     spec = importlib.util.spec_from_file_location("cr", HERE / "check_references.py")
     cr = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(cr)
 
-    out, err = io.StringIO(), io.StringIO()
-    with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
-        cr.notice(days=90)
-    assert out.getvalue() == "", "the notice must never touch stdout: %r" % out.getvalue()
-    assert err.getvalue() == "", "nothing is due, so it must say nothing"
+    with tempfile.TemporaryDirectory() as d:
+        ref = pathlib.Path(d) / "fresh.md"
+        ref.write_text("# Fresh\n\n**Last verified:** %s\n\nSource of authority: "
+                       "https://example.org/\n" % datetime.date.today().isoformat())
+        real, cr.REFS = cr.REFS, pathlib.Path(d)
+        try:
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                cr.notice(days=90)
+            assert out.getvalue() == "", "the notice must never touch stdout: %r" % out.getvalue()
+            assert err.getvalue() == "", "nothing is due, so it must say nothing"
 
-    err = io.StringIO()
-    with contextlib.redirect_stderr(err):
-        cr.notice(days=0)
-    assert "check_references" in err.getvalue(), err.getvalue()
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                cr.notice(days=0)
+            assert "check_references" in err.getvalue(), err.getvalue()
+            assert "fresh" in err.getvalue(), "the notice must name what is due: %r" % err.getvalue()
+        finally:
+            cr.REFS = real
 
     for script in ("learned.py", "detect_tokens.py", "resolve.py"):
         t = (HERE / script).read_text()
