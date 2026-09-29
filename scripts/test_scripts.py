@@ -1407,17 +1407,33 @@ def a_source_that_says_nothing_about_itself_is_looked_at_more_often():
     cr = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(cr)
 
-    windows = {r["file"]: r["window"]
-               for r in sum(cr.survey(90, datetime.date(2026, 9, 21))[:2], [])}
-    assert windows["references/ios/ios-hig-accessibility.md"] == 30, windows
-    assert windows["references/android/android-material-accessibility.md"] == 30, windows
-    # A source that dates itself needs no help and keeps the default.
-    assert windows["references/web/wcag-mapping.md"] == 90, windows
+    # What the shipped files DECLARE — read straight off each file, with no date arithmetic, so
+    # this says nothing about whether any of them happens to be due this week.
+    declared = {f: cr.read(ROOT / "references" / f)["recheck"] for f in (
+        "ios/ios-hig-accessibility.md", "macos/macos-hig-accessibility.md",
+        "android/android-material-accessibility.md", "web/wcag-mapping.md")}
+    assert declared["ios/ios-hig-accessibility.md"] == 30, declared
+    assert declared["macos/macos-hig-accessibility.md"] == 30, declared
+    assert declared["android/android-material-accessibility.md"] == 30, declared
+    # A source that dates itself needs no help: no declaration, so it takes the default.
+    assert declared["web/wcag-mapping.md"] is None, declared
 
-    # The short window must actually fire earlier, or declaring it achieves nothing.
-    due = {r["file"] for r in cr.survey(90, datetime.date(2026, 9, 28))[0]}
-    assert "references/ios/ios-hig-accessibility.md" in due, due
-    assert "references/web/wcag-mapping.md" not in due, due
+    # And the declaration must actually fire earlier, or making it achieves nothing. Against a
+    # fixture: asserting that a shipped file is due on a given day made this a function of the
+    # calendar, and it broke the moment those files were re-verified.
+    with tempfile.TemporaryDirectory() as d:
+        for name, extra in (("short.md", "\n**Recheck:** 30 days — no usable date.\n"), ("long.md", "")):
+            (pathlib.Path(d) / name).write_text(
+                "# R\n\n**Last verified:** 2026-08-25\n%s\nSource of authority: "
+                "https://example.org/\n" % extra)
+        real, cr.REFS = cr.REFS, pathlib.Path(d)
+        try:                                               # 35 days on: past 30, short of 90
+            due, fresh, _ = cr.survey(90, datetime.date(2026, 9, 29))
+            assert [pathlib.Path(r["file"]).name for r in due] == ["short.md"], due
+            assert [pathlib.Path(r["file"]).name for r in fresh] == ["long.md"], fresh
+            assert due[0]["window"] == 30 and fresh[0]["window"] == 90, (due, fresh)
+        finally:
+            cr.REFS = real
 
 
 @test
@@ -1456,6 +1472,59 @@ def a_render_timestamp_is_not_mistaken_for_a_publication_date():
         == datetime.date(2026, 3, 3)
     # A date that does not exist must not crash the run.
     assert cr.extract_date('datetime="2026-02-31"', {}, today) == (None, None)
+
+
+@test
+def a_last_modified_header_can_clear_a_source_but_never_accuse_one():
+    """Guards: a render timestamp reported as a change, for ever, on every run.
+
+    Rejecting only a header dated TODAY was not enough. Apple's returned yesterday's date —
+    a cache or render timestamp — which sailed through the guard and reported three reference
+    files as changed. Nothing would ever clear them, because the header moves again tomorrow.
+
+    Dated BEFORE our own check the header still proves something real: nothing re-renders to
+    a 2023 date, so the freedesktop page genuinely has not moved. That direction is kept, and
+    the other becomes `no publication date`, which falls back to age and SAYS it fell back.
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("cr", HERE / "check_references.py")
+    cr = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cr)
+
+    with tempfile.TemporaryDirectory() as d:
+        (pathlib.Path(d) / "ref.md").write_text(
+            "# Ref\n\n**Last verified:** 2026-08-25\n\n"
+            "Source of authority: https://example.org/\n")
+        real, cr.REFS = cr.REFS, pathlib.Path(d)
+        calls = []
+
+        def fake(url, timeout=10):
+            calls.append(url)
+            return fake.answer
+        real_fetch, cr.source_date = cr.source_date, fake
+        try:
+            # Newer than our check: indistinguishable from a cache stamp, so it is no evidence.
+            fake.answer = (datetime.date(2026, 9, 28), cr.HEADER)
+            due, fresh, _, undatable = cr.survey_online(90, today=datetime.date(2026, 9, 29))
+            # A file outside the skill is reported by its full path, so compare basenames.
+            assert [pathlib.Path(r["file"]).name for r in undatable] == ["ref.md"], undatable
+            assert "proves nothing" in undatable[0]["source"], undatable[0]["source"]
+            # 35 days old against a 90-day window, so falling back to age leaves it not due.
+            assert not due and len(fresh) == 1, (due, fresh)
+
+            # Older than our check: real, and it clears the file even when age says otherwise.
+            fake.answer = (datetime.date(2023, 1, 12), cr.HEADER)
+            due, fresh, _, undatable = cr.survey_online(7, today=datetime.date(2026, 9, 29))
+            assert not undatable and not due, (undatable, due)
+            assert "unchanged" in fresh[0]["source"], fresh[0]["source"]
+
+            # A date the DOCUMENT publishes is believed in both directions — that is the point
+            # of preferring it, and the header rule must not have weakened it.
+            fake.answer = (datetime.date(2026, 9, 8), "w3c <time>")
+            due, _, _, undatable = cr.survey_online(90, today=datetime.date(2026, 9, 29))
+            assert not undatable and len(due) == 1, (undatable, due)
+        finally:
+            cr.source_date, cr.REFS = real_fetch, real
 
 
 @test

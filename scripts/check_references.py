@@ -85,6 +85,9 @@ def survey(days, today=None):
     return due, fresh, broken
 
 
+# `Last-Modified` is named, because it is believed in one direction only. See `survey_online`.
+HEADER = "Last-Modified header"
+
 MONTHS = {m: i for i, m in enumerate(
     "january february march april may june july august september october november december"
     .split(), 1)}
@@ -136,10 +139,31 @@ def extract_date(body, headers=None, today=None):
             import email.utils
             when = email.utils.parsedate_to_datetime(lm).date()
             if when < today:
-                return when, "Last-Modified header"
+                return when, HEADER
         except Exception:                                  # noqa: BLE001 — a malformed header
             pass
     return None, None
+
+
+import urllib.request                                      # noqa: E402 — used by _Follow308 below
+
+
+class _Follow308(urllib.request.HTTPRedirectHandler):
+    """urllib follows 301, 302, 303 and 307 — but not 308.
+
+    A standards body that reorganises its site permanently (JSON Schema dropped the `.html`
+    suffix) therefore came back `unreachable`, which reads exactly like a dead link and
+    silently drops the file to age alone. A moved source is the ordinary case, not a failure.
+
+    Both halves are needed: a handler METHOD for the status, because the dispatch chain is
+    built from method names, and `redirect_request`, which refuses outright any code outside
+    301/302/303/307 and so raised the error before the method could run.
+    """
+    http_error_308 = urllib.request.HTTPRedirectHandler.http_error_301
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return super().redirect_request(req, fp, 301 if code == 308 else code,
+                                        msg, headers, newurl)
 
 
 def source_date(url, timeout=10):
@@ -148,13 +172,16 @@ def source_date(url, timeout=10):
     req = urllib.request.Request(url, headers={
         "User-Agent": "component-contract-skill reference freshness check"})
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
+        with urllib.request.build_opener(_Follow308).open(req, timeout=timeout) as r:
             # Only the head of the document: every shape above appears near the top, and a
             # living standard is megabytes.
             body = r.read(200_000).decode("utf-8", "replace")
             return extract_date(body, dict(r.headers))
     except Exception as e:                                 # noqa: BLE001 — offline, 403, timeout
-        return None, "unreachable (%s)" % type(e).__name__
+        # The status matters to whoever has to act: 404 means find the new home, 403 means the
+        # check cannot read it and a person must, 308 meant this handler was missing.
+        code = getattr(e, "code", None)
+        return None, "unreachable (%s)" % (("HTTP %s" % code) if code else type(e).__name__)
 
 
 def survey_online(days, today=None):
@@ -174,6 +201,18 @@ def survey_online(days, today=None):
         when, how = source_date(r["sources"][0])
         if when is None:
             r["source"] = how or "no date published"
+            undatable.append(r)
+            continue
+        if how == HEADER and when > datetime.date.fromisoformat(r["verified"]):
+            # The header can CLEAR a source and never accuse one. On a page rendered per
+            # request it is a render or cache timestamp, not a publication date, and the two
+            # are indistinguishable from one fetch. Rejecting only a header dated today was
+            # not enough: Apple's returned yesterday, which sailed through and reported three
+            # files as changed — a finding that would recur on every run for ever, which is
+            # the check nobody reads. Dated BEFORE our own check it still proves something
+            # real (nothing re-renders to a 2023 date), so that direction is kept.
+            r["source"] = "no publication date; header says %s but a header newer than our " \
+                          "own check proves nothing" % when
             undatable.append(r)
             continue
         r["source_date"], r["source_how"] = when.isoformat(), how
